@@ -1,53 +1,82 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem
+from PyQt5.QtCore import Qt
+from db import queries
 from db.connection import get_connection
 
 class MainWindow(QWidget):
-    def __init__(self, conn):
+    def __init__(self, conn, raceid):
         super().__init__()
         self.conn = conn # Lagre connection.
+        self.raceId = raceid
 
         self.setWindowTitle("Trekkeplan")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(0, 0, 1800, 900)
 
-        self.status = QLabel("Status: Ikke tilkoblet")
-        self.table1 = QTableWidget()
-        self.load_button = QPushButton("Last data fra MySQL")
-#        self.load_button.clicked.connect(self.load_data)
-        self.load_data()
+        #
+        # Komponenter
+        #
+#        self.status = QLabel("Status: Ikke tilkoblet")
+        style_table_header = "font-weight: bold; font-size: 16px; margin: 10px 0;"
+        title_non_planned = QLabel("Ikke-planlagte klasser")
+        title_non_planned.setStyleSheet(style_table_header)
+        title_block_lag = QLabel("Bås/tidsslep")
+        title_block_lag.setStyleSheet(style_table_header)
+        title_class_start = QLabel("Klassevis starttider")
+        title_class_start.setStyleSheet(style_table_header)
 
-#        self.table1.setColumnCount(4)
-#        self.table1.setRowCount(7)
+        self.tableNotPlanned = QTableWidget()
+        self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.status)
-        layout.addWidget(self.table1)
-        layout.addWidget(self.load_button)
+        self.tableBlockLag = QTableWidget()
+        self.tableClassStart = QTableWidget()
 
-        self.setLayout(layout)
+        self.moveButton = QPushButton("Flytt")
+        self.addBlockButton = QPushButton("+")
+        self.drawButton = QPushButton("Trekk starttider")
+        self.chk1Button = QPushButton("Klasser, løyper, post1")
+        self.chk2Button = QPushButton("Sjekk samtidige")
+        #        self.load_button.clicked.connect(self.load_data)
 
-#        conn.close()
+        main_layout = QHBoxLayout()
+        column1_layout = QVBoxLayout()
+        column2_layout = QVBoxLayout()
+        column3_layout = QVBoxLayout()
+        column4_layout = QVBoxLayout()
+        main_layout.addLayout(column1_layout)
+        main_layout.addLayout(column2_layout)
+        main_layout.addLayout(column3_layout)
+        main_layout.addLayout(column4_layout)
 
-    def load_data(self):
-        try:
-            print("Prøver connection")
-#            conn = get_connection()
-            print("Tilkobling OK")
-            cursor = self.conn.cursor()
+        column1_layout.addWidget(title_non_planned)
+        column1_layout.addWidget(self.tableNotPlanned)
+        column1_layout.addWidget(self.chk1Button)
 
-#            classesNotInPlanSql = ""
-#            """
-            cursor.execute("SELECT * FROM races where id > 140 and id < 183")
-            rows = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
-            self.table1.setColumnCount(len(columns))
-            self.table1.setRowCount(len(rows))
-            self.table1.setHorizontalHeaderLabels(columns)
-            for row_idx, row_data in enumerate(rows):
-                for col_idx, value in enumerate(row_data):
-                    self.table1.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+        column2_layout.addWidget(self.moveButton)
+#        layout.addWidget(self.status)
 
-            self.status.setText("Status: Tilkoblet og data lastet")
-        except Exception as e:
-            print(f"Feil: {e}")
-            self.status.setText(f"Feil: {e}")
+        column3_layout.addWidget(title_block_lag)
+        column3_layout.addWidget(self.addBlockButton)
+        column3_layout.addWidget(self.tableBlockLag)
+
+        column4_layout.addWidget(title_class_start)
+        column4_layout.addWidget(self.tableClassStart)
+        column4_layout.addWidget(self.drawButton)
+        column4_layout.addWidget(self.chk2Button)
+
+        self.setLayout(main_layout)
+
+        rows, columns = queries.readNotPlanned(self.conn, self.raceId)
+
+        self.tableNotPlanned.setColumnCount(len(columns))
+        self.tableNotPlanned.setRowCount(len(rows))
+        self.tableNotPlanned.setHorizontalHeaderLabels(columns)
+        self.tableNotPlanned.setColumnHidden(0, True)
+
+        for row_idx, row_data in enumerate(rows):
+            for col_idx, value in enumerate(row_data):
+                self.tableNotPlanned.setItem(row_idx, col_idx, QTableWidgetItem(str(value)))
+        self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
+        self.tableNotPlanned.setSortingEnabled(True)
+
+#        self.status.setText("Status: Data lastet")
 
