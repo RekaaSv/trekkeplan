@@ -30,7 +30,7 @@ JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
 def read_class_starts(conn, raceid):
     cursor = conn.cursor()
     sql = """
-SELECT cls.id classstartid, sb.name Bås, sbl.timelag Slep
+SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep
       , cl.name Klasse
       , co.name Løype
       , SUBSTRING_INDEX(co.codes," ",1) Post_1

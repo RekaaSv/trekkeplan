@@ -1,8 +1,11 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QItemSelectionModel
 from db import queries
+
 from db.connection import get_connection
+from gui.filtered_table import FilteredTable
+
 
 class MainWindow(QWidget):
     def __init__(self, conn, raceid):
@@ -35,12 +38,14 @@ class MainWindow(QWidget):
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setMinimumSize(120, 100)
         self.tableBlockLag.setMaximumSize(120, 800)
+        selectionModel_block_lag = self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
 
-        self.tableClassStart = QTableWidget()
+        self.tableClassStart = FilteredTable()  #QTableWidget()
         self.tableClassStart.setMinimumSize(800, 100)
         self.tableClassStart.setMaximumSize(800, 1200)
+        self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
 
@@ -69,15 +74,16 @@ class MainWindow(QWidget):
         header = self.tableNotPlanned.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        self.tableBlockLag.setColumnHidden(0, True)
-        self.tableBlockLag.setColumnHidden(1, True)
+#        self.tableBlockLag.setColumnHidden(0, True)
+#        self.tableBlockLag.setColumnHidden(1, True)
         self.tableBlockLag.sortItems(2, order=Qt.AscendingOrder)
         self.tableBlockLag.resizeColumnsToContents()
         self.tableBlockLag.resizeRowsToContents()
         header2 = self.tableBlockLag.horizontalHeader()
         header2.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        self.tableClassStart.setColumnHidden(0, True)
+#        self.tableClassStart.setColumnHidden(0, True)
+#        self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.resizeColumnsToContents()
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
@@ -121,6 +127,9 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
+        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
+
+
     def populate_table(self, table, columns: list[any], rows):
         table.setColumnCount(len(columns))
         table.setRowCount(len(rows))
@@ -134,5 +143,17 @@ class MainWindow(QWidget):
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         table.setSortingEnabled(True)
 
-#        self.status.setText("Status: Data lastet")
+
+    def upd_filter_table_cl_st(self):
+        utvalg = self.tableBlockLag.selectionModel().selectedRows()
+        if not utvalg:
+            self.tableClassStart.filter_verdier.clear()
+            self.tableClassStart.marker_valgbare_rader()
+            self.tableClassStart.clearSelection()
+            return
+
+        if utvalg:
+            rad = utvalg[0].row()
+            verdi1 = self.tableBlockLag.item(rad, 0).text()
+            self.tableClassStart.sett_filter(1, verdi1)
 
