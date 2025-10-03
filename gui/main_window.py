@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView
 from PyQt5.QtCore import Qt, QItemSelectionModel
+from PyQt5.QtGui import QPalette, QColor
 from db import queries
 
 from db.connection import get_connection
@@ -39,7 +40,7 @@ class MainWindow(QWidget):
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setMinimumSize(120, 100)
         self.tableBlockLag.setMaximumSize(120, 800)
-        selectionModel_block_lag = self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
+        self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
 
@@ -89,6 +90,11 @@ class MainWindow(QWidget):
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
         header3.setSectionResizeMode(1, QHeaderView.Stretch)
+
+        # Behold samme farge når tabell ikke er i fokus.
+        self.keep_selection_colour()
+        #        self.keep_selection_colour(self.tableBlockLag)
+        #        self.keep_selection_colour(self.tableClassStart)
 
         #
         # Layout
@@ -164,3 +170,15 @@ class MainWindow(QWidget):
             verdi1 = self.tableBlockLag.item(rad, 0).text()
             self.tableClassStart.sett_filter(1, verdi1)
 
+    def keep_selection_colour(tabell):
+        palett = tabell.palette()
+#        dark_blue = QColor(0, 120, 215)  # Windows 10 blå
+#        dark_blue = QColor(173, 216, 230)  # Windows 10 blå
+        dark_blue = QColor(70, 130, 180)  # Windows 10 blå
+        palett.setColor(QPalette.Active, QPalette.Highlight, dark_blue)
+        palett.setColor(QPalette.Inactive, QPalette.Highlight, dark_blue)
+
+        hvit = QColor(Qt.white)
+        palett.setColor(QPalette.Active, QPalette.HighlightedText, hvit)
+        palett.setColor(QPalette.Inactive, QPalette.HighlightedText, hvit)
+        tabell.setPalette(palett)
