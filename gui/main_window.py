@@ -5,6 +5,7 @@ from db import queries
 
 from db.connection import get_connection
 from gui.filtered_table import FilteredTable
+from gui.table_connection import TableConnection
 
 
 class MainWindow(QWidget):
@@ -127,8 +128,14 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
+#        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
+        self.tab_connect_bloclag_clst = TableConnection(
+            table_source=self.tableBlockLag,
+            table_dest=self.tableClassStart,
+            inx_source=0,
+            inx_dest=1
+        )
 
     def populate_table(self, table, columns: list[any], rows):
         table.setColumnCount(len(columns))
