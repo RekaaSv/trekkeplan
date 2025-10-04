@@ -12,7 +12,7 @@ from gui.table_connection import TableConnection
 class MainWindow(QWidget):
     def __init__(self, conn, raceid):
         super().__init__()
-        self.conn = conn # Lagre connection.
+        self.conn = conn # Lagre connection. Nei den funker ikke i andre tråer (signal, etc.)
         self.raceId = raceid
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
@@ -64,10 +64,10 @@ class MainWindow(QWidget):
         #
         # Les fra MySQL initielt.
         #
-        rows0, columns0 = queries.read_race(self.conn, self.raceId)
-        rows1, columns1 = queries.read_not_planned(self.conn, self.raceId)
-        rows2, columns2 = queries.read_block_lags(self.conn, self.raceId)
-        rows3, columns3 = queries.read_class_starts(self.conn, self.raceId)
+        rows0, columns0 = queries.read_race(self.raceId)
+        rows1, columns1 = queries.read_not_planned(self.raceId)
+        rows2, columns2 = queries.read_block_lags(self.raceId)
+        rows3, columns3 = queries.read_class_starts(self.raceId)
 
         race = rows0[0]
         self.race_name = race[1]
@@ -112,6 +112,7 @@ class MainWindow(QWidget):
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
         header3.setSectionResizeMode(1, QHeaderView.Stretch)
+        self.tableClassStart.setSortingEnabled(False)
 
         # Behold samme farge når tabell ikke er i fokus.
         self.keep_selection_colour()

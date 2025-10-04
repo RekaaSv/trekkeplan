@@ -1,7 +1,10 @@
+import mysql.connector
+
 from db import connection
 
 
-def read_race(conn, raceid):
+def read_race(raceid):
+    conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT r.id, r.name, r.racedate, r.first_start
@@ -11,7 +14,8 @@ WHERE r.id = %s
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_not_planned(conn, raceid):
+def read_not_planned(raceid):
+    conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT cl.id classid, cl.name Klasse
@@ -31,7 +35,8 @@ WHERE cl.raceid = %s AND cl.cource = 0
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_block_lags(conn, raceid):
+def read_block_lags(raceid):
+    conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep
@@ -40,7 +45,8 @@ JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_class_starts(conn, raceid):
+def read_class_starts(raceid):
+    conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep
@@ -64,12 +70,9 @@ WHERE r.id = %s
 ORDER BY  sb.name, sbl.timelag, cls.sortorder 
 """
     cursor.execute(sql, (raceid,))
-#    return (
-    to_return = (cursor.fetchall(), [desc[0] for desc in cursor.description])
-    cursor.close()
-    return to_return
+    return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def upd_first_start(raceId, new_value):
+def upd_first_start(raceid, new_value):
     try:
         conn = connection.get_connection()
         cursor = conn.cursor()
@@ -78,13 +81,11 @@ UPDATE races
 set first_start = %s
 WHERE id = %s
 """
-        cursor.execute(sql, (new_value, raceId))
+        cursor.execute(sql, (new_value, raceid))
         conn.commit()
         conn.close()
-    except conn.Error as err:
-        print("1"+err)
-    except Exception as err:
-        print("2"+err)
-    finally:
-        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
 
