@@ -37,6 +37,7 @@ class MainWindow(QWidget):
         self.tableNotPlanned.setMaximumSize(300, 800)
         self.tableNotPlanned.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableNotPlanned.verticalHeader().setVisible(False)
+        self.tableNotPlanned.setSortingEnabled(True)
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setMinimumSize(120, 100)
@@ -44,6 +45,7 @@ class MainWindow(QWidget):
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
+        self.tableBlockLag.setSortingEnabled(True)
 
         self.tableClassStart = FilteredTable()  #QTableWidget()
         self.tableClassStart.setMinimumSize(800, 100)
@@ -51,6 +53,7 @@ class MainWindow(QWidget):
         self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
+        self.tableClassStart.setSortingEnabled(False)
 
         self.moveButton = QPushButton("==>")
         self.moveButton.setFixedWidth(100)
@@ -112,7 +115,6 @@ class MainWindow(QWidget):
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
         header3.setSectionResizeMode(1, QHeaderView.Stretch)
-        self.tableClassStart.setSortingEnabled(False)
 
         # Behold samme farge når tabell ikke er i fokus.
         self.keep_selection_colour()
@@ -179,21 +181,7 @@ class MainWindow(QWidget):
                 if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
-        table.setSortingEnabled(True)
 
-
-    def upd_filter_table_cl_st(self):
-        utvalg = self.tableBlockLag.selectionModel().selectedRows()
-        if not utvalg:
-            self.tableClassStart.filter_verdier.clear()
-            self.tableClassStart.marker_valgbare_rader()
-            self.tableClassStart.clearSelection()
-            return
-
-        if utvalg:
-            rad = utvalg[0].row()
-            verdi1 = self.tableBlockLag.item(rad, 0).text()
-            self.tableClassStart.sett_filter(1, verdi1)
 
     def keep_selection_colour(tabell):
         palett = tabell.palette()
@@ -209,6 +197,11 @@ class MainWindow(QWidget):
         tabell.setPalette(palett)
 
     def first_start_edited(self):
+        # Update first start-time, the rebuild redundant in class_starts, and reread.
         first_time = self.field_first_start.time().toString("HH:mm:ss")
         self.str_new_first_start = self.race_date_str + " " + first_time
         queries.upd_first_start(self.raceId, self.str_new_first_start)
+
+        queries.rebuild_class_starts(self.raceId)
+        rows3, columns3 = queries.read_class_starts(self.raceId)
+        self.populate_table(self.tableClassStart, columns3, rows3)

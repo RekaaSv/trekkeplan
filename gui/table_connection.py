@@ -16,9 +16,6 @@ class TableConnection:
 
     def koble_signal(self):
         # Bruker itemSelectionChanged for robusthet
-#        print("koble_signal ble kalt")
-#        self.kilde.itemSelectionChanged.connect(lambda: print("Utvalg endret"))
-
         self.kilde.itemSelectionChanged.connect(self.oppdater_filter)
 #        print("koble_signal slutt")
 
