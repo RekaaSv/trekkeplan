@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView
-from PyQt5.QtCore import Qt, QItemSelectionModel
+    QHeaderView, QTimeEdit
+from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor
 from db import queries
 
@@ -14,8 +14,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.conn = conn # Lagre connection.
         self.raceId = raceid
-
-        self.setWindowTitle("Trekkeplan")
+        self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
 
         #
@@ -29,6 +28,8 @@ class MainWindow(QWidget):
         title_block_lag.setStyleSheet(style_table_header)
         title_class_start = QLabel("Klassevis starttider")
         title_class_start.setStyleSheet(style_table_header)
+        title_first_start = QLabel("Første start:")
+        title_first_start.setStyleSheet(style_table_header)
 
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -60,10 +61,31 @@ class MainWindow(QWidget):
         self.chk2Button = QPushButton("Sjekk samtidige")
 
         #        self.load_button.clicked.connect(self.load_data)
-
+        #
+        # Les fra MySQL initielt.
+        #
+        rows0, columns0 = queries.read_race(self.conn, self.raceId)
         rows1, columns1 = queries.read_not_planned(self.conn, self.raceId)
         rows2, columns2 = queries.read_block_lags(self.conn, self.raceId)
         rows3, columns3 = queries.read_class_starts(self.conn, self.raceId)
+
+        race = rows0[0]
+        self.race_name = race[1]
+        self.race_date_db = race[2]
+        self.race_date_str = race[2].isoformat()
+        self.race_start_time_db = race[3]
+        self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute, self.race_start_time_db.second)
+
+
+        print(self.race_date_str)
+        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
+        self.label_first_start = QLabel("Første start: ")
+        self.field_first_start = QTimeEdit()
+        self.field_first_start.setDisplayFormat("HH:mm")
+        self.field_first_start.setFixedWidth(100)
+        self.field_first_start.setTime(self.q_time)
+        self.field_first_start.editingFinished.connect(self.first_start_edited)
+
 
         self.populate_table(self.tableNotPlanned, columns1, rows1)
         self.populate_table(self.tableBlockLag, columns2, rows2)
@@ -110,6 +132,8 @@ class MainWindow(QWidget):
         column1_layout.addStretch()
         column1_layout.addWidget(self.chk1Button)
 
+        column2_layout.addWidget(title_first_start)
+        column2_layout.addWidget(self.field_first_start)
         column2_layout.addSpacing(200)
         column2_layout.addWidget(self.moveButton)
         column2_layout.addStretch()
@@ -136,7 +160,7 @@ class MainWindow(QWidget):
 
 #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
-        self.tab_connect_bloclag_clst = TableConnection(
+        self.tab_connect_blocklag_clst = TableConnection(
             table_source=self.tableBlockLag,
             table_dest=self.tableClassStart,
             inx_source=0,
@@ -182,3 +206,8 @@ class MainWindow(QWidget):
         palett.setColor(QPalette.Active, QPalette.HighlightedText, hvit)
         palett.setColor(QPalette.Inactive, QPalette.HighlightedText, hvit)
         tabell.setPalette(palett)
+
+    def first_start_edited(self):
+        first_time = self.field_first_start.time().toString("HH:mm:ss")
+        self.str_new_first_start = self.race_date_str + " " + first_time
+        queries.upd_first_start(self.raceId, self.str_new_first_start)
