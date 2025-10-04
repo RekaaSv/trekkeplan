@@ -1,57 +1,97 @@
-from PyQt5.QtWidgets import QTableWidget, QAbstractItemView
-from PyQt5.QtGui import QColor, QBrush
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
+from PyQt5.QtCore import Qt, QTimer, QItemSelectionModel
+from PyQt5.QtGui import QColor
 
 class FilteredTable(QTableWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.filter_verdier = {}  # kol_index → ønsket verdi
+    def __init__(self, referansetabell, referansekolonne, parent=None):
+        super().__init__(parent)
+        self.referansetabell = referansetabell
+        self.referansekolonne = referansekolonne
+        self.filterverdi = None
+
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
 
-    def sett_filter(self, kol_index, verdi):
-        self.filter_verdier[kol_index] = verdi
-        self.marker_valgbare_rader()
+        self.referansetabell.itemSelectionChanged.connect(self._planlagt_filteroppdatering)
+        self.itemSelectionChanged.connect(self.rens_seleksjon)
 
-    def mousePressEvent(self, event):
-        indeks = self.indexAt(event.pos())
-        rad = indeks.row()
-
-        if self.rad_oppfyller_filter(rad):
-            super().mousePressEvent(event)
-        else:
-            self.clearSelection()
-
-    # Kun velge rad med mus, ikke tastatur.
-    def keyPressEvent(self, event):
-        super().keyPressEvent(event)
-        self.clearSelection()
-
-    def rad_oppfyller_filter(self, rad):
-        if not self.filter_verdier:
-            return False  # ingen filter = ingen valgbarhet
-
-        for kol_index, ønsket in self.filter_verdier.items():
-            celle = self.item(rad, kol_index)
-            if not celle or celle.text() != ønsket:
-                return False
-        return True
-
-    def marker_valgbare_rader(self):
-        lys_bla = QBrush(QColor(220, 235, 255))
-        hvit = QBrush(Qt.white)
-        første_valgbar = None
+    def oppdater_filter(self):
+        print("oppdater_filter start")
+        items = self.referansetabell.selectedItems()
+        self.filterverdi = items[0].text() if items else None
 
         for rad in range(self.rowCount()):
-            bakgrunn = lys_bla if self.rad_oppfyller_filter(rad) else hvit
-            for kol in range(self.columnCount()):
-                celle = self.item(rad, kol)
-                if celle:
-                    celle.setBackground(bakgrunn)
+            item = self.item(rad, 1)
+            match = item and item.text() == self.filterverdi
+            self.set_rad_valgbar(rad, match)
 
-            if bakgrunn == lys_bla and første_valgbar is None:
-                første_valgbar = self.item(rad, 0)
+#        QTimer.singleShot(0, self.rens_seleksjon)
+        self.rens_seleksjon()
+        self.scroll_til_forste_valgbar_rad()
+        print("oppdater_filter end")
 
-        if første_valgbar:
-            self.scrollToItem(første_valgbar, QAbstractItemView.PositionAtTop)
+    def set_rad_valgbar(self, rad_index, valgbar):
+        print("set_rad_valgbar start")
+        lys_bla = QColor(220, 235, 255)
+        standard = QColor(Qt.white)
 
+        for kol in range(self.columnCount()):
+            item = self.item(rad_index, kol)
+            if item is None:
+                continue
+
+            try:
+                index = self.indexFromItem(item)
+                if self.selectionModel().isSelected(index):
+                    self.setItemSelected(item, False)
+
+                flags = item.flags()
+                if valgbar:
+                    item.setFlags(flags | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setBackground(lys_bla)
+                else:
+                    item.setFlags(flags & ~Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setBackground(standard)
+            except Exception as e:
+                print(f"Feil i set_rad_valgbar på rad {rad_index}, kol {kol}: {e}")
+
+        print("set_rad_valgbar end")
+
+    def rad_er_valgbar(self, rad_index):
+        item = self.item(rad_index, 1)
+        return item and item.text() == self.filterverdi
+
+    def rens_seleksjon(self):
+        print("rens_seleksjon start")
+        standard = QColor(Qt.white)
+        for item in self.selectedItems():
+            if item is None:
+                continue
+            rad = item.row()
+            if not self.rad_er_valgbar(rad):
+                index = self.indexFromItem(item)
+                if index.isValid():
+                    self.selectionModel().select(index, QItemSelectionModel.Deselect)
+                    # Fjern visuell markering
+                    for kol in range(self.columnCount()):
+                        celle = self.item(rad, kol)
+                        if celle:
+                            celle.setBackground(standard)
+
+#                    self.marker_rad(index, QColor(Qt.white))
+        print("rens_seleksjon end")
+
+    def _planlagt_filteroppdatering(self):
+        QTimer.singleShot(0, self.oppdater_filter)
+
+    def marker_rad(rad_index, farge):
+        for kol in range(self.columnCount()):
+            item = self.item(rad_index, kol)
+            if item:
+                item.setBackground(farge)
+
+    def scroll_til_forste_valgbar_rad(self):
+        for rad in range(self.rowCount()):
+            if self.rad_er_valgbar(rad):
+                self.scrollToItem(self.item(rad, 0), QAbstractItemView.PositionAtTop)
+                break

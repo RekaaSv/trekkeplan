@@ -47,7 +47,7 @@ class MainWindow(QWidget):
         self.tableBlockLag.verticalHeader().setVisible(False)
         self.tableBlockLag.setSortingEnabled(True)
 
-        self.tableClassStart = FilteredTable()  #QTableWidget()
+        self.tableClassStart = FilteredTable(self.tableBlockLag, 0)  #QTableWidget()
         self.tableClassStart.setMinimumSize(800, 100)
         self.tableClassStart.setMaximumSize(800, 1200)
         self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
@@ -163,13 +163,6 @@ class MainWindow(QWidget):
 
 #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
-        self.tab_connect_blocklag_clst = TableConnection(
-            table_source=self.tableBlockLag,
-            table_dest=self.tableClassStart,
-            inx_source=0,
-            inx_dest=1
-        )
-
     def populate_table(self, table, columns: list[any], rows):
         table.setColumnCount(len(columns))
         table.setRowCount(len(rows))
@@ -177,7 +170,7 @@ class MainWindow(QWidget):
 
         for row_idx, row_data in enumerate(rows):
             for col_idx, value in enumerate(row_data):
-                item = "" if value is None else QTableWidgetItem(str(value))
+                item = QTableWidgetItem("") if value is None else QTableWidgetItem(str(value))
                 if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
