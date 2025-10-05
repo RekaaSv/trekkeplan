@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit
+    QHeaderView, QTimeEdit, QMenu, QAction
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor
+
+from control import control
 from db import queries
 
 from db.connection import get_connection
@@ -54,6 +56,8 @@ class MainWindow(QWidget):
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
         self.tableClassStart.setSortingEnabled(False)
+        self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
 
         self.moveButton = QPushButton("==>")
         self.moveButton.setFixedWidth(100)
@@ -193,8 +197,51 @@ class MainWindow(QWidget):
         # Update first start-time, the rebuild redundant in class_starts, and reread.
         first_time = self.field_first_start.time().toString("HH:mm:ss")
         self.str_new_first_start = self.race_date_str + " " + first_time
-        queries.upd_first_start(self.raceId, self.str_new_first_start)
 
-        queries.rebuild_class_starts(self.raceId)
+        control.first_start_edited(self.raceId, self.str_new_first_start)
+
         rows3, columns3 = queries.read_class_starts(self.raceId)
         self.populate_table(self.tableClassStart, columns3, rows3)
+
+    def class_start_menu(self, pos):
+        print("class_start_menu start")
+        rad_index = self.tableClassStart.rowAt(pos.y())
+        if rad_index < 0:
+            print("Ingen rad under musepeker – meny avbrytes")
+            return
+
+        print(f"Høyreklikk på rad {rad_index}")
+
+        meny = QMenu(self)
+
+        slett_rad = QAction("Slett rad", self)
+        slett_rad.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
+
+# Andre funksjoner: Slett hele bås/slep seksjonen, slett alt, fyttNed, flyttOpp.
+
+#        flytt_ned = QAction("Flytt ned", self)
+#        flytt_ned.triggered.connect(lambda: self.flytt_class_start_ned())
+
+#        flytt_opp = QAction("Flytt opp", self)
+#        flytt_opp.triggered.connect(lambda: self.flytt_class_start_opp())
+
+        meny.addAction(slett_rad)
+#        meny.addAction(flytt_ned)
+#        meny.addAction(flytt_opp)
+
+        meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
+
+    def slett_class_start_rad(self, rad_index):
+        classstartid = self.tableClassStart.model().index(rad_index, 0).data()
+        blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
+        klasse = self.tableClassStart.model().index(rad_index, 4).data()
+
+        print("Slett rad med klasse = " + klasse)
+
+
+    def flytt_class_start_ned(self):
+        item = self.currentItem()
+        if item:
+            print("flytt rad = " + item.text())
+#            tekst = item.text()
+#            QApplication.clipboard().setText(tekst)
