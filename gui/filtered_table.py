@@ -3,10 +3,11 @@ from PyQt5.QtCore import Qt, QTimer, QItemSelectionModel
 from PyQt5.QtGui import QColor
 
 class FilteredTable(QTableWidget):
-    def __init__(self, referansetabell, referansekolonne, parent=None):
+    def __init__(self, referansetabell, referansekolonne, filterkolonne, parent=None):
         super().__init__(parent)
         self.referansetabell = referansetabell
         self.referansekolonne = referansekolonne
+        self.filterkolonne = filterkolonne
         self.filterverdi = None
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -14,24 +15,45 @@ class FilteredTable(QTableWidget):
 
         self.referansetabell.itemSelectionChanged.connect(self._planlagt_filteroppdatering)
         self.itemSelectionChanged.connect(self.rens_seleksjon)
+        self.log = False
 
     def oppdater_filter(self):
-        print("oppdater_filter start")
-        items = self.referansetabell.selectedItems()
-        self.filterverdi = items[0].text() if items else None
+        if self.log: print("oppdater_filter start")
+        # Hent verdi fra seleksjonsmodellen til <referansetabell>,
+        # kun en rad fordi single select,
+        # kolonne <referansekolonne>
+        indexes = self.referansetabell.selectionModel().selectedIndexes()
+
+#        print(f"indexes: {indexes}")
+#        rad = indexes[0].row()
+#        kol = indexes[0].column()
+        if indexes:
+            if self.log: print("indexes er der")
+            self.filterverdi = indexes[self.referansekolonne].data()
+        else:
+            if self.log: print("indexes er None")
+            self.filterverdi = None
+
+#        print(f"Rad {rad}, kol {kol}, verdi: {self.filterverdi}")
+#        self.filterverdi = verdi
+
+#        items = self.referansetabell.selectedItems()
+#        self.filterverdi = items[0].text() if items else None
 
         for rad in range(self.rowCount()):
-            item = self.item(rad, 1)
-            match = item and item.text() == self.filterverdi
+            match = self.rad_er_valgbar(rad)
+
+#            item = self.item(rad, 1)
+#            match = item and item.text() == self.filterverdi
             self.set_rad_valgbar(rad, match)
 
 #        QTimer.singleShot(0, self.rens_seleksjon)
         self.rens_seleksjon()
         self.scroll_til_forste_valgbar_rad()
-        print("oppdater_filter end")
+        if self.log: print("oppdater_filter end")
 
     def set_rad_valgbar(self, rad_index, valgbar):
-        print("set_rad_valgbar start")
+        if self.log: print("set_rad_valgbar start")
         lys_bla = QColor(220, 235, 255)
         standard = QColor(Qt.white)
 
@@ -42,9 +64,8 @@ class FilteredTable(QTableWidget):
 
             try:
                 index = self.indexFromItem(item)
-                if self.selectionModel().isSelected(index):
-                    self.setItemSelected(item, False)
-
+#                if self.selectionModel().isSelected(index):
+#                    self.setItemSelected(item, False)
                 flags = item.flags()
                 if valgbar:
                     item.setFlags(flags | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
@@ -55,14 +76,37 @@ class FilteredTable(QTableWidget):
             except Exception as e:
                 print(f"Feil i set_rad_valgbar på rad {rad_index}, kol {kol}: {e}")
 
-        print("set_rad_valgbar end")
+        if self.log: print("set_rad_valgbar end")
 
     def rad_er_valgbar(self, rad_index):
-        item = self.item(rad_index, 1)
-        return item and item.text() == self.filterverdi
+        if self.log: print("rad_er_valgbar start")
+        er_valgbar = False
+        if self.filterverdi:
+            if self.log: print("rad_er_valgbar 1")
+            if self.log: print("self.filterverdi =" + self.filterverdi)
+            index = self.model().index(rad_index, self.filterkolonne)
+            if self.log: print("rad_er_valgbar 2")
+            er_valgbar = index.isValid() and index.data() == self.filterverdi
+            if self.log: print("rad_er_valgbar 3")
+        else:
+            if self.log: print("rad_er_valgbar 4")
+            er_valgbar = False
+            if self.log: print("rad_er_valgbar 5")
+
+        if self.log:
+            if self.log: print("rad_er_valgbar 6")
+            if er_valgbar: print("rad_er_valgbar = True")
+            else: print("rad_er_valgbar = False")
+
+        if self.log: print("rad_er_valgbar end")
+        return er_valgbar
+
+        if self.log: print("rad_er_valgbar end")
+        return er_valgbar
+
 
     def rens_seleksjon(self):
-        print("rens_seleksjon start")
+        if self.log: print("rens_seleksjon start")
         standard = QColor(Qt.white)
         for item in self.selectedItems():
             if item is None:
@@ -77,21 +121,16 @@ class FilteredTable(QTableWidget):
                         celle = self.item(rad, kol)
                         if celle:
                             celle.setBackground(standard)
-
-#                    self.marker_rad(index, QColor(Qt.white))
-        print("rens_seleksjon end")
+        if self.log: print("rens_seleksjon end")
 
     def _planlagt_filteroppdatering(self):
         QTimer.singleShot(0, self.oppdater_filter)
 
-    def marker_rad(rad_index, farge):
-        for kol in range(self.columnCount()):
-            item = self.item(rad_index, kol)
-            if item:
-                item.setBackground(farge)
-
     def scroll_til_forste_valgbar_rad(self):
+        if self.log: print("scroll_til_forste_valgbar_rad start")
         for rad in range(self.rowCount()):
             if self.rad_er_valgbar(rad):
-                self.scrollToItem(self.item(rad, 0), QAbstractItemView.PositionAtTop)
+                # Bruk kolonne 0 eller en annen synlig kolonne
+                self.scrollToItem(self.item(rad, 2), QAbstractItemView.PositionAtTop)
                 break
+        if self.log: print("scroll_til_forste_valgbar_rad end")
