@@ -113,8 +113,8 @@ class MainWindow(QWidget):
         header2 = self.tableBlockLag.horizontalHeader()
         header2.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        self.tableClassStart.setColumnHidden(0, True)
-        self.tableClassStart.setColumnHidden(1, True)
+#        self.tableClassStart.setColumnHidden(0, True)
+#        self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.resizeColumnsToContents()
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
@@ -217,6 +217,9 @@ class MainWindow(QWidget):
         slett_rad = QAction("Slett rad", self)
         slett_rad.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
 
+        slett_rader_i_båsslep = QAction("Slett bås/slep seksjon", self)
+        slett_rader_i_båsslep.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
+
 # Andre funksjoner: Slett hele bås/slep seksjonen, slett alt, fyttNed, flyttOpp.
 
 #        flytt_ned = QAction("Flytt ned", self)
@@ -226,6 +229,7 @@ class MainWindow(QWidget):
 #        flytt_opp.triggered.connect(lambda: self.flytt_class_start_opp())
 
         meny.addAction(slett_rad)
+        meny.addAction(slett_rader_i_båsslep)
 #        meny.addAction(flytt_ned)
 #        meny.addAction(flytt_opp)
 
@@ -237,6 +241,33 @@ class MainWindow(QWidget):
         klasse = self.tableClassStart.model().index(rad_index, 4).data()
 
         print("Slett rad med klasse = " + klasse)
+
+        control.delete_class_start_row(self.raceId, classstartid)
+        rows1, columns1 = queries.read_not_planned(self.raceId)
+        rows3, columns3 = queries.read_class_starts(self.raceId)
+        self.populate_table(self.tableNotPlanned, columns1, rows1)
+        self.populate_table(self.tableClassStart , columns3, rows3)
+        # Refarge valgbare
+        self.tableClassStart.oppdater_filter()
+
+    #
+    # Slett classStart rader som tilhører valgt bås/slep
+    #
+    def slett_class_start_bås_slep(self, rad_index):
+        classstartid = self.tableClassStart.model().index(rad_index, 0).data()
+        blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
+        klasse = self.tableClassStart.model().index(rad_index, 4).data()
+
+        control.delete_class_start_rows(self.raceId, blocklagid)
+
+        rows1, columns1 = queries.read_not_planned(self.raceId)
+        rows3, columns3 = queries.read_class_starts(self.raceId)
+        self.populate_table(self.tableNotPlanned, columns1, rows1)
+        self.populate_table(self.tableClassStart , columns3, rows3)
+        # Refarge valgbare
+        self.tableClassStart.oppdater_filter()
+
+
 
 
     def flytt_class_start_ned(self):

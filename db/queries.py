@@ -197,3 +197,35 @@ SET stcl2.sortorder = classst.newsortorder
         print(f"MySQL-feil: {err}")
     except Exception as e:
         print(f"Uventet feil: {e}")
+
+def delete_class_start_row(raceId, classstartId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+DELETE FROM classstarts WHERE id = %s
+    """
+        cursor.execute(sql, (classstartId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def delete_class_start_rows(raceId, blocklagId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+DELETE FROM classstarts WHERE blocklagid = %s
+    """
+        cursor.execute(sql, (blocklagId,))
+        conn.commit()
+        conn.close()
+        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
+#        return cursor
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")

@@ -15,7 +15,7 @@ class FilteredTable(QTableWidget):
 
         self.referansetabell.itemSelectionChanged.connect(self._planlagt_filteroppdatering)
         self.itemSelectionChanged.connect(self.rens_seleksjon)
-        self.log = False
+        self.log = True
 
     def oppdater_filter(self):
         if self.log: print("oppdater_filter start")
