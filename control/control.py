@@ -17,6 +17,8 @@ def delete_blocklag(raceId, blocklagId, blockId):
     if returned:
         print("delete_blocklag slettet OK")
         # Prøv å slett bås også.
+        returned2 = queries.delete_block(raceId, blockId)
+        if returned2: print("delete_block slettet OK")
         return None
     else:
         return "Fjern tilhørende klasser fra planen, og prøv igjen!"

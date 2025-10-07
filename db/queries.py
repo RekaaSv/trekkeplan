@@ -230,7 +230,6 @@ DELETE FROM classstarts WHERE blocklagid = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-# delete_blocklag
 def delete_blocklag(raceId, blocklagId):
     try:
         conn = connection.get_connection()
@@ -241,6 +240,28 @@ WHERE sbl.id = %s
   AND NOT EXISTS (SELECT NULL FROM classstarts cs WHERE  cs.blocklagid = sbl.id)
 """
         cursor.execute(sql, (blocklagId, ))
+        if cursor.rowcount > 0:
+            to_return = True
+        else:
+            to_return = False
+        conn.commit()
+        conn.close()
+        return to_return
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def delete_block(raceId, blockId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+DELETE FROM startblocks sb
+WHERE sb.id = %s
+  AND NOT EXISTS (SELECT NULL FROM startblocklags sbl WHERE  sbl.startblockid = sb.id)
+"""
+        cursor.execute(sql, (blockId, ))
         if cursor.rowcount > 0:
             to_return = True
         else:

@@ -264,10 +264,6 @@ class MainWindow(QWidget):
         print("Slett = " + block + ", " + str(lag) + ", " + str(blockid) + ", " + str(blocklagid))
 
         returned = control.delete_blocklag(self.raceId, blocklagid, blockid)
-#        rows1, columns1 = queries.read_not_planned(self.raceId)
-#        rows3, columns3 = queries.read_class_starts(self.raceId)
-#        self.populate_table(self.tableNotPlanned, columns1, rows1)
-#        self.populate_table(self.tableClassStart , columns3, rows3)
         if returned:
             self.vis_brukermelding(returned)
         else:
