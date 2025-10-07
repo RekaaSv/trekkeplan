@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor
 
@@ -48,6 +48,8 @@ class MainWindow(QWidget):
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
         self.tableBlockLag.setSortingEnabled(True)
+        self.tableBlockLag.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableBlockLag.customContextMenuRequested.connect(self.block_lag_menu)
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
         self.tableClassStart.setMinimumSize(800, 100)
@@ -168,17 +170,22 @@ class MainWindow(QWidget):
 #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
     def populate_table(self, table, columns: list[any], rows):
+        table.clearContents()
+        is_sorted = table.isSortingEnabled()
+        if is_sorted: table.setSortingEnabled(False)
         table.setColumnCount(len(columns))
         table.setRowCount(len(rows))
         table.setHorizontalHeaderLabels(columns)
-
         for row_idx, row_data in enumerate(rows):
+            print("row_idx : ", row_idx)
             for col_idx, value in enumerate(row_data):
+                print("col_idx : ", col_idx)
+                print(str(value))
                 item = QTableWidgetItem("") if value is None else QTableWidgetItem(str(value))
                 if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
-
+        if is_sorted: table.setSortingEnabled(True)
 
     def keep_selection_colour(tabell):
         palett = tabell.palette()
@@ -204,13 +211,10 @@ class MainWindow(QWidget):
         self.populate_table(self.tableClassStart, columns3, rows3)
 
     def class_start_menu(self, pos):
-        print("class_start_menu start")
         rad_index = self.tableClassStart.rowAt(pos.y())
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
             return
-
-        print(f"Høyreklikk på rad {rad_index}")
 
         meny = QMenu(self)
 
@@ -234,6 +238,53 @@ class MainWindow(QWidget):
 #        meny.addAction(flytt_opp)
 
         meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
+
+    def block_lag_menu(self, pos):
+        rad_index = self.tableBlockLag.rowAt(pos.y())
+        if rad_index < 0:
+            print("Ingen rad under musepeker – meny avbrytes")
+            return
+
+        meny = QMenu(self)
+
+        slett_rad = QAction("Slett rad", self)
+        slett_rad.triggered.connect(lambda: self.slett_blocklag_rad(rad_index))
+
+        meny.addAction(slett_rad)
+
+        meny.exec_(self.tableBlockLag.viewport().mapToGlobal(pos))
+
+
+    def slett_blocklag_rad(self, rad_index):
+        blocklagid = self.tableBlockLag.model().index(rad_index, 0).data()
+        blockid = self.tableBlockLag.model().index(rad_index, 1).data()
+        block = self.tableBlockLag.model().index(rad_index, 2).data()
+        lag = self.tableBlockLag.model().index(rad_index, 3).data()
+
+        print("Slett = " + block + ", " + str(lag) + ", " + str(blockid) + ", " + str(blocklagid))
+
+        returned = control.delete_blocklag(self.raceId, blocklagid, blockid)
+#        rows1, columns1 = queries.read_not_planned(self.raceId)
+#        rows3, columns3 = queries.read_class_starts(self.raceId)
+#        self.populate_table(self.tableNotPlanned, columns1, rows1)
+#        self.populate_table(self.tableClassStart , columns3, rows3)
+        if returned:
+            self.vis_brukermelding(returned)
+        else:
+            rows2, columns2 = queries.read_block_lags(self.raceId)
+            print("populate_table blockLag")
+
+            self.populate_table(self.tableBlockLag, columns2, rows2)
+            # Refarge valgbare
+            self.tableClassStart.oppdater_filter()
+
+
+    def vis_brukermelding(self, tekst):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Feil")
+        msg.setText(tekst)
+        msg.exec_()
 
     def slett_class_start_rad(self, rad_index):
         classstartid = self.tableClassStart.model().index(rad_index, 0).data()
