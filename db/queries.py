@@ -28,9 +28,12 @@ LEFT JOIN classes co ON co.id = cc.courceid
 WHERE cl.raceid = %s AND cl.cource = 0
   AND NOT EXISTS(
       SELECT cl.id
-	   FROM classstarts cls
-	   WHERE cls.classid = cl.id
-  )
+	  FROM classstarts cls
+	  WHERE cls.classid = cl.id
+     UNION
+      SELECT cl.id
+	  FROM classstarts_not clsn
+	  WHERE clsn.classid = cl.id)
 """
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
@@ -273,3 +276,21 @@ WHERE sb.id = %s
         print(f"MySQL-feil: {err}")
     except Exception as e:
         print(f"Uventet feil: {e}")
+
+def insert_class_start_not(raceId, classId):
+    try:
+        print("Inserting class start not=" + classId)
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+INSERT INTO classstarts_not (classid)
+    VALUES (%s)
+"""
+        cursor.execute(sql, (classId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+

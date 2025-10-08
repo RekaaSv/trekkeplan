@@ -40,6 +40,8 @@ class MainWindow(QWidget):
         self.tableNotPlanned.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableNotPlanned.verticalHeader().setVisible(False)
         self.tableNotPlanned.setSortingEnabled(True)
+        self.tableNotPlanned.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableNotPlanned.customContextMenuRequested.connect(self.not_planned_menu)
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setMinimumSize(120, 100)
@@ -177,9 +179,9 @@ class MainWindow(QWidget):
         table.setRowCount(len(rows))
         table.setHorizontalHeaderLabels(columns)
         for row_idx, row_data in enumerate(rows):
-            print("row_idx : ", row_idx)
+#            print("row_idx : ", row_idx)
             for col_idx, value in enumerate(row_data):
-                print("col_idx : ", col_idx)
+#                print("col_idx : ", col_idx)
                 print(str(value))
                 item = QTableWidgetItem("") if value is None else QTableWidgetItem(str(value))
                 if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
@@ -209,6 +211,26 @@ class MainWindow(QWidget):
 
         rows3, columns3 = queries.read_class_starts(self.raceId)
         self.populate_table(self.tableClassStart, columns3, rows3)
+
+    def not_planned_menu(self, pos):
+        rad_index = self.tableNotPlanned.rowAt(pos.y())
+        if rad_index < 0:
+            print("Ingen rad under musepeker – meny avbrytes")
+            return
+
+        meny = QMenu(self)
+
+        skjul_rader = QAction("Skjul valgte rader.", self)
+#        skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader(self, rad_index))
+        skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader())
+
+        meny.addAction(skjul_rader)
+
+        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
+
+    def xxx(self):
+        print("Ble trigget")
+
 
     def class_start_menu(self, pos):
         rad_index = self.tableClassStart.rowAt(pos.y())
@@ -313,6 +335,19 @@ class MainWindow(QWidget):
         self.populate_table(self.tableClassStart , columns3, rows3)
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
+
+    def skjul_valgte_rader(self):
+#        print("skjul_valgte_rader start")
+        model_indexes = self.tableNotPlanned.selectionModel().selectedRows()
+#        print("skjul_valgte_rader 2")
+
+        classids = set()
+        for indeks in model_indexes:
+            rad = indeks.row()
+            classid = self.tableNotPlanned.item(rad, 0)
+            classids.add(classid.text())
+        print(f"classids = " + str(classids))
+        control.insert_class_start_nots(self.raceId, classids)
 
 
 

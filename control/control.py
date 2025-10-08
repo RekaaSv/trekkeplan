@@ -22,3 +22,9 @@ def delete_blocklag(raceId, blocklagId, blockId):
         return None
     else:
         return "Fjern tilhørende klasser fra planen, og prøv igjen!"
+
+def insert_class_start_nots(raceId, classsIds):
+#    print("Control. insert_class_start_nots start")
+    for classid in classsIds:
+#       print("Control. Inserting class start not=" + classid)
+        queries.insert_class_start_not(raceId, classid)
