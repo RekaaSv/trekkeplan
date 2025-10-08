@@ -294,3 +294,24 @@ INSERT INTO classstarts_not (classid)
     except Exception as e:
         print(f"Uventet feil: {e}")
 
+def delete_class_start_not(raceId):
+    try:
+        print("delete_class_start_not=" + str(raceId))
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+DELETE FROM classstarts_not csn
+WHERE csn.classid in ( 
+   SELECT cl.id
+   FROM classes cl 
+   WHERE cl.id = csn.classid
+	 AND cl.raceid = %s
+)
+"""
+        cursor.execute(sql, (raceId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")

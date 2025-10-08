@@ -221,15 +221,14 @@ class MainWindow(QWidget):
         meny = QMenu(self)
 
         skjul_rader = QAction("Skjul valgte rader.", self)
-#        skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader(self, rad_index))
         skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader())
-
         meny.addAction(skjul_rader)
 
-        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
+        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
+        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
+        meny.addAction(vis_skjulte)
 
-    def xxx(self):
-        print("Ble trigget")
+        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
 
     def class_start_menu(self, pos):
@@ -348,8 +347,17 @@ class MainWindow(QWidget):
             classids.add(classid.text())
         print(f"classids = " + str(classids))
         control.insert_class_start_nots(self.raceId, classids)
+        # Refresh
+        rows1, columns1 = queries.read_not_planned(self.raceId)
+        self.populate_table(self.tableNotPlanned, columns1, rows1)
 
 
+    def vis_skjulte_rader(self):
+        print("vis_skjulte_rader start")
+        control.delete_class_start_not(self.raceId)
+        # Refresh
+        rows1, columns1 = queries.read_not_planned(self.raceId)
+        self.populate_table(self.tableNotPlanned, columns1, rows1)
 
 
     def flytt_class_start_ned(self):

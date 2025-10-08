@@ -28,3 +28,6 @@ def insert_class_start_nots(raceId, classsIds):
     for classid in classsIds:
 #       print("Control. Inserting class start not=" + classid)
         queries.insert_class_start_not(raceId, classid)
+
+def delete_class_start_not(raceId):
+    queries.delete_class_start_not(raceId)
