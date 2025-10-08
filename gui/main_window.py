@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
 from control import control
+from control.errors import MyCustomError
 from db import queries
 
 from db.connection import get_connection
@@ -67,7 +68,10 @@ class MainWindow(QWidget):
         self.moveButton.setFixedWidth(100)
         self.moveButton.setEnabled(False)  # deaktivert til å begynne med
         self.addBlockButton = QPushButton("+")
-        self.drawButton = QPushButton("Trekk starttider")
+        self.addBlockButton.setFixedWidth(120)
+        self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
+        self.addBlockButton.clicked.connect(self.add_block_lag)
+        self.drawButton = QPushButton("Trekk starttider").setFixedWidth(100)
         self.chk1Button = QPushButton("Klasser, løyper, post1")
         self.chk2Button = QPushButton("Sjekk samtidige")
 
@@ -93,10 +97,18 @@ class MainWindow(QWidget):
         self.label_first_start = QLabel("Første start: ")
         self.field_first_start = QTimeEdit()
         self.field_first_start.setDisplayFormat("HH:mm")
-        self.field_first_start.setFixedWidth(100)
+        self.field_first_start.setFixedWidth(70)
         self.field_first_start.setTime(self.q_time)
         self.field_first_start.editingFinished.connect(self.first_start_edited)
 
+        self.field_block = QLineEdit()
+        self.field_block.setReadOnly(False)
+        self.field_block.setFixedWidth(60)
+        self.field_lag = QLineEdit()
+        self.field_lag.setReadOnly(False)
+        self.field_lag.setFixedWidth(40)
+        self.field_lag.setValidator(QIntValidator(0, 999))
+        self.field_lag.setText("0")
 
         self.populate_table(self.tableNotPlanned, columns1, rows1)
         self.populate_table(self.tableBlockLag, columns2, rows2)
@@ -135,6 +147,7 @@ class MainWindow(QWidget):
         main_layout = QHBoxLayout()
         column1_layout = QVBoxLayout()
         column2_layout = QVBoxLayout()
+        new_blocklag_layout = QHBoxLayout()
         column3_layout = QVBoxLayout()
         column4_layout = QVBoxLayout()
 
@@ -151,7 +164,14 @@ class MainWindow(QWidget):
 
         #        layout.addWidget(self.status)
 
+        new_blocklag_layout.addWidget(self.field_block)
+        new_blocklag_layout.addWidget(self.field_lag)
+#        new_blocklag_layout.addWidget(self.addBlockButton)
+
         column3_layout.addWidget(title_block_lag)
+        column3_layout.addLayout(new_blocklag_layout)
+#        column3_layout.addWidget(self.field_block)
+#        column3_layout.addWidget(self.field_lag)
         column3_layout.addWidget(self.addBlockButton)
         column3_layout.addWidget(self.tableBlockLag)
         column3_layout.addStretch()
@@ -366,3 +386,30 @@ class MainWindow(QWidget):
             print("flytt rad = " + item.text())
 #            tekst = item.text()
 #            QApplication.clipboard().setText(tekst)
+
+    def add_block_lag(self):
+#        print("skjul_valgte_rader start")
+        model_indexes = self.tableBlockLag.selectionModel().selectedRows()
+        if model_indexes:
+            rad = model_indexes[0].row()
+            blockid = self.tableBlockLag.item(rad, 1).text()
+            print("Valgt rad:", rad)
+            lag = self.field_lag.text()
+            try:
+                control.add_lag(blockid, lag)
+            except MyCustomError as e:
+                self.vis_brukermelding(e.message)
+        else:
+            print("No rad found")
+            block = self.field_block.text()
+            if not block:
+                self.vis_brukermelding("Du må fylle inn navnet på båsen, \neller velge en rad fra tabellen under!")
+                return
+            lag = self.field_lag.text()
+            try:
+                control.add_block_lag(self.raceId, block, lag)
+            except MyCustomError as e:
+                self.vis_brukermelding(e.message)
+        # Refresh
+        rows2, columns2 = queries.read_block_lags(self.raceId)
+        self.populate_table(self.tableBlockLag, columns2, rows2)

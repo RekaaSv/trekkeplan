@@ -31,3 +31,12 @@ def insert_class_start_nots(raceId, classsIds):
 
 def delete_class_start_not(raceId):
     queries.delete_class_start_not(raceId)
+
+
+def add_block_lag(raceId, block, lag):
+    blockid = queries.add_block(raceId, block)
+    blocklagid = queries.add_blocklag(blockid, lag)
+
+
+def add_lag(blockid, lag):
+    blocklagid = queries.add_blocklag(blockid, lag)

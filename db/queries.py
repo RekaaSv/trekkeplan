@@ -1,5 +1,6 @@
 import mysql.connector
 
+from control.errors import MyCustomError
 from db import connection
 
 
@@ -311,6 +312,60 @@ WHERE csn.classid in (
         cursor.execute(sql, (raceId,))
         conn.commit()
         conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+
+def add_block(raceId, block):
+    try:
+        print("Inserting block")
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+INSERT INTO startblocks (raceid, name)
+VALUES (%s, %s)
+"""
+        cursor.execute(sql, (raceId, block))
+        ny_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return ny_id
+    except mysql.connector.errors.IntegrityError as err:
+        if err.errno == 1062:
+            raise MyCustomError("Bås med det navnet finnes fra før!")
+        else:
+            print(f"MySQL-feil: {err}")
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+
+def add_blocklag(blockid, lag):
+    try:
+        print("Inserting blocklag")
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+INSERT INTO startblocklags (startblockid, timelag)
+VALUES (%s, %s) \
+"""
+        print("add_blocklag 1", blockid, lag)
+        cursor.execute(sql, (blockid, lag))
+        conn.commit()
+        print("add_blocklag 2")
+        ny_id = cursor.lastrowid
+        print("add_blocklag 3")
+        conn.close()
+        return ny_id
+    except mysql.connector.errors.IntegrityError as err:
+        if err.errno == 1062:
+            print(f"MySQL-feil: {err}")
+            raise MyCustomError("Denne kombinasjonen av Bås/tidsslep finnes fra før!")
+        else:
+            print(f"MySQL-feil: {err}")
     except mysql.connector.Error as err:
         print(f"MySQL-feil: {err}")
     except Exception as e:
