@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLab
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
+import db.queries
 from control import control
 from control.errors import MyCustomError
 from db import queries
@@ -45,6 +46,7 @@ class MainWindow(QWidget):
         self.tableNotPlanned.customContextMenuRequested.connect(self.not_planned_menu)
 
         self.tableBlockLag = QTableWidget()
+        self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tableBlockLag.setMinimumSize(120, 100)
         self.tableBlockLag.setMaximumSize(120, 800)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
@@ -66,7 +68,10 @@ class MainWindow(QWidget):
 
         self.moveButton = QPushButton("==>")
         self.moveButton.setFixedWidth(100)
-        self.moveButton.setEnabled(False)  # deaktivert til å begynne med
+#        self.moveButton.setEnabled(False)  # deaktivert til å begynne med
+        self.moveButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
+        self.moveButton.clicked.connect(self.move_class_to_plan)
+
         self.addBlockButton = QPushButton("+")
         self.addBlockButton.setFixedWidth(120)
         self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
@@ -413,3 +418,49 @@ class MainWindow(QWidget):
         # Refresh
         rows2, columns2 = queries.read_block_lags(self.raceId)
         self.populate_table(self.tableBlockLag, columns2, rows2)
+
+    def move_class_to_plan(self):
+        selected_model_rows = self.tableNotPlanned.selectionModel().selectedRows()
+        if not selected_model_rows:
+            self.vis_brukermelding("Du må velge ei klasse å flytte Trekkeplanen!")
+            return
+        elif (selected_model_rows.__len__() > 9):
+            self.vis_brukermelding("Du kan ikke flytte flere enn 9 klasser til Trekkeplanen samtidig!")
+            return
+
+        block_lag_rows = self.tableBlockLag.selectionModel().selectedRows()
+        if not block_lag_rows:
+            self.vis_brukermelding("Du må velge et bås/tidsslep-seksjon å flytte til!")
+            return
+        row_id = block_lag_rows[0].row()
+        blocklag_id = self.tableBlockLag.item(row_id, 0).text()
+
+        class_start_rows = self.tableClassStart.selectionModel().selectedRows()
+        sort_value = 9
+        if class_start_rows:
+            row_id = class_start_rows[0].row()
+            sort_value = self.tableClassStart.item(row_id, 4).text()
+
+        i = selected_model_rows.__len__()
+
+        sorted_selected = sorted(selected_model_rows, key=lambda index: index.row())
+
+        for view_index in sorted_selected:
+            model_index = self.tableNotPlanned.model().index(view_index.row(), 0)
+            classid = self.tableNotPlanned.model().data(model_index)
+            i = i-1
+            print(classid, blocklag_id, sort_value-i)
+            control.insert_class_start(self.raceId, blocklag_id, classid, 60, sort_value-i)
+
+        # Oppdater redundante kolonner og oppfrisk tabellene.
+        queries.rebuild_class_starts(self.raceId)
+        control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableClassStart)
+
+"""
+        queries.rebuild_class_starts(self.raceId)
+        rows3, columns3 = queries.read_class_starts(self.raceId)
+        self.populate_table(self.tableClassStart, columns3, rows3)
+
+        self.populate_table(self.tableNotPlanned, columns3, rows3)
+"""

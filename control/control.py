@@ -1,6 +1,5 @@
 from db import queries
 
-
 def first_start_edited(raceId, str_new_first_start):
     # Update first start-time, then rebuild redundant columns in class_starts.
     queries.upd_first_start(raceId, str_new_first_start)
@@ -40,3 +39,20 @@ def add_block_lag(raceId, block, lag):
 
 def add_lag(blockid, lag):
     blocklagid = queries.add_blocklag(blockid, lag)
+
+def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
+    queries.insert_class_start(raceId, blocklagId, classId, timegap, sortorder)
+
+
+def refresh_table(self, table):
+    rows, columns = None, None
+    if table == self.tableNotPlanned:
+        rows, columns = queries.read_not_planned(self.raceId)
+    elif table == self.tableBlockLag:
+        rows, columns = queries.read_block_lags(self.raceId)
+    elif table == self.tableClassStart:
+        rows, columns = queries.read_class_starts(self.raceId)
+    else:
+        raise Exception("Systemfeil!")
+
+    self.populate_table(table, columns, rows)

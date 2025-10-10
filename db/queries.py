@@ -53,7 +53,7 @@ def read_class_starts(raceid):
     conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep
+SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep, cls.sortorder
       , cl.name Klasse
       , co.name Løype
       , SUBSTRING_INDEX(co.codes," ",1) Post_1
@@ -93,14 +93,14 @@ WHERE id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
+"""
+ Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
+"""
 def rebuild_class_starts(raceid):
     try:
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
---
--- Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
---
 WITH classst AS (
 SELECT classstartid, classname, cource, control1, blocklagid, sbname, timelag, timegap, sortorder
      , noinclass, freebefore, freeafter, newsortorder, basetime
@@ -129,7 +129,7 @@ JOIN races r ON r.id = cl.raceid
 JOIN startblocklags sbl ON sbl.id = cls.blocklagid
 JOIN startblocks sb ON sb.id = sbl.startblockid
 WHERE r.id = %s
-ORDER BY cls.sortorder 
+ORDER BY cls.sortorder
 ) t1
 )
 UPDATE classstarts stcl2
@@ -310,6 +310,23 @@ WHERE csn.classid in (
 )
 """
         cursor.execute(sql, (raceId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
+    try:
+        print("Inserting class start=" + classId)
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
+    VALUES (%s, %s, %s, %s)
+"""
+        cursor.execute(sql, (blocklagId, classId, timegap, sortorder))
         conn.commit()
         conn.close()
     except mysql.connector.Error as err:
