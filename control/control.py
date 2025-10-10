@@ -57,3 +57,13 @@ def refresh_table(self, table):
         raise Exception("Systemfeil!")
 
     self.populate_table(table, columns, rows)
+
+"""
+    Leser høyeste Neste (neste starttid) for bås/slep blocklagid
+"""
+def read_blocklag_neste(self, blocklagid ):
+    print("control.read_blocklag_neste")
+    rows, columns = queries.read_block_lag(blocklagid)
+    print("control.read_blocklag_neste", rows, columns)
+    return rows[0][4]
+    # return rows

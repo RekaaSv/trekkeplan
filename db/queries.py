@@ -44,10 +44,24 @@ def read_block_lags(raceid):
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep
+   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
+
+def read_block_lag(blocklagid):
+    conn = connection.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep
+   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
+FROM startblocklags bll
+JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
+"""
+    cursor.execute(sql, (blocklagid,))
+    return cursor.fetchall(), [desc[0] for desc in cursor.description]
+
 
 def read_class_starts(raceid):
     conn = connection.get_connection()

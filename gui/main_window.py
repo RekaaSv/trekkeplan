@@ -47,8 +47,8 @@ class MainWindow(QWidget):
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.tableBlockLag.setMinimumSize(120, 100)
-        self.tableBlockLag.setMaximumSize(120, 800)
+        self.tableBlockLag.setMinimumSize(180, 100)
+        self.tableBlockLag.setMaximumSize(180, 800)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
@@ -210,6 +210,7 @@ class MainWindow(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
+
 
     def keep_selection_colour(tabell):
         palett = tabell.palette()
@@ -416,6 +417,7 @@ class MainWindow(QWidget):
             self.vis_brukermelding("Du kan ikke flytte flere enn 9 klasser til Trekkeplanen samtidig!")
             return
 
+        # Bås/slep
         block_lag_rows = self.tableBlockLag.selectionModel().selectedRows()
         if not block_lag_rows:
             self.vis_brukermelding("Du må velge et bås/tidsslep-seksjon å flytte til!")
@@ -423,7 +425,7 @@ class MainWindow(QWidget):
 
         # Hvilken bås/slep skal klassen inn i?
         row_id = block_lag_rows[0].row()
-        blocklag_id = self.tableBlockLag.item(row_id, 0).text()
+        blocklag_id = int(self.tableBlockLag.item(row_id, 0).text())
 
         # Valgt rad styrer hvor i bås/slep-seksjonen den skal inn.
         class_start_rows = self.tableClassStart.selectionModel().selectedRows()
@@ -448,6 +450,29 @@ class MainWindow(QWidget):
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
 
+        # Hent verdi fra DB.
+        neste = control.read_blocklag_neste(self, blocklag_id)
+#        neste = db_rows[0][4]
+#        print("nestetid", neste)
+
+        # Finn item og oppdater det med verdien fra basen.
+        row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
+        print("blocklag_id = ", blocklag_id)
+        print("row_idx = ", row_idx)
+        item = self.tableBlockLag.item(row_idx, 4)
+        print("move_class_to_plan 2", item)
+        item.setText(str(neste))
+        print("move_class_to_plan 3")
+
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
+
+    def get_row_idx(self, table: QTableWidget, col_idx: int, col_value):
+        print("get_row_idx", col_idx, col_value)
+        for row_idx in range(table.rowCount()):
+            item = int(table.item(row_idx, col_idx).text())
+#            print("item", item)
+            if item == col_value:
+                return row_idx
+        return None
 
