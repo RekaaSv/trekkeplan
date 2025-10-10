@@ -41,6 +41,7 @@ def add_lag(blockid, lag):
     blocklagid = queries.add_blocklag(blockid, lag)
 
 def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
+    print("control.insert_class_start")
     queries.insert_class_start(raceId, blocklagId, classId, timegap, sortorder)
 
 

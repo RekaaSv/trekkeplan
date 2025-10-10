@@ -118,7 +118,7 @@ SELECT cls.id classstartid, cl.name classname
       , sbl.id blocklagid, sb.name sbname, sbl.timelag, cls.timegap, cls.sortorder 
       , (SELECT COUNT(id) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X')) noinclass -- Avmeldt, Arrangør
 		, COALESCE(cls.freebefore,0) freebefore, COALESCE(cls.freeafter,0) freeafter
-		, (ROW_NUMBER() OVER (order BY cls.sortorder))*10 newsortorder
+		, (ROW_NUMBER() OVER (order BY sb.name, sbl.timelag, cls.sortorder))*10 newsortorder
       , DATE_ADD( r.first_start, INTERVAL sbl.timelag SECOND) basetime
       , SUM((SELECT COUNT(*) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X'))+COALESCE(cls.freebefore,0)+COALESCE(cls.freeafter,0)) OVER (PARTITION BY sbl.id ORDER BY cls.sortorder) spansqty
 FROM classstarts cls
@@ -319,7 +319,8 @@ WHERE csn.classid in (
 
 def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
     try:
-        print("Inserting class start=" + classId)
+        print("Inserting class start=")
+        print(classId)
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """

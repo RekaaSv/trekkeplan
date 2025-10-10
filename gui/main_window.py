@@ -85,9 +85,6 @@ class MainWindow(QWidget):
         # Les fra MySQL initielt.
         #
         rows0, columns0 = queries.read_race(self.raceId)
-        rows1, columns1 = queries.read_not_planned(self.raceId)
-        rows2, columns2 = queries.read_block_lags(self.raceId)
-        rows3, columns3 = queries.read_class_starts(self.raceId)
 
         race = rows0[0]
         self.race_name = race[1]
@@ -115,9 +112,9 @@ class MainWindow(QWidget):
         self.field_lag.setValidator(QIntValidator(0, 999))
         self.field_lag.setText("0")
 
-        self.populate_table(self.tableNotPlanned, columns1, rows1)
-        self.populate_table(self.tableBlockLag, columns2, rows2)
-        self.populate_table(self.tableClassStart, columns3, rows3)
+        control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableBlockLag)
+        control.refresh_table(self, self.tableClassStart)
 
         self.tableNotPlanned.setColumnHidden(0, True)
         self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
@@ -234,8 +231,7 @@ class MainWindow(QWidget):
 
         control.first_start_edited(self.raceId, self.str_new_first_start)
 
-        rows3, columns3 = queries.read_class_starts(self.raceId)
-        self.populate_table(self.tableClassStart, columns3, rows3)
+        control.refresh_table(self, self.tableClassStart)
 
     def not_planned_menu(self, pos):
         rad_index = self.tableNotPlanned.rowAt(pos.y())
@@ -313,10 +309,7 @@ class MainWindow(QWidget):
         if returned:
             self.vis_brukermelding(returned)
         else:
-            rows2, columns2 = queries.read_block_lags(self.raceId)
-            print("populate_table blockLag")
-
-            self.populate_table(self.tableBlockLag, columns2, rows2)
+            control.refresh_table(self, self.tableBlockLag)
             # Refarge valgbare
             self.tableClassStart.oppdater_filter()
 
@@ -336,10 +329,10 @@ class MainWindow(QWidget):
         print("Slett rad med klasse = " + klasse)
 
         control.delete_class_start_row(self.raceId, classstartid)
-        rows1, columns1 = queries.read_not_planned(self.raceId)
-        rows3, columns3 = queries.read_class_starts(self.raceId)
-        self.populate_table(self.tableNotPlanned, columns1, rows1)
-        self.populate_table(self.tableClassStart , columns3, rows3)
+
+        control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableClassStart)
+
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
 
@@ -353,10 +346,9 @@ class MainWindow(QWidget):
 
         control.delete_class_start_rows(self.raceId, blocklagid)
 
-        rows1, columns1 = queries.read_not_planned(self.raceId)
-        rows3, columns3 = queries.read_class_starts(self.raceId)
-        self.populate_table(self.tableNotPlanned, columns1, rows1)
-        self.populate_table(self.tableClassStart , columns3, rows3)
+        control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableClassStart)
+
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
 
@@ -373,16 +365,13 @@ class MainWindow(QWidget):
         print(f"classids = " + str(classids))
         control.insert_class_start_nots(self.raceId, classids)
         # Refresh
-        rows1, columns1 = queries.read_not_planned(self.raceId)
-        self.populate_table(self.tableNotPlanned, columns1, rows1)
-
+        control.refresh_table(self, self.tableNotPlanned)
 
     def vis_skjulte_rader(self):
         print("vis_skjulte_rader start")
         control.delete_class_start_not(self.raceId)
         # Refresh
-        rows1, columns1 = queries.read_not_planned(self.raceId)
-        self.populate_table(self.tableNotPlanned, columns1, rows1)
+        control.refresh_table(self, self.tableNotPlanned)
 
 
     def flytt_class_start_ned(self):
@@ -416,8 +405,7 @@ class MainWindow(QWidget):
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
         # Refresh
-        rows2, columns2 = queries.read_block_lags(self.raceId)
-        self.populate_table(self.tableBlockLag, columns2, rows2)
+        control.refresh_table(self, self.tableBlockLag)
 
     def move_class_to_plan(self):
         selected_model_rows = self.tableNotPlanned.selectionModel().selectedRows()
@@ -432,35 +420,34 @@ class MainWindow(QWidget):
         if not block_lag_rows:
             self.vis_brukermelding("Du må velge et bås/tidsslep-seksjon å flytte til!")
             return
+
+        # Hvilken bås/slep skal klassen inn i?
         row_id = block_lag_rows[0].row()
         blocklag_id = self.tableBlockLag.item(row_id, 0).text()
 
+        # Valgt rad styrer hvor i bås/slep-seksjonen den skal inn.
         class_start_rows = self.tableClassStart.selectionModel().selectedRows()
-        sort_value = 9
+        sort_value = 1000 # Hvis ingen rad er valgt, legges den til sist i gruppen.
         if class_start_rows:
+            # En rad valgt. Ta plassen til denne, og skyv de andre lenger ned.
             row_id = class_start_rows[0].row()
-            sort_value = self.tableClassStart.item(row_id, 4).text()
-
-        i = selected_model_rows.__len__()
-
+            sort_value = int(self.tableClassStart.item(row_id, 4).text())
+            sort_value = sort_value-10 # Plass til 9 før denne.
+        # Radene er sortert i den rekkefølgen de ble selektert.
+        # Men vi ønsker de sortert som den visuelle sorteringen i bildet.
         sorted_selected = sorted(selected_model_rows, key=lambda index: index.row())
-
         for view_index in sorted_selected:
             model_index = self.tableNotPlanned.model().index(view_index.row(), 0)
             classid = self.tableNotPlanned.model().data(model_index)
-            i = i-1
-            print(classid, blocklag_id, sort_value-i)
-            control.insert_class_start(self.raceId, blocklag_id, classid, 60, sort_value-i)
+            sort_value = sort_value+1
+            print("INSERT: ", classid, blocklag_id, sort_value)
+            control.insert_class_start(self.raceId, blocklag_id, classid, 60, sort_value)
 
         # Oppdater redundante kolonner og oppfrisk tabellene.
         queries.rebuild_class_starts(self.raceId)
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
 
-"""
-        queries.rebuild_class_starts(self.raceId)
-        rows3, columns3 = queries.read_class_starts(self.raceId)
-        self.populate_table(self.tableClassStart, columns3, rows3)
+        # Refarge valgbare
+        self.tableClassStart.oppdater_filter()
 
-        self.populate_table(self.tableNotPlanned, columns3, rows3)
-"""
