@@ -233,6 +233,7 @@ class MainWindow(QWidget):
         control.first_start_edited(self.raceId, self.str_new_first_start)
 
         control.refresh_table(self, self.tableClassStart)
+        control.refresh_table(self, self.tableBlockLag)
 
     def not_planned_menu(self, pos):
         rad_index = self.tableNotPlanned.rowAt(pos.y())
@@ -452,10 +453,13 @@ class MainWindow(QWidget):
 
         # Hent verdi fra DB.
         neste = control.read_blocklag_neste(self, blocklag_id)
-#        neste = db_rows[0][4]
-#        print("nestetid", neste)
-
         # Finn item og oppdater det med verdien fra basen.
+        self.set_nexttime_on_blocklag(blocklag_id, neste)
+
+        # Refarge valgbare
+        self.tableClassStart.oppdater_filter()
+
+    def set_nexttime_on_blocklag(self, blocklag_id: int, neste):
         row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
         print("blocklag_id = ", blocklag_id)
         print("row_idx = ", row_idx)
@@ -463,9 +467,6 @@ class MainWindow(QWidget):
         print("move_class_to_plan 2", item)
         item.setText(str(neste))
         print("move_class_to_plan 3")
-
-        # Refarge valgbare
-        self.tableClassStart.oppdater_filter()
 
     def get_row_idx(self, table: QTableWidget, col_idx: int, col_value):
         print("get_row_idx", col_idx, col_value)
