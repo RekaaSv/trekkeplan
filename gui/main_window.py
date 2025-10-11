@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
@@ -31,7 +31,7 @@ class MainWindow(QWidget):
         title_non_planned.setStyleSheet(style_table_header)
         title_block_lag = QLabel("Bås/tidsslep")
         title_block_lag.setStyleSheet(style_table_header)
-        title_class_start = QLabel("Klassevis starttider")
+        title_class_start = QLabel("Trekkeplan")
         title_class_start.setStyleSheet(style_table_header)
         title_first_start = QLabel("Første start:")
         title_first_start.setStyleSheet(style_table_header)
@@ -97,25 +97,19 @@ class MainWindow(QWidget):
         #
         # Les fra MySQL initielt.
         #
-        rows0, columns0 = queries.read_race(self.raceId)
-        race = rows0[0]
-        self.race_name = race[1]
-        self.race_date_db = race[2]
-        self.race_date_str = race[2].isoformat()
-        self.race_start_time_db = race[3]
-        self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute, self.race_start_time_db.second)
+        print("refresh 1", self.raceId)
+        self.refresh_first_start(self.raceId)
+        print("refresh 1 ferdig")
 
-        print(self.race_date_str)
+#        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
+        self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
 
-        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
-
-        self.q_time = QTime()
         self.label_first_start = QLabel("Første start: ")
         self.field_first_start = QTimeEdit()
         self.field_first_start.setDisplayFormat("HH:mm")
         self.field_first_start.setFixedWidth(70)
-        self.field_first_start.setTime(self.q_time)
         self.field_first_start.editingFinished.connect(self.first_start_edited)
+        self.field_first_start.setTime(self.q_time)
 
         self.field_block = QLineEdit()
         self.field_block.setReadOnly(False)
@@ -209,7 +203,27 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-#        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
+    def refresh_first_start(self, raceid):
+        print("refresh_first_start")
+        self.raceID = raceid
+        print("raceId", self.raceID)
+        rows0, columns0 = queries.read_race(self.raceId)
+        race = rows0[0]
+        print("race", race)
+        self.race_name = race[1]
+        self.race_date_db: QDateEdit = race[2]
+        self.race_date_str = race[2].isoformat()
+        self.race_start_time_db = race[3]
+        print("race", self.race_name)
+        print("race_start_time_db", self.race_start_time_db)
+        if self.race_start_time_db:
+            self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute,
+                                self.race_start_time_db.second)
+        else: self.q_time = QTime(0,0)
+
+#        print(self.q_time)
+
+    #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
     def populate_table(self, table, columns: list[any], rows):
         print("populate_table")
@@ -245,12 +259,16 @@ class MainWindow(QWidget):
         tabell.setPalette(palett)
 
     def first_start_edited(self):
+        print("first_start_edited")
         # Update first start-time, the rebuild redundant in class_starts, and reread.
         first_time = self.field_first_start.time().toString("HH:mm:ss")
+        print("first_start_edited", first_time)
+        print("first_start_edited", self.race_date_str)
         self.str_new_first_start = self.race_date_str + " " + first_time
 
+        print("first_start_edited", self.str_new_first_start)
         control.first_start_edited(self.raceId, self.str_new_first_start)
-
+        print("first_start_edited edit ok")
         control.refresh_table(self, self.tableClassStart)
         control.refresh_table(self, self.tableBlockLag)
 
@@ -512,6 +530,15 @@ class MainWindow(QWidget):
             control.refresh_table(self, self.tableNotPlanned)
             control.refresh_table(self, self.tableBlockLag)
             control.refresh_table(self, self.tableClassStart)
+            print("refresh 2", self.raceId)
+
+            self.refresh_first_start(self.raceId)
+            print("q_time", self.q_time)
+#            self.q_time.setText(str(self.q_time.text()))
+            print("select_race 4")
+            self.field_first_start.setTime(self.q_time)
+            print("select_race 6")
+            self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
 
         else:
             print("Brukeren avbrøt")

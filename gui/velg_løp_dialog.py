@@ -47,6 +47,6 @@ class SelectRaceDialog(QDialog):
     def ok_klikket(self):
         valgt = self.table_race.currentRow()
         if valgt >= 0:
-            id_item = self.table_race.item(valgt, 2)
+            id_item = self.table_race.item(valgt, 3)
             self.valgt_løpsid = int(id_item.text())
             self.accept()

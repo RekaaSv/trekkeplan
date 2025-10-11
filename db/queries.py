@@ -7,7 +7,7 @@ def read_race_list():
     conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT r.racedate, r.name, r.id
+SELECT r.racedate, r.name, r.first_start, r.id
 FROM races r
 ORDER BY r.created DESC
 """
