@@ -29,7 +29,7 @@ class MainWindow(QWidget):
         style_table_header = "font-weight: bold; font-size: 16px; margin: 10px 0;"
         title_non_planned = QLabel("Ikke-planlagte klasser")
         title_non_planned.setStyleSheet(style_table_header)
-        title_block_lag = QLabel("Bås/tidsslep")
+        title_block_lag = QLabel("Bås/tidsslep/gap")
         title_block_lag.setStyleSheet(style_table_header)
         title_class_start = QLabel("Trekkeplan")
         title_class_start.setStyleSheet(style_table_header)
@@ -48,8 +48,8 @@ class MainWindow(QWidget):
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.tableBlockLag.setMinimumSize(180, 100)
-        self.tableBlockLag.setMaximumSize(180, 800)
+        self.tableBlockLag.setMinimumSize(210, 100)
+        self.tableBlockLag.setMaximumSize(210, 800)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
@@ -119,6 +119,11 @@ class MainWindow(QWidget):
         self.field_lag.setFixedWidth(40)
         self.field_lag.setValidator(QIntValidator(0, 999))
         self.field_lag.setText("0")
+        self.field_gap = QLineEdit()
+        self.field_gap.setReadOnly(False)
+        self.field_gap.setFixedWidth(40)
+        self.field_gap.setValidator(QIntValidator(0, 999))
+        self.field_gap.setText("60")
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableBlockLag)
@@ -139,8 +144,8 @@ class MainWindow(QWidget):
         header2 = self.tableBlockLag.horizontalHeader()
         header2.setSectionResizeMode(1, QHeaderView.Stretch)
 
-#        self.tableClassStart.setColumnHidden(0, True)
-#        self.tableClassStart.setColumnHidden(1, True)
+        self.tableClassStart.setColumnHidden(0, True)
+        self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.resizeColumnsToContents()
         self.tableClassStart.resizeRowsToContents()
         header3 = self.tableClassStart.horizontalHeader()
@@ -178,6 +183,8 @@ class MainWindow(QWidget):
 
         new_blocklag_layout.addWidget(self.field_block)
         new_blocklag_layout.addWidget(self.field_lag)
+        new_blocklag_layout.addWidget(self.field_gap)
+
 #        new_blocklag_layout.addWidget(self.addBlockButton)
 
         column3_layout.addWidget(self.empty_hight)
@@ -428,8 +435,9 @@ class MainWindow(QWidget):
             blockid = self.tableBlockLag.item(rad, 1).text()
             print("Valgt rad:", rad)
             lag = self.field_lag.text()
+            gap = self.field_gap.text()
             try:
-                control.add_lag(blockid, lag)
+                control.add_lag(blockid, lag, gap)
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
         else:
@@ -439,8 +447,9 @@ class MainWindow(QWidget):
                 self.vis_brukermelding("Du må fylle inn navnet på båsen, \neller velge en rad fra tabellen under!")
                 return
             lag = self.field_lag.text()
+            gap = self.field_gap.text()
             try:
-                control.add_block_lag(self.raceId, block, lag)
+                control.add_block_lag(self.raceId, block, lag, gap)
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
         # Refresh
@@ -464,6 +473,8 @@ class MainWindow(QWidget):
         # Hvilken bås/slep skal klassen inn i?
         row_id = block_lag_rows[0].row()
         blocklag_id = int(self.tableBlockLag.item(row_id, 0).text())
+        gap = int(self.tableBlockLag.item(row_id, 4).text())
+        print("gap", gap)
 
         # Valgt rad styrer hvor i bås/slep-seksjonen den skal inn.
         class_start_rows = self.tableClassStart.selectionModel().selectedRows()
@@ -481,7 +492,7 @@ class MainWindow(QWidget):
             classid = self.tableNotPlanned.model().data(model_index)
             sort_value = sort_value+1
             print("INSERT: ", classid, blocklag_id, sort_value)
-            control.insert_class_start(self.raceId, blocklag_id, classid, 60, sort_value)
+            control.insert_class_start(self.raceId, blocklag_id, classid, gap, sort_value)
 
         # Oppdater redundante kolonner og oppfrisk tabellene.
         queries.rebuild_class_starts(self.raceId)
@@ -500,7 +511,7 @@ class MainWindow(QWidget):
         row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
         print("blocklag_id = ", blocklag_id)
         print("row_idx = ", row_idx)
-        item = self.tableBlockLag.item(row_idx, 4)
+        item = self.tableBlockLag.item(row_idx, 5)
         print("move_class_to_plan 2", item)
         item.setText(str(neste))
         print("move_class_to_plan 3")

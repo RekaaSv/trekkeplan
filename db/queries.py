@@ -53,7 +53,7 @@ def read_block_lags(raceid):
     conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep
+SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
    ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
@@ -64,7 +64,7 @@ def read_block_lag(blocklagid):
     conn = connection.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep
+SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
    ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
@@ -385,17 +385,17 @@ VALUES (%s, %s)
         print(f"Uventet feil: {e}")
 
 
-def add_blocklag(blockid, lag):
+def add_blocklag(blockid, lag, gap):
     try:
         print("Inserting blocklag")
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO startblocklags (startblockid, timelag)
-VALUES (%s, %s) \
+INSERT INTO startblocklags (startblockid, timelag, defaulttimegap)
+VALUES (%s, %s, %s)
 """
         print("add_blocklag 1", blockid, lag)
-        cursor.execute(sql, (blockid, lag))
+        cursor.execute(sql, (blockid, lag, gap))
         conn.commit()
         print("add_blocklag 2")
         ny_id = cursor.lastrowid

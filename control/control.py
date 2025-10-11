@@ -34,13 +34,13 @@ def delete_class_start_not(raceId):
     queries.delete_class_start_not(raceId)
 
 
-def add_block_lag(raceId, block, lag):
+def add_block_lag(raceId, block, lag, gap):
     blockid = queries.add_block(raceId, block)
-    blocklagid = queries.add_blocklag(blockid, lag)
+    blocklagid = queries.add_blocklag(blockid, lag, gap)
 
 
-def add_lag(blockid, lag):
-    blocklagid = queries.add_blocklag(blockid, lag)
+def add_lag(blockid, lag, gap):
+    blocklagid = queries.add_blocklag(blockid, lag, gap)
 
 def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
     print("control.insert_class_start")
@@ -86,6 +86,6 @@ def read_blocklag_neste(self, blocklagid ):
     print("control.read_blocklag_neste")
     rows, columns = queries.read_block_lag(blocklagid)
     print("control.read_blocklag_neste", rows, columns)
-    return rows[0][4]
+    return rows[0][5]
     # return rows
 
