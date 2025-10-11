@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog
 from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
@@ -11,6 +11,7 @@ from db import queries
 from db.connection import get_connection
 from gui.filtered_table import FilteredTable
 from gui.table_connection import TableConnection
+from gui.velg_løp_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):
@@ -66,6 +67,18 @@ class MainWindow(QWidget):
         self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
 
+        self.raceButton = QPushButton("Velg løp")
+        self.raceButton.setFixedWidth(150)
+        self.raceButton.setToolTip("Velg et annet løp.")
+        self.raceButton.clicked.connect(self.select_race)
+
+ #       print("raceButton", self.raceButton.sizeHint().height())
+
+        self.empty_hight = QWidget()
+        self.empty_hight.setFixedHeight(self.raceButton.sizeHint().height())
+#        self.empty_hight.setFixedHeight(50)
+        self.empty_hight.setFixedWidth(100)
+
         self.moveButton = QPushButton("==>")
         self.moveButton.setFixedWidth(100)
 #        self.moveButton.setEnabled(False)  # deaktivert til å begynne med
@@ -85,7 +98,6 @@ class MainWindow(QWidget):
         # Les fra MySQL initielt.
         #
         rows0, columns0 = queries.read_race(self.raceId)
-
         race = rows0[0]
         self.race_name = race[1]
         self.race_date_db = race[2]
@@ -93,9 +105,11 @@ class MainWindow(QWidget):
         self.race_start_time_db = race[3]
         self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute, self.race_start_time_db.second)
 
-
         print(self.race_date_str)
+
         self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
+
+        self.q_time = QTime()
         self.label_first_start = QLabel("Første start: ")
         self.field_first_start = QTimeEdit()
         self.field_first_start.setDisplayFormat("HH:mm")
@@ -153,11 +167,13 @@ class MainWindow(QWidget):
         column3_layout = QVBoxLayout()
         column4_layout = QVBoxLayout()
 
+        column1_layout.addWidget(self.raceButton)
         column1_layout.addWidget(title_non_planned)
         column1_layout.addWidget(self.tableNotPlanned)
         column1_layout.addStretch()
         column1_layout.addWidget(self.chk1Button)
 
+        column2_layout.addWidget(self.empty_hight)
         column2_layout.addWidget(title_first_start)
         column2_layout.addWidget(self.field_first_start)
         column2_layout.addSpacing(200)
@@ -170,6 +186,7 @@ class MainWindow(QWidget):
         new_blocklag_layout.addWidget(self.field_lag)
 #        new_blocklag_layout.addWidget(self.addBlockButton)
 
+        column3_layout.addWidget(self.empty_hight)
         column3_layout.addWidget(title_block_lag)
         column3_layout.addLayout(new_blocklag_layout)
 #        column3_layout.addWidget(self.field_block)
@@ -178,6 +195,7 @@ class MainWindow(QWidget):
         column3_layout.addWidget(self.tableBlockLag)
         column3_layout.addStretch()
 
+        column4_layout.addWidget(self.empty_hight)
         column4_layout.addWidget(title_class_start)
         column4_layout.addWidget(self.tableClassStart)
         column4_layout.addStretch()
@@ -194,12 +212,14 @@ class MainWindow(QWidget):
 #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
     def populate_table(self, table, columns: list[any], rows):
+        print("populate_table")
         table.clearContents()
         is_sorted = table.isSortingEnabled()
         if is_sorted: table.setSortingEnabled(False)
         table.setColumnCount(len(columns))
         table.setRowCount(len(rows))
         table.setHorizontalHeaderLabels(columns)
+        print("populate_table 2")
         for row_idx, row_data in enumerate(rows):
 #            print("row_idx : ", row_idx)
             for col_idx, value in enumerate(row_data):
@@ -210,7 +230,6 @@ class MainWindow(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
-
 
     def keep_selection_colour(tabell):
         palett = tabell.palette()
@@ -477,3 +496,22 @@ class MainWindow(QWidget):
                 return row_idx
         return None
 
+    def select_race(self: QWidget):
+        print("select_race")
+        dialog = SelectRaceDialog([])
+        print("select_race 2")
+        control.refresh_raise_list(self, dialog)
+        print("select_race 3")
+
+        #        dialog = VelgLøpDialog([(101, "Løp 1"), (102, "Løp 2"), (103, "Finale")])
+        if dialog.exec_() == QDialog.Accepted:
+            valgt_id = dialog.valgt_løpsid
+            print("Brukeren valgte løps-ID:", valgt_id)
+
+            self.raceId = valgt_id
+            control.refresh_table(self, self.tableNotPlanned)
+            control.refresh_table(self, self.tableBlockLag)
+            control.refresh_table(self, self.tableClassStart)
+
+        else:
+            print("Brukeren avbrøt")

@@ -3,6 +3,16 @@ import mysql.connector
 from control.errors import MyCustomError
 from db import connection
 
+def read_race_list():
+    conn = connection.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT r.racedate, r.name, r.id
+FROM races r
+ORDER BY r.created DESC
+"""
+    cursor.execute(sql)
+    return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_race(raceid):
     conn = connection.get_connection()
