@@ -67,6 +67,8 @@ def refresh_table(self, table):
         raise Exception("Systemfeil!")
 
     self.populate_table(table, columns, rows)
+    if table == self.tableClassStart:
+        self.sett_redigerbare_kolonner(self.tableClassStart, [8, 10, 11])
 
 def refresh_raise_list(self, dialog):
     print("control.refresh_table")

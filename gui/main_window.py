@@ -553,3 +553,16 @@ class MainWindow(QWidget):
 
         else:
             print("Brukeren avbrøt")
+
+    def sett_redigerbare_kolonner(self, table, redigerbare_kolonner: list[int]):
+        for rad in range(table.rowCount()):
+            for kol in range(table.columnCount()):
+                item = table.item(rad, kol)
+                if item is None:
+                    item = QTableWidgetItem()
+                    table.setItem(rad, kol, item)
+
+                if kol in redigerbare_kolonner:
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                else:
+                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
