@@ -22,6 +22,7 @@ class MainWindow(QWidget):
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
 
+        self.log = True
         #
         # Komponenter
         #
@@ -97,9 +98,9 @@ class MainWindow(QWidget):
         #
         # Les fra MySQL initielt.
         #
-        print("refresh 1", self.raceId)
+#        print("refresh 1", self.raceId)
         self.refresh_first_start(self.raceId)
-        print("refresh 1 ferdig")
+#        print("refresh 1 ferdig")
 
 #        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
         self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
@@ -148,11 +149,12 @@ class MainWindow(QWidget):
         self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.resizeColumnsToContents()
         self.tableClassStart.resizeRowsToContents()
+        self.tableClassStart.itemChanged.connect(self.classStart_item_changed)
         header3 = self.tableClassStart.horizontalHeader()
         header3.setSectionResizeMode(1, QHeaderView.Stretch)
 
         # Behold samme farge når tabell ikke er i fokus.
-        self.keep_selection_colour()
+        self.keep_selection_colour(self)
         #        self.keep_selection_colour(self.tableBlockLag)
         #        self.keep_selection_colour(self.tableClassStart)
 
@@ -211,18 +213,18 @@ class MainWindow(QWidget):
         self.setLayout(main_layout)
 
     def refresh_first_start(self, raceid):
-        print("refresh_first_start")
+        if self.log: print("refresh_first_start")
         self.raceID = raceid
-        print("raceId", self.raceID)
+#        print("raceId", self.raceID)
         rows0, columns0 = queries.read_race(self.raceId)
         race = rows0[0]
-        print("race", race)
+#        print("race", race)
         self.race_name = race[1]
         self.race_date_db: QDateEdit = race[2]
         self.race_date_str = race[2].isoformat()
         self.race_start_time_db = race[3]
-        print("race", self.race_name)
-        print("race_start_time_db", self.race_start_time_db)
+#        print("race", self.race_name)
+#        print("race_start_time_db", self.race_start_time_db)
         if self.race_start_time_db:
             self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute,
                                 self.race_start_time_db.second)
@@ -233,27 +235,31 @@ class MainWindow(QWidget):
     #        self.tableBlockLag.selectionModel().selectionChanged.connect(self.upd_filter_table_cl_st)
 
     def populate_table(self, table, columns: list[any], rows):
-        print("populate_table")
+        if self.log: print("populate_table")
+        self.tableClassStart.blockSignals(True)
+#        print("populate_table 2")
         table.clearContents()
         is_sorted = table.isSortingEnabled()
         if is_sorted: table.setSortingEnabled(False)
         table.setColumnCount(len(columns))
         table.setRowCount(len(rows))
         table.setHorizontalHeaderLabels(columns)
-        print("populate_table 2")
+#        print("populate_table 3")
         for row_idx, row_data in enumerate(rows):
 #            print("row_idx : ", row_idx)
             for col_idx, value in enumerate(row_data):
 #                print("col_idx : ", col_idx)
-                print(str(value))
+#                print(str(value))
                 item = QTableWidgetItem("") if value is None else QTableWidgetItem(str(value))
                 if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
+        self.tableClassStart.blockSignals(False)
 
-    def keep_selection_colour(tabell):
-        palett = tabell.palette()
+    def keep_selection_colour(self, table):
+        if self.log: print("keep_selection_colour")
+        palett = table.palette()
 #        dark_blue = QColor(0, 120, 215)  # Windows 10 blå
 #        dark_blue = QColor(173, 216, 230)  # Windows 10 blå
         dark_blue = QColor(70, 130, 180)  # Windows 10 blå
@@ -263,23 +269,24 @@ class MainWindow(QWidget):
         hvit = QColor(Qt.white)
         palett.setColor(QPalette.Active, QPalette.HighlightedText, hvit)
         palett.setColor(QPalette.Inactive, QPalette.HighlightedText, hvit)
-        tabell.setPalette(palett)
+        table.setPalette(palett)
 
     def first_start_edited(self):
-        print("first_start_edited")
+        if self.log: print("first_start_edited")
         # Update first start-time, the rebuild redundant in class_starts, and reread.
         first_time = self.field_first_start.time().toString("HH:mm:ss")
-        print("first_start_edited", first_time)
-        print("first_start_edited", self.race_date_str)
+#        print("first_start_edited", first_time)
+#        print("first_start_edited", self.race_date_str)
         self.str_new_first_start = self.race_date_str + " " + first_time
 
-        print("first_start_edited", self.str_new_first_start)
-        control.first_start_edited(self.raceId, self.str_new_first_start)
-        print("first_start_edited edit ok")
+#        print("first_start_edited", self.str_new_first_start)
+        control.first_start_edited(self, self.raceId, self.str_new_first_start)
+#        print("first_start_edited edit ok")
         control.refresh_table(self, self.tableClassStart)
         control.refresh_table(self, self.tableBlockLag)
 
     def not_planned_menu(self, pos):
+        if self.log: print("not_planned_menu")
         rad_index = self.tableNotPlanned.rowAt(pos.y())
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
@@ -299,6 +306,7 @@ class MainWindow(QWidget):
 
 
     def class_start_menu(self, pos):
+        if self.log: print("class_start_menu")
         rad_index = self.tableClassStart.rowAt(pos.y())
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
@@ -328,6 +336,7 @@ class MainWindow(QWidget):
         meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
 
     def block_lag_menu(self, pos):
+        if self.log: print("block_lag_menu")
         rad_index = self.tableBlockLag.rowAt(pos.y())
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
@@ -344,14 +353,15 @@ class MainWindow(QWidget):
 
 
     def slett_blocklag_rad(self, rad_index):
+        if self.log: print("slett_blocklag_rad")
         blocklagid = self.tableBlockLag.model().index(rad_index, 0).data()
         blockid = self.tableBlockLag.model().index(rad_index, 1).data()
         block = self.tableBlockLag.model().index(rad_index, 2).data()
         lag = self.tableBlockLag.model().index(rad_index, 3).data()
 
-        print("Slett = " + block + ", " + str(lag) + ", " + str(blockid) + ", " + str(blocklagid))
+#        print("Slett = " + block + ", " + str(lag) + ", " + str(blockid) + ", " + str(blocklagid))
 
-        returned = control.delete_blocklag(self.raceId, blocklagid, blockid)
+        returned = control.delete_blocklag(self, self.raceId, blocklagid, blockid)
         if returned:
             self.vis_brukermelding(returned)
         else:
@@ -361,6 +371,7 @@ class MainWindow(QWidget):
 
 
     def vis_brukermelding(self, tekst):
+        if self.log: print("vis_brukermelding")
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("Feil")
@@ -368,13 +379,14 @@ class MainWindow(QWidget):
         msg.exec_()
 
     def slett_class_start_rad(self, rad_index):
+        if self.log: print("slett_class_start_rad")
         classstartid = self.tableClassStart.model().index(rad_index, 0).data()
         blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
         klasse = self.tableClassStart.model().index(rad_index, 4).data()
 
-        print("Slett rad med klasse = " + klasse)
+#        print("Slett rad med klasse = " + klasse)
 
-        control.delete_class_start_row(self.raceId, classstartid)
+        control.delete_class_start_row(self, self.raceId, classstartid)
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
@@ -386,11 +398,12 @@ class MainWindow(QWidget):
     # Slett classStart rader som tilhører valgt bås/slep
     #
     def slett_class_start_bås_slep(self, rad_index):
+        if self.log: print("slett_class_start_bås_slep")
         classstartid = self.tableClassStart.model().index(rad_index, 0).data()
         blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
         klasse = self.tableClassStart.model().index(rad_index, 4).data()
 
-        control.delete_class_start_rows(self.raceId, blocklagid)
+        control.delete_class_start_rows(self, self.raceId, blocklagid)
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
@@ -399,7 +412,7 @@ class MainWindow(QWidget):
         self.tableClassStart.oppdater_filter()
 
     def skjul_valgte_rader(self):
-#        print("skjul_valgte_rader start")
+        if self.log: print("skjul_valgte_rader")
         model_indexes = self.tableNotPlanned.selectionModel().selectedRows()
 #        print("skjul_valgte_rader 2")
 
@@ -408,19 +421,20 @@ class MainWindow(QWidget):
             rad = indeks.row()
             classid = self.tableNotPlanned.item(rad, 0)
             classids.add(classid.text())
-        print(f"classids = " + str(classids))
-        control.insert_class_start_nots(self.raceId, classids)
+#        print(f"classids = " + str(classids))
+        control.insert_class_start_nots(self, self.raceId, classids)
         # Refresh
         control.refresh_table(self, self.tableNotPlanned)
 
     def vis_skjulte_rader(self):
-        print("vis_skjulte_rader start")
-        control.delete_class_start_not(self.raceId)
+        if self.log: print("vis_skjulte_rader")
+        control.delete_class_start_not(self, self.raceId)
         # Refresh
         control.refresh_table(self, self.tableNotPlanned)
 
 
     def flytt_class_start_ned(self):
+        if self.log: print("flytt_class_start_ned")
         item = self.currentItem()
         if item:
             print("flytt rad = " + item.text())
@@ -428,20 +442,20 @@ class MainWindow(QWidget):
 #            QApplication.clipboard().setText(tekst)
 
     def add_block_lag(self):
-#        print("skjul_valgte_rader start")
+        if self.log: print("add_block_lag")
         model_indexes = self.tableBlockLag.selectionModel().selectedRows()
         if model_indexes:
             rad = model_indexes[0].row()
             blockid = self.tableBlockLag.item(rad, 1).text()
-            print("Valgt rad:", rad)
+#            print("Valgt rad:", rad)
             lag = self.field_lag.text()
             gap = self.field_gap.text()
             try:
-                control.add_lag(blockid, lag, gap)
+                control.add_lag(self, blockid, lag, gap)
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
         else:
-            print("No rad found")
+#            print("No rad found")
             block = self.field_block.text()
             if not block:
                 self.vis_brukermelding("Du må fylle inn navnet på båsen, \neller velge en rad fra tabellen under!")
@@ -449,13 +463,14 @@ class MainWindow(QWidget):
             lag = self.field_lag.text()
             gap = self.field_gap.text()
             try:
-                control.add_block_lag(self.raceId, block, lag, gap)
+                control.add_block_lag(self, self.raceId, block, lag, gap)
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
         # Refresh
         control.refresh_table(self, self.tableBlockLag)
 
     def move_class_to_plan(self):
+        if self.log: print("move_class_to_plan")
         selected_model_rows = self.tableNotPlanned.selectionModel().selectedRows()
         if not selected_model_rows:
             self.vis_brukermelding("Du må velge ei klasse å flytte Trekkeplanen!")
@@ -474,7 +489,7 @@ class MainWindow(QWidget):
         row_id = block_lag_rows[0].row()
         blocklag_id = int(self.tableBlockLag.item(row_id, 0).text())
         gap = int(self.tableBlockLag.item(row_id, 4).text())
-        print("gap", gap)
+#        print("gap", gap)
 
         # Valgt rad styrer hvor i bås/slep-seksjonen den skal inn.
         class_start_rows = self.tableClassStart.selectionModel().selectedRows()
@@ -491,8 +506,8 @@ class MainWindow(QWidget):
             model_index = self.tableNotPlanned.model().index(view_index.row(), 0)
             classid = self.tableNotPlanned.model().data(model_index)
             sort_value = sort_value+1
-            print("INSERT: ", classid, blocklag_id, sort_value)
-            control.insert_class_start(self.raceId, blocklag_id, classid, gap, sort_value)
+#            print("INSERT: ", classid, blocklag_id, sort_value)
+            control.insert_class_start(self, self.raceId, blocklag_id, classid, gap, sort_value)
 
         # Oppdater redundante kolonner og oppfrisk tabellene.
         queries.rebuild_class_starts(self.raceId)
@@ -508,53 +523,53 @@ class MainWindow(QWidget):
         self.tableClassStart.oppdater_filter()
 
     def set_nexttime_on_blocklag(self, blocklag_id: int, neste):
+        if self.log: print("set_nexttime_on_blocklag")
+        self.tableClassStart.blockSignals(True)
         row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
-        print("blocklag_id = ", blocklag_id)
-        print("row_idx = ", row_idx)
+#        print("blocklag_id = ", blocklag_id)
+#        print("row_idx = ", row_idx)
         item = self.tableBlockLag.item(row_idx, 5)
-        print("move_class_to_plan 2", item)
+        print("neste", neste)
         item.setText(str(neste))
-        print("move_class_to_plan 3")
+        self.tableClassStart.blockSignals(False)
+
+#        print("move_class_to_plan 3")
 
     def get_row_idx(self, table: QTableWidget, col_idx: int, col_value):
+        if self.log: print("get_row_idx")
         print("get_row_idx", col_idx, col_value)
         for row_idx in range(table.rowCount()):
-            item = int(table.item(row_idx, col_idx).text())
-#            print("item", item)
+            print("get_row_idx", row_idx)
+            item = table.item(row_idx, col_idx).text()
+#            item = int(table.item(row_idx, col_idx).text())
+            print("item, col_value", item, col_value)
             if item == col_value:
+                print("return row_idx=", row_idx)
                 return row_idx
+        print("System error: return row_idx=None")
         return None
 
     def select_race(self: QWidget):
-        print("select_race")
+        if self.log: print("select_race")
         dialog = SelectRaceDialog([])
-        print("select_race 2")
-        control.refresh_raise_list(self, dialog)
-        print("select_race 3")
+        control.refresh_race_list(self, dialog)
 
-        #        dialog = VelgLøpDialog([(101, "Løp 1"), (102, "Løp 2"), (103, "Finale")])
         if dialog.exec_() == QDialog.Accepted:
             valgt_id = dialog.valgt_løpsid
-            print("Brukeren valgte løps-ID:", valgt_id)
 
             self.raceId = valgt_id
             control.refresh_table(self, self.tableNotPlanned)
             control.refresh_table(self, self.tableBlockLag)
             control.refresh_table(self, self.tableClassStart)
-            print("refresh 2", self.raceId)
 
             self.refresh_first_start(self.raceId)
-            print("q_time", self.q_time)
-#            self.q_time.setText(str(self.q_time.text()))
-            print("select_race 4")
             self.field_first_start.setTime(self.q_time)
-            print("select_race 6")
-            self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
-
         else:
             print("Brukeren avbrøt")
 
     def sett_redigerbare_kolonner(self, table, redigerbare_kolonner: list[int]):
+        if self.log: print("sett_redigerbare_kolonner")
+        self.tableClassStart.blockSignals(True)
         for rad in range(table.rowCount()):
             for kol in range(table.columnCount()):
                 item = table.item(rad, kol)
@@ -566,3 +581,24 @@ class MainWindow(QWidget):
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                 else:
                     item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        self.tableClassStart.blockSignals(False)
+
+    def classStart_item_changed(self, item):
+        if self.log: print("classStart_item_changed")
+        self.tableClassStart.blockSignals(True)
+        idx_col = item.column()
+        idx_row = item.row()
+#        if self.tableClassStart.hasFocus():
+        if idx_col in [10,11]: # Antall ledige før og etter.
+            new_value = item.text()
+            item.setText(new_value)
+            classstartid = self.tableClassStart.item(idx_row, 0).text()
+            blocklagid = self.tableClassStart.item(idx_row, 1).text()
+#            print(f"Endret rad {idx_row}, kol {idx_col} til: {new_value}")
+#            print("classstartid", classstartid)
+            if idx_col==10:
+                control.class_start_free_updated(self, self.raceId, classstartid, blocklagid, new_value, 1)
+            if idx_col==11:
+                control.class_start_free_updated(self, self.raceId, classstartid, blocklagid, new_value, 2)
+
+        self.tableClassStart.blockSignals(False)

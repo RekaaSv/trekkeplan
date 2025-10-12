@@ -11,6 +11,7 @@ def sett_seleksjonsfarge(widget, bakgrunn=QColor(0, 120, 215), tekst=QColor(Qt.w
     widget.setPalette(palett)
 
 def marker_rader(tabell, rad_filter_fn, farge=QColor(220, 235, 255), scroll_til_første=True):
+    print("marker_rader start")
     """
     Farger rader som oppfyller rad_filter_fn(tabell, rad) med gitt farge.
     tabell: QTableWidget

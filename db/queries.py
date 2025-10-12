@@ -251,7 +251,7 @@ DELETE FROM classstarts WHERE blocklagid = %s
         cursor.execute(sql, (blocklagId,))
         conn.commit()
         conn.close()
-        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
+#        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
 #        return cursor
     except mysql.connector.Error as err:
         print(f"MySQL-feil: {err}")
@@ -304,7 +304,7 @@ WHERE sb.id = %s
 
 def insert_class_start_not(raceId, classId):
     try:
-        print("Inserting class start not=" + classId)
+#        print("Inserting class start not=" + classId)
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -321,7 +321,7 @@ INSERT INTO classstarts_not (classid)
 
 def delete_class_start_not(raceId):
     try:
-        print("delete_class_start_not=" + str(raceId))
+#        print("delete_class_start_not=" + str(raceId))
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -343,8 +343,8 @@ WHERE csn.classid in (
 
 def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
     try:
-        print("Inserting class start=")
-        print(classId)
+#        print("Inserting class start=")
+#        print(classId)
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -362,7 +362,7 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
 
 def add_block(raceId, block):
     try:
-        print("Inserting block")
+#        print("Inserting block")
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -387,19 +387,19 @@ VALUES (%s, %s)
 
 def add_blocklag(blockid, lag, gap):
     try:
-        print("Inserting blocklag")
+#        print("Inserting blocklag")
         conn = connection.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO startblocklags (startblockid, timelag, defaulttimegap)
 VALUES (%s, %s, %s)
 """
-        print("add_blocklag 1", blockid, lag)
+#        print("add_blocklag 1", blockid, lag)
         cursor.execute(sql, (blockid, lag, gap))
         conn.commit()
-        print("add_blocklag 2")
+#        print("add_blocklag 2")
         ny_id = cursor.lastrowid
-        print("add_blocklag 3")
+#        print("add_blocklag 3")
         conn.close()
         return ny_id
     except mysql.connector.errors.IntegrityError as err:
@@ -408,6 +408,41 @@ VALUES (%s, %s, %s)
             raise MyCustomError("Denne kombinasjonen av Bås/tidsslep finnes fra før!")
         else:
             print(f"MySQL-feil: {err}")
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+
+def upd_class_start_free_before(raceId, classstartid, new_value):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+UPDATE classstarts
+set freebefore = %s
+WHERE id = %s
+"""
+        cursor.execute(sql, (new_value, classstartid))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def upd_class_start_free_after(raceId, classstartid, new_value):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+UPDATE classstarts
+set freeafter = %s
+WHERE id = %s
+"""
+        cursor.execute(sql, (new_value, classstartid))
+        conn.commit()
+        conn.close()
     except mysql.connector.Error as err:
         print(f"MySQL-feil: {err}")
     except Exception as e:
