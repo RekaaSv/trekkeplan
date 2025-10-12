@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit
-from PyQt5.QtCore import Qt, QTime
+from PyQt5.QtCore import Qt, QTime, QSettings
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
 from control import control
@@ -15,11 +15,13 @@ class MainWindow(QWidget):
     def __init__(self, conn, raceid):
         super().__init__()
         self.conn = conn # Lagre connection. Nei den funker ikke i andre tråer (signal, etc.)
-        self.raceId = raceid
+        self.raceId = self.hent_raceid()
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
 
         self.log = True
+        self.race_name = None
+        self.q_time = None
         #
         # Komponenter
         #
@@ -33,6 +35,25 @@ class MainWindow(QWidget):
         title_class_start.setStyleSheet(style_table_header)
         title_first_start = QLabel("Første start:")
         title_first_start.setStyleSheet(style_table_header)
+
+        self.label_first_start = QLabel("Første start: ")
+        self.field_first_start = QTimeEdit()
+        self.field_first_start.setDisplayFormat("HH:mm")
+        self.field_first_start.setFixedWidth(70)
+        self.field_block = QLineEdit()
+        self.field_block.setReadOnly(False)
+        self.field_block.setFixedWidth(60)
+        self.field_lag = QLineEdit()
+        self.field_lag.setReadOnly(False)
+        self.field_lag.setFixedWidth(40)
+        self.field_lag.setValidator(QIntValidator(0, 999))
+        self.field_lag.setText("0")
+        self.field_gap = QLineEdit()
+        self.field_gap.setReadOnly(False)
+        self.field_gap.setFixedWidth(40)
+        self.field_gap.setValidator(QIntValidator(0, 999))
+        self.field_gap.setText("60")
+
 
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -91,6 +112,8 @@ class MainWindow(QWidget):
         self.chk1Button = QPushButton("Klasser, løyper, post1")
         self.chk2Button = QPushButton("Sjekk samtidige")
 
+        self.make_layout(title_block_lag, title_class_start, title_first_start, title_non_planned)
+
         #        self.load_button.clicked.connect(self.load_data)
         #
         # Les fra MySQL initielt.
@@ -100,28 +123,11 @@ class MainWindow(QWidget):
 #        print("refresh 1 ferdig")
 
 #        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
-        self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
+        if not self.race_name: self.setWindowTitle("Brikkesys Trekkeplan - ")
+        else: self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
 
-        self.label_first_start = QLabel("Første start: ")
-        self.field_first_start = QTimeEdit()
-        self.field_first_start.setDisplayFormat("HH:mm")
-        self.field_first_start.setFixedWidth(70)
         self.field_first_start.editingFinished.connect(self.first_start_edited)
-        self.field_first_start.setTime(self.q_time)
-
-        self.field_block = QLineEdit()
-        self.field_block.setReadOnly(False)
-        self.field_block.setFixedWidth(60)
-        self.field_lag = QLineEdit()
-        self.field_lag.setReadOnly(False)
-        self.field_lag.setFixedWidth(40)
-        self.field_lag.setValidator(QIntValidator(0, 999))
-        self.field_lag.setText("0")
-        self.field_gap = QLineEdit()
-        self.field_gap.setReadOnly(False)
-        self.field_gap.setFixedWidth(40)
-        self.field_gap.setValidator(QIntValidator(0, 999))
-        self.field_gap.setText("60")
+        if self.q_time: self.field_first_start.setTime(self.q_time)
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableBlockLag)
@@ -155,6 +161,9 @@ class MainWindow(QWidget):
         #        self.keep_selection_colour(self.tableBlockLag)
         #        self.keep_selection_colour(self.tableClassStart)
 
+
+    def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
+                    title_first_start: QLabel | QLabel, title_non_planned: QLabel | QLabel):
         #
         # Layout
         #
@@ -184,13 +193,13 @@ class MainWindow(QWidget):
         new_blocklag_layout.addWidget(self.field_lag)
         new_blocklag_layout.addWidget(self.field_gap)
 
-#        new_blocklag_layout.addWidget(self.addBlockButton)
+        #        new_blocklag_layout.addWidget(self.addBlockButton)
 
         column3_layout.addWidget(self.empty_hight)
         column3_layout.addWidget(title_block_lag)
         column3_layout.addLayout(new_blocklag_layout)
-#        column3_layout.addWidget(self.field_block)
-#        column3_layout.addWidget(self.field_lag)
+        #        column3_layout.addWidget(self.field_block)
+        #        column3_layout.addWidget(self.field_lag)
         column3_layout.addWidget(self.addBlockButton)
         column3_layout.addWidget(self.tableBlockLag)
         column3_layout.addStretch()
@@ -214,6 +223,7 @@ class MainWindow(QWidget):
         self.raceID = raceid
 #        print("raceId", self.raceID)
         rows0, columns0 = queries.read_race(self.raceId)
+        if not rows0: return
         race = rows0[0]
 #        print("race", race)
         self.race_name = race[1]
@@ -440,6 +450,9 @@ class MainWindow(QWidget):
 
     def add_block_lag(self):
         if self.log: print("add_block_lag")
+        if self.raceId == 0:
+            self.vis_brukermelding("Må velge et løp først!")
+            return
         model_indexes = self.tableBlockLag.selectionModel().selectedRows()
         if model_indexes:
             rad = model_indexes[0].row()
@@ -563,6 +576,8 @@ class MainWindow(QWidget):
 
             self.refresh_first_start(self.raceId)
             self.field_first_start.setTime(self.q_time)
+            self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str)
+            self.lagre_raceid(self.raceId)
         else:
             print("Brukeren avbrøt")
 
@@ -601,3 +616,12 @@ class MainWindow(QWidget):
                 control.class_start_free_updated(self, self.raceId, classstartid, blocklagid, new_value, 2)
 
         self.tableClassStart.blockSignals(False)
+
+    def lagre_raceid(self, raceid: int):
+        settings = QSettings("Brikkesys_svr", "Trekkeplan")
+        settings.setValue("Race_id", raceid)
+
+    def hent_raceid(self) -> int | None:
+        settings = QSettings("Brikkesys_svr", "Trekkeplan")
+        verdi = settings.value("Race_id", None)
+        return int(verdi) if verdi is not None else 0

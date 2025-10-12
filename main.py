@@ -6,7 +6,7 @@ import sys
 def main():
     conn = get_connection()
     app = QApplication(sys.argv)
-    raceid = 142 # 179
+    raceid = 0 # 179
     window = MainWindow(conn, raceid)
     window.show()
 
