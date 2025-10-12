@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTime, QSettings
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
@@ -68,7 +68,7 @@ class MainWindow(QWidget):
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tableBlockLag.setMinimumSize(210, 100)
-        self.tableBlockLag.setMaximumSize(210, 800)
+        self.tableBlockLag.setMaximumSize(210, 2000)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
@@ -78,7 +78,7 @@ class MainWindow(QWidget):
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
         self.tableClassStart.setMinimumSize(800, 100)
-        self.tableClassStart.setMaximumSize(800, 1200)
+        self.tableClassStart.setMaximumSize(800, 2000)
         self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
@@ -201,12 +201,16 @@ class MainWindow(QWidget):
         #        column3_layout.addWidget(self.field_block)
         #        column3_layout.addWidget(self.field_lag)
         column3_layout.addWidget(self.addBlockButton)
-        column3_layout.addWidget(self.tableBlockLag)
+        column3_layout.addWidget(self.tableBlockLag, 3)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        column3_layout.addItem(spacer)
         column3_layout.addStretch()
 
         column4_layout.addWidget(self.empty_hight)
         column4_layout.addWidget(title_class_start)
-        column4_layout.addWidget(self.tableClassStart)
+        column4_layout.addWidget(self.tableClassStart, 4)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        column4_layout.addItem(spacer)
         column4_layout.addStretch()
         column4_layout.addWidget(self.drawButton)
         column4_layout.addWidget(self.chk2Button)
@@ -262,6 +266,10 @@ class MainWindow(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
+        self.juster_tabellhøyde(table)
+        table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+#        table.setMaximumHeight(100)
+
         self.tableClassStart.blockSignals(False)
 
     def keep_selection_colour(self, table):
@@ -625,3 +633,11 @@ class MainWindow(QWidget):
         settings = QSettings("Brikkesys_svr", "Trekkeplan")
         verdi = settings.value("Race_id", None)
         return int(verdi) if verdi is not None else 0
+
+    def juster_tabellhøyde(self, table):
+        header_h = table.horizontalHeader().height()
+        rad_høyde = table.verticalHeader().defaultSectionSize()
+        scrollbar_h = table.horizontalScrollBar().height() if table.horizontalScrollBar().isVisible() else 0
+        total_høyde = header_h + (rad_høyde * table.rowCount()) + scrollbar_h + 2  # +2 for ramme
+        begrenset_høyde = min(total_høyde, 600)
+        table.setFixedHeight(begrenset_høyde)

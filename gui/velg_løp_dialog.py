@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QHeaderView
+    QPushButton, QHeaderView, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 
@@ -16,7 +16,6 @@ class SelectRaceDialog(QDialog):
 
         # Tabell
         self.table_race = QTableWidget()
-
         self.table_race.setColumnCount(2)
         self.table_race.setHorizontalHeaderLabels(["Løpsnavn", "ID"])
         self.table_race.setRowCount(len(løp_liste))

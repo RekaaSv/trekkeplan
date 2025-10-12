@@ -19,6 +19,7 @@ class FilteredTable(QTableWidget):
 
     def oppdater_filter(self):
         if self.log: print("FilteredTable.oppdater_filter")
+        self.blockSignals(True)
         # Hent verdi fra seleksjonsmodellen til <referansetabell>,
         # kun en rad fordi single select,
         # kolonne <referansekolonne>
@@ -33,6 +34,7 @@ class FilteredTable(QTableWidget):
         else:
             if self.log: print("FilteredTable.indexes er None")
             self.filterverdi = None
+        self.blockSignals(False)
 
 #        print(f"Rad {rad}, kol {kol}, verdi: {self.filterverdi}")
 #        self.filterverdi = verdi
@@ -106,6 +108,7 @@ class FilteredTable(QTableWidget):
 
     def rens_seleksjon(self):
         if self.log: print("FilteredTable.rens_seleksjon")
+        self.blockSignals(True)
         standard = QColor(Qt.white)
         for item in self.selectedItems():
             if item is None:
@@ -120,6 +123,7 @@ class FilteredTable(QTableWidget):
                         celle = self.item(rad, kol)
                         if celle:
                             celle.setBackground(standard)
+        self.blockSignals(False)
         if self.log: print("FilteredTable.rens_seleksjon end")
 
     def _planlagt_filteroppdatering(self):
