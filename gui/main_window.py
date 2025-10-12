@@ -543,7 +543,7 @@ class MainWindow(QWidget):
             item = table.item(row_idx, col_idx).text()
 #            item = int(table.item(row_idx, col_idx).text())
             print("item, col_value", item, col_value)
-            if item == col_value:
+            if item == str(col_value):
                 print("return row_idx=", row_idx)
                 return row_idx
         print("System error: return row_idx=None")
