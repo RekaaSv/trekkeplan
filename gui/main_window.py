@@ -1,16 +1,13 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit
-from PyQt5.QtCore import Qt, QItemSelectionModel, QTime
+from PyQt5.QtCore import Qt, QTime
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
-import db.queries
 from control import control
 from control.errors import MyCustomError
 from db import queries
 
-from db.connection import get_connection
 from gui.filtered_table import FilteredTable
-from gui.table_connection import TableConnection
 from gui.velg_løp_dialog import SelectRaceDialog
 
 
@@ -461,7 +458,9 @@ class MainWindow(QWidget):
                 self.vis_brukermelding("Du må fylle inn navnet på båsen, \neller velge en rad fra tabellen under!")
                 return
             lag = self.field_lag.text()
+            if not lag: lag = 0
             gap = self.field_gap.text()
+            if not gap: gap = 0
             try:
                 control.add_block_lag(self, self.raceId, block, lag, gap)
             except MyCustomError as e:

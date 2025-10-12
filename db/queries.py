@@ -1,5 +1,4 @@
 import mysql.connector
-
 from control.errors import MyCustomError
 from db import connection
 

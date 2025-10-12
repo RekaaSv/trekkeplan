@@ -1,5 +1,4 @@
 from db import queries
-from gui.velg_løp_dialog import SelectRaceDialog
 
 
 def first_start_edited(self, raceId, str_new_first_start):
