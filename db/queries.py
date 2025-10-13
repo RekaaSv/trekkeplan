@@ -446,3 +446,96 @@ WHERE id = %s
         print(f"MySQL-feil: {err}")
     except Exception as e:
         print(f"Uventet feil: {e}")
+
+def sql_start_list(raceid):
+    conn = connection.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT cl.name klasse, n.startnr , n.name navn, n.club, n.ecardno brikke, concat("&nbsp;&nbsp;&nbsp;&nbsp;", substring(cast(n.starttime as char),12,8)) starttid
+FROM names n
+JOIN classes cl on cl.id = n.classid
+JOIN races r on r.id = cl.raceid
+WHERE r.id = %s
+  AND n.status not in ('V','X')
+ORDER BY cl.sortorder, n.starttime
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def sql_starter_list(raceid):
+    conn = connection.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT n.startnr , n.name navn, n.club, n.ecardno brikke, cl.name klasse
+     , concat("_____________________________________________________________________", substring(cast(n.starttime as char),12,8)) starttid
+     ,'&#x25A1;' html_kvadrat
+FROM names n
+JOIN classes cl on cl.id = n.classid
+JOIN races r on r.id = cl.raceid
+WHERE r.id = %s
+  AND n.status not in ('V','X')
+ORDER BY n.starttime, cl.sortorder
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+
+def clear_start_times(raceId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+WITH n1 AS (
+	SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
+	FROM names n 
+	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 
+	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X') AND r.id = %s
+)
+UPDATE names n
+JOIN n1 ON n.id = n1.id
+SET n.starttime = null
+"""
+        cursor.execute(sql, (raceId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+def draw_start_times(raceId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+WITH n1 AS (
+SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
+	      ,ROW_NUMBER() OVER(PARTITION BY cls.id ORDER BY RAND())-1+COALESCE(cls.freebefore, 0) nowithinclass
+	      ,cls.classstarttime, cls.timegap 
+	FROM names n 
+	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 
+	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X') AND r.id = %s
+)
+UPDATE names n
+JOIN n1 ON n.id = n1.id
+SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap SECOND)
+"""
+        cursor.execute(sql, (raceId,))
+        conn.commit()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")

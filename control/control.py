@@ -1,4 +1,5 @@
 from db import queries
+from html.html_builder import HtmlBuilder
 
 
 def first_start_edited(self, raceId, str_new_first_start):
@@ -115,3 +116,31 @@ def class_start_free_updated(self, raceId, classstartid, blocklagid, new_value, 
     print("Signal på")
     self.tableClassStart.blockSignals(False)
     print("control.class_start_free_updated end")
+
+def make_startlist(self, raceId):
+    if self.log: print("control.make_startlist")
+    rows, columns = queries.sql_start_list(raceId)
+    if self.log: print("rows, columns", rows, columns)
+    html = HtmlBuilder.grouped_rows_in_single_table(rows, columns, 0, "strong", 0)
+    if self.log: print("html", html)
+
+    HtmlBuilder.download(html, "Startlist.html")
+
+def make_starterlist(self, raceId):
+    if self.log: print("control.make_starterlist")
+    rows, columns = queries.sql_starter_list(raceId)
+    if self.log: print("rows, columns", rows, columns)
+    html = HtmlBuilder.grouped_rows_in_single_table(rows, columns, 5, "strong", 0)
+    if self.log: print("html", html)
+
+    HtmlBuilder.download(html, "Startlist.html")
+
+
+def draw_start_times(self, raceId):
+    queries.draw_start_times(raceId)
+    self.vis_brukermelding("Trekking foretatt, se Startliste!")
+
+
+def clear_start_times(self, raceId):
+    queries.clear_start_times(raceId)
+    self.vis_brukermelding("Starttider fjernet, se Startliste!")

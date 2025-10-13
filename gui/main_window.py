@@ -668,14 +668,18 @@ class MainWindow(QWidget):
         table.setFixedHeight(begrenset_høyde)
 
     def draw_start_times(self):
-        print("draw_start_times")
+        if self.log: print("draw_start_times")
+        control.draw_start_times(self, self.raceId)
 
     def clear_start_times(self):
-        print("clear_start_times")
+        if self.log: print("clear_start_times")
+        control.clear_start_times(self, self.raceId)
 
     def make_startlist(self):
-        print("make_startlist")
+        if self.log: print("make_startlist")
+        control.make_startlist(self, self.raceId)
 
     def make_starterlist(self):
-        print("make_starterlist")
+        if self.log: print("make_starterlist")
+        control.make_starterlist(self, self.raceId)
 
