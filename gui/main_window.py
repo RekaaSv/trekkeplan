@@ -100,10 +100,26 @@ class MainWindow(QWidget):
         self.addBlockButton.setFixedWidth(120)
         self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
         self.addBlockButton.clicked.connect(self.add_block_lag)
+
         self.buttonDrawStartTimes = QPushButton("Trekk starttider")
+        self.buttonDrawStartTimes.setFixedWidth(150)
+        self.buttonDrawStartTimes.setToolTip("Trekk starttider for alle klasser i trekkeplanen.")
+        self.buttonDrawStartTimes.clicked.connect(self.draw_start_times)
+
         self.buttonClearStartTimes = QPushButton("Fjern starttider")
-        self.chk1Button = QPushButton("Klasser, løyper, post1")
-        self.chk2Button = QPushButton("Sjekk samtidige")
+        self.buttonClearStartTimes.setFixedWidth(150)
+        self.buttonClearStartTimes.setToolTip("Fjern starttider for alle klasser i trekkeplanen.")
+        self.buttonClearStartTimes.clicked.connect(self.clear_start_times)
+
+        self.startListButton = QPushButton("Startliste")
+        self.startListButton.setFixedWidth(150)
+        self.startListButton.setToolTip("Lag startliste pr. klasse.")
+        self.startListButton.clicked.connect(self.make_startlist)
+
+        self.starterListButton = QPushButton("Starter-liste")
+        self.starterListButton.setFixedWidth(150)
+        self.starterListButton.setToolTip("Lag startliste pr. starttid.")
+        self.starterListButton.clicked.connect(self.make_starterlist)
 
         self.make_layout(title_block_lag, title_class_start, title_first_start, title_non_planned)
 
@@ -165,9 +181,18 @@ class MainWindow(QWidget):
         center_layout = QHBoxLayout()
         bottom_layout = QHBoxLayout()
 
+        center_ramme = QFrame()
+        center_ramme.setFrameShape(QFrame.StyledPanel)
+        center_ramme.setFrameShadow(QFrame.Plain)
+        center_ramme.setLayout(center_layout)
+        bottom_ramme = QFrame()
+        bottom_ramme.setFrameShape(QFrame.StyledPanel)
+        bottom_ramme.setFrameShadow(QFrame.Plain)
+        bottom_ramme.setLayout(bottom_layout)
+
         main_layout.addLayout(top_layout)
-        main_layout.addLayout(center_layout)
-        main_layout.addLayout(bottom_layout)
+        main_layout.addWidget(center_ramme)
+        main_layout.addWidget(bottom_ramme)
 
         top_layout.addWidget(self.raceButton)
         top_layout.addStretch()
@@ -177,7 +202,7 @@ class MainWindow(QWidget):
         new_blocklag_layout = QHBoxLayout()
         column3_layout = QVBoxLayout()
         column4_layout = QVBoxLayout()
-        button_layout = QHBoxLayout()
+#        button_layout = QHBoxLayout()
 
         column1_layout.addWidget(title_non_planned)
         column1_layout.addWidget(self.tableNotPlanned)
@@ -201,10 +226,11 @@ class MainWindow(QWidget):
 #        column3_layout.addItem(spacer)
         column3_layout.addStretch()
 
-        button_layout.addWidget(self.chk1Button)
-        button_layout.addWidget(self.chk2Button)
-        button_layout.addWidget(self.buttonClearStartTimes)
-        button_layout.addWidget(self.buttonDrawStartTimes)
+        bottom_layout.addWidget(self.startListButton)
+        bottom_layout.addWidget(self.starterListButton)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(self.buttonClearStartTimes)
+        bottom_layout.addWidget(self.buttonDrawStartTimes)
 
         column4_layout.addWidget(title_class_start)
         column4_layout.addWidget(self.tableClassStart, 4)
@@ -217,7 +243,7 @@ class MainWindow(QWidget):
         center_layout.addLayout(column3_layout)
         center_layout.addLayout(column4_layout)
 
-        bottom_layout.addLayout(button_layout)
+#        bottom_layout.addLayout(button_layout)
 
         self.setLayout(main_layout)
 
@@ -640,3 +666,16 @@ class MainWindow(QWidget):
         total_høyde = header_h + (rad_høyde * table.rowCount()) + scrollbar_h + 2  # +2 for ramme
         begrenset_høyde = min(total_høyde, 600)
         table.setFixedHeight(begrenset_høyde)
+
+    def draw_start_times(self):
+        print("draw_start_times")
+
+    def clear_start_times(self):
+        print("clear_start_times")
+
+    def make_startlist(self):
+        print("make_startlist")
+
+    def make_starterlist(self):
+        print("make_starterlist")
+
