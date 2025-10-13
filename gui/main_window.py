@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy
+    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QTime, QSettings
 from PyQt5.QtGui import QPalette, QColor, QIntValidator
 
@@ -91,24 +91,17 @@ class MainWindow(QWidget):
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
- #       print("raceButton", self.raceButton.sizeHint().height())
-
-        self.empty_hight = QWidget()
-        self.empty_hight.setFixedHeight(self.raceButton.sizeHint().height())
-#        self.empty_hight.setFixedHeight(50)
-        self.empty_hight.setFixedWidth(100)
-
         self.moveButton = QPushButton("==>")
         self.moveButton.setFixedWidth(100)
-#        self.moveButton.setEnabled(False)  # deaktivert til å begynne med
-        self.moveButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
+        self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
         self.moveButton.clicked.connect(self.move_class_to_plan)
 
         self.addBlockButton = QPushButton("+")
         self.addBlockButton.setFixedWidth(120)
         self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
         self.addBlockButton.clicked.connect(self.add_block_lag)
-        self.drawButton = QPushButton("Trekk starttider").setFixedWidth(100)
+        self.buttonDrawStartTimes = QPushButton("Trekk starttider")
+        self.buttonClearStartTimes = QPushButton("Fjern starttider")
         self.chk1Button = QPushButton("Klasser, løyper, post1")
         self.chk2Button = QPushButton("Sjekk samtidige")
 
@@ -167,58 +160,64 @@ class MainWindow(QWidget):
         #
         # Layout
         #
-        main_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()
+        top_layout = QHBoxLayout()
+        center_layout = QHBoxLayout()
+        bottom_layout = QHBoxLayout()
+
+        main_layout.addLayout(top_layout)
+        main_layout.addLayout(center_layout)
+        main_layout.addLayout(bottom_layout)
+
+        top_layout.addWidget(self.raceButton)
+        top_layout.addStretch()
+
         column1_layout = QVBoxLayout()
         column2_layout = QVBoxLayout()
         new_blocklag_layout = QHBoxLayout()
         column3_layout = QVBoxLayout()
         column4_layout = QVBoxLayout()
+        button_layout = QHBoxLayout()
 
-        column1_layout.addWidget(self.raceButton)
         column1_layout.addWidget(title_non_planned)
         column1_layout.addWidget(self.tableNotPlanned)
         column1_layout.addStretch()
-        column1_layout.addWidget(self.chk1Button)
 
-        column2_layout.addWidget(self.empty_hight)
         column2_layout.addWidget(title_first_start)
         column2_layout.addWidget(self.field_first_start)
         column2_layout.addSpacing(200)
         column2_layout.addWidget(self.moveButton)
         column2_layout.addStretch()
 
-        #        layout.addWidget(self.status)
-
         new_blocklag_layout.addWidget(self.field_block)
         new_blocklag_layout.addWidget(self.field_lag)
         new_blocklag_layout.addWidget(self.field_gap)
 
-        #        new_blocklag_layout.addWidget(self.addBlockButton)
-
-        column3_layout.addWidget(self.empty_hight)
         column3_layout.addWidget(title_block_lag)
         column3_layout.addLayout(new_blocklag_layout)
-        #        column3_layout.addWidget(self.field_block)
-        #        column3_layout.addWidget(self.field_lag)
         column3_layout.addWidget(self.addBlockButton)
-        column3_layout.addWidget(self.tableBlockLag, 3)
-        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        column3_layout.addItem(spacer)
+        column3_layout.addWidget(self.tableBlockLag)
+#        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+#        column3_layout.addItem(spacer)
         column3_layout.addStretch()
 
-        column4_layout.addWidget(self.empty_hight)
+        button_layout.addWidget(self.chk1Button)
+        button_layout.addWidget(self.chk2Button)
+        button_layout.addWidget(self.buttonClearStartTimes)
+        button_layout.addWidget(self.buttonDrawStartTimes)
+
         column4_layout.addWidget(title_class_start)
         column4_layout.addWidget(self.tableClassStart, 4)
         spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
         column4_layout.addItem(spacer)
         column4_layout.addStretch()
-        column4_layout.addWidget(self.drawButton)
-        column4_layout.addWidget(self.chk2Button)
 
-        main_layout.addLayout(column1_layout)
-        main_layout.addLayout(column2_layout)
-        main_layout.addLayout(column3_layout)
-        main_layout.addLayout(column4_layout)
+        center_layout.addLayout(column1_layout)
+        center_layout.addLayout(column2_layout)
+        center_layout.addLayout(column3_layout)
+        center_layout.addLayout(column4_layout)
+
+        bottom_layout.addLayout(button_layout)
 
         self.setLayout(main_layout)
 
