@@ -64,6 +64,9 @@ class MainWindow(QWidget):
         self.tableNotPlanned.setSortingEnabled(True)
         self.tableNotPlanned.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableNotPlanned.customContextMenuRequested.connect(self.not_planned_menu)
+        # Og på header.
+        self.tableNotPlanned.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableNotPlanned.horizontalHeader().customContextMenuRequested.connect(self.not_planned_header_menu)
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -328,6 +331,7 @@ class MainWindow(QWidget):
     def not_planned_menu(self, pos):
         if self.log: print("not_planned_menu")
         rad_index = self.tableNotPlanned.rowAt(pos.y())
+        print("rad_index", rad_index)
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
             return
@@ -344,23 +348,57 @@ class MainWindow(QWidget):
 
         meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
+    def not_planned_header_menu(self, pos):
+        if self.log: print("not_planned_header_menu")
+        # Høyreklikk på kolonneheader
+        meny = QMenu(self)
+        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
+        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
+        meny.addAction(vis_skjulte)
+
+        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
+
+        meny = QMenu(self)
+
+        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
+        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
+        meny.addAction(vis_skjulte)
+
+        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
+
 
     def class_start_menu(self, pos):
         if self.log: print("class_start_menu")
         rad_index = self.tableClassStart.rowAt(pos.y())
+        print("rad_index", rad_index)
         if rad_index < 0:
             print("Ingen rad under musepeker – meny avbrytes")
             return
 
-        meny = QMenu(self)
+        selected_indexes = self.tableClassStart.selectionModel().selectedRows()
+        if selected_indexes:
+            row_inx = selected_indexes[0].row()
+            if row_inx == rad_index:
+                meny = QMenu(self)
 
-        slett_rad = QAction("Slett rad", self)
-        slett_rad.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
+                slett_rad = QAction("Slett rad", self)
+                slett_rad.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
 
-        slett_rader_i_båsslep = QAction("Slett bås/slep seksjon", self)
-        slett_rader_i_båsslep.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
+                slett_rader_i_båsslep = QAction("Slett bås/slep seksjon", self)
+                slett_rader_i_båsslep.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
 
-# Andre funksjoner: Slett hele bås/slep seksjonen, slett alt, fyttNed, flyttOpp.
+                slett_rader_alle = QAction("Slett alle", self)
+                slett_rader_alle.triggered.connect(lambda: self.slett_class_start_alle())
+
+                meny.addAction(slett_rad)
+                meny.addAction(slett_rader_i_båsslep)
+                meny.addAction(slett_rader_alle)
+                #        meny.addAction(flytt_ned)
+                #        meny.addAction(flytt_opp)
+
+                meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
+
+# Andre funksjoner: slett alt, fyttNed, flyttOpp.
 
 #        flytt_ned = QAction("Flytt ned", self)
 #        flytt_ned.triggered.connect(lambda: self.flytt_class_start_ned())
@@ -368,12 +406,6 @@ class MainWindow(QWidget):
 #        flytt_opp = QAction("Flytt opp", self)
 #        flytt_opp.triggered.connect(lambda: self.flytt_class_start_opp())
 
-        meny.addAction(slett_rad)
-        meny.addAction(slett_rader_i_båsslep)
-#        meny.addAction(flytt_ned)
-#        meny.addAction(flytt_opp)
-
-        meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
 
     def block_lag_menu(self, pos):
         if self.log: print("block_lag_menu")
@@ -450,6 +482,17 @@ class MainWindow(QWidget):
 
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
+
+    #
+    # Slett alle classStart rader for dette løpet.
+    #
+    def slett_class_start_alle(self):
+        if self.log: print("slett_class_start_alle")
+        control.delete_class_start_all(self, self.raceId)
+
+        control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableClassStart)
+
 
     def skjul_valgte_rader(self):
         if self.log: print("skjul_valgte_rader")

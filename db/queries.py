@@ -257,6 +257,31 @@ DELETE FROM classstarts WHERE blocklagid = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
+def delete_class_start_all(raceId):
+    try:
+        conn = connection.get_connection()
+        cursor = conn.cursor()
+        sql = """
+DELETE FROM classstarts cls
+WHERE cls.classid in (
+SELECT cl.id
+FROM classes cl
+JOIN races r ON r.id = cl.raceid
+WHERE cl.cource = 0
+  AND r.id = %s
+)
+"""
+        cursor.execute(sql, (raceId,))
+        conn.commit()
+        conn.close()
+#        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
+#        return cursor
+    except mysql.connector.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
+
+
 def delete_blocklag(raceId, blocklagId):
     try:
         conn = connection.get_connection()
@@ -539,3 +564,5 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
         print(f"MySQL-feil: {err}")
     except Exception as e:
         print(f"Uventet feil: {e}")
+
+

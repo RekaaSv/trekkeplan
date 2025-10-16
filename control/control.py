@@ -16,6 +16,10 @@ def delete_class_start_rows(self, raceId, blocklagId):
     if self.log: print("control.delete_class_start_rows")
     queries.delete_class_start_rows(raceId, blocklagId)
 
+def delete_class_start_all(self, raceId):
+    if self.log: print("control.delete_class_start_all")
+    queries.delete_class_start_all(raceId)
+
 def delete_blocklag(self, raceId, blocklagId, blockId):
     if self.log: print("control.delete_blocklag")
     returned = queries.delete_blocklag(raceId, blocklagId)
@@ -144,3 +148,5 @@ def draw_start_times(self, raceId):
 def clear_start_times(self, raceId):
     queries.clear_start_times(raceId)
     self.vis_brukermelding("Starttider fjernet, se Startliste!")
+
+
