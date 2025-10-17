@@ -12,9 +12,8 @@ from gui.velg_løp_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):
-    def __init__(self, conn, raceid):
+    def __init__(self):
         super().__init__()
-        self.conn = conn # Lagre connection. Nei den funker ikke i andre tråer (signal, etc.)
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
