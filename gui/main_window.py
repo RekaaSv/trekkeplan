@@ -1,3 +1,5 @@
+import configparser
+
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QTime, QSettings
@@ -14,6 +16,7 @@ from gui.velg_løp_dialog import SelectRaceDialog
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        mysql_config = self.hent_mysql_config("trekkeplan.cfg")
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
@@ -725,3 +728,18 @@ class MainWindow(QWidget):
         if self.log: print("make_starterlist")
         control.make_starterlist(self, self.raceId)
 
+    @staticmethod
+    def hent_mysql_config(self, filnavn="trekkeplan.cfg"):
+        config = configparser.ConfigParser()
+        config.read(filnavn)
+
+        if "mysql" not in config:
+            raise ValueError("Mangler [mysql]-seksjon i config-filen")
+
+        return {
+            "host": config["mysql"].get("host", "localhost"),
+            "port": config["mysql"].getint("port", 3306),
+            "user": config["mysql"]["user"],
+            "password": config["mysql"]["password"],
+            "database": config["mysql"]["database"],
+        }
