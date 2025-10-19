@@ -28,4 +28,4 @@ class ConnectionManager:
             return conn
         except Exception as e:
             print("❌ Feil ved tilkobling:", e)
-            return None
+            raise
