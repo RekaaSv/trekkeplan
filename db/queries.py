@@ -2,8 +2,8 @@ import mysql.connector
 from control.errors import MyCustomError
 from db import connection
 
-def read_race_list():
-    conn = connection.get_connection()
+def read_race_list(conn_mgr):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT r.racedate, r.name, r.first_start, r.id
@@ -13,8 +13,10 @@ ORDER BY r.created DESC
     cursor.execute(sql)
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_race(raceid):
-    conn = connection.get_connection()
+def read_race(conn_mgr, raceid):
+    print("read_race", raceid)
+    conn = conn_mgr.get_connection()
+
     cursor = conn.cursor()
     sql = """
 SELECT r.id, r.name, r.racedate, r.first_start
@@ -24,8 +26,8 @@ WHERE r.id = %s
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_not_planned(raceid):
-    conn = connection.get_connection()
+def read_not_planned(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT cl.id classid, cl.name Klasse
@@ -48,8 +50,8 @@ WHERE cl.raceid = %s AND cl.cource = 0
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_block_lags(raceid):
-    conn = connection.get_connection()
+def read_block_lags(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
@@ -59,8 +61,8 @@ JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def read_block_lag(blocklagid):
-    conn = connection.get_connection()
+def read_block_lag(conn_mgr, blocklagid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
@@ -72,8 +74,8 @@ JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 
-def read_class_starts(raceid):
-    conn = connection.get_connection()
+def read_class_starts(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep, cls.sortorder
@@ -99,9 +101,9 @@ ORDER BY  sb.name, sbl.timelag, cls.sortorder
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
-def upd_first_start(raceid, new_value):
+def upd_first_start(conn_mgr, raceid, new_value):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE races
@@ -119,9 +121,9 @@ WHERE id = %s
 """
  Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
 """
-def rebuild_class_starts(raceid):
+def rebuild_class_starts(conn_mgr, raceid):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 WITH classst AS (
@@ -170,9 +172,9 @@ SET stcl2.sortorder = classst.newsortorder
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def rebuild_class_starts_partition(raceid, blocklagid):
+def rebuild_class_starts_partition(conn_mgr, raceid, blocklagid):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 --
@@ -225,9 +227,9 @@ SET stcl2.sortorder = classst.newsortorder
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def delete_class_start_row(raceId, classstartId):
+def delete_class_start_row(conn_mgr, raceId, classstartId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts WHERE id = %s
@@ -240,9 +242,9 @@ DELETE FROM classstarts WHERE id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def delete_class_start_rows(raceId, blocklagId):
+def delete_class_start_rows(conn_mgr, raceId, blocklagId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts WHERE blocklagid = %s
@@ -257,9 +259,9 @@ DELETE FROM classstarts WHERE blocklagid = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def delete_class_start_all(raceId):
+def delete_class_start_all(conn_mgr, raceId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts cls
@@ -282,9 +284,9 @@ WHERE cl.cource = 0
         print(f"Uventet feil: {e}")
 
 
-def delete_blocklag(raceId, blocklagId):
+def delete_blocklag(conn_mgr, raceId, blocklagId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM startblocklags sbl
@@ -304,9 +306,9 @@ WHERE sbl.id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def delete_block(raceId, blockId):
+def delete_block(conn_mgr, raceId, blockId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM startblocks sb
@@ -326,10 +328,10 @@ WHERE sb.id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def insert_class_start_not(raceId, classId):
+def insert_class_start_not(conn_mgr, raceId, classId):
     try:
 #        print("Inserting class start not=" + classId)
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO classstarts_not (classid)
@@ -343,10 +345,10 @@ INSERT INTO classstarts_not (classid)
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def delete_class_start_not(raceId):
+def delete_class_start_not(conn_mgr, raceId):
     try:
 #        print("delete_class_start_not=" + str(raceId))
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts_not csn
@@ -365,11 +367,11 @@ WHERE csn.classid in (
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def insert_class_start(raceId, blocklagId, classId, timegap, sortorder):
+def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder):
     try:
 #        print("Inserting class start=")
 #        print(classId)
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
@@ -384,10 +386,10 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
         print(f"Uventet feil: {e}")
 
 
-def add_block(raceId, block):
+def add_block(conn_mgr, raceId, block):
     try:
 #        print("Inserting block")
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO startblocks (raceid, name)
@@ -409,10 +411,10 @@ VALUES (%s, %s)
         print(f"Uventet feil: {e}")
 
 
-def add_blocklag(blockid, lag, gap):
+def add_blocklag(conn_mgr, blockid, lag, gap):
     try:
 #        print("Inserting blocklag")
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO startblocklags (startblockid, timelag, defaulttimegap)
@@ -438,9 +440,9 @@ VALUES (%s, %s, %s)
         print(f"Uventet feil: {e}")
 
 
-def upd_class_start_free_before(raceId, classstartid, new_value):
+def upd_class_start_free_before(conn_mgr, raceId, classstartid, new_value):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE classstarts
@@ -455,9 +457,9 @@ WHERE id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def upd_class_start_free_after(raceId, classstartid, new_value):
+def upd_class_start_free_after(conn_mgr, raceId, classstartid, new_value):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE classstarts
@@ -472,8 +474,8 @@ WHERE id = %s
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def sql_start_list(raceid):
-    conn = connection.get_connection()
+def sql_start_list(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT cl.name klasse, n.startnr , n.name navn, n.club, n.ecardno brikke, concat("&nbsp;&nbsp;&nbsp;&nbsp;", substring(cast(n.starttime as char),12,8)) starttid
@@ -492,8 +494,8 @@ ORDER BY cl.sortorder, n.starttime
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def sql_starter_list(raceid):
-    conn = connection.get_connection()
+def sql_starter_list(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT n.startnr , n.name navn, n.club, n.ecardno brikke, cl.name klasse
@@ -515,9 +517,9 @@ ORDER BY n.starttime, cl.sortorder
         print(f"Uventet feil: {e}")
 
 
-def clear_start_times(raceId):
+def clear_start_times(conn_mgr, raceId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 WITH n1 AS (
@@ -539,9 +541,9 @@ SET n.starttime = null
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-def draw_start_times(raceId):
+def draw_start_times(conn_mgr, raceId):
     try:
-        conn = connection.get_connection()
+        conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 WITH n1 AS (

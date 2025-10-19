@@ -1,8 +1,15 @@
-from db.connection import get_connection
+from db import queries
+from db.connection import ConnectionManager
 
-try:
-    conn = get_connection()
-    print("Tilkobling OK")
-    conn.close()
-except Exception as e:
-    print(f"Feil: {e}")
+def test():
+    conn_mgr = ConnectionManager.validate_config("trekkeplan.cfg")
+    if conn_mgr:
+        print("✅ Klar til bruk:", conn_mgr)
+        conn = conn_mgr.get_connection()
+        print("conn:", conn)
+    else:
+        print("❌ Feil i config eller tilkobling")
+
+    queries.read_race(conn_mgr, 179)
+
+test()

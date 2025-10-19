@@ -1,5 +1,3 @@
-import configparser
-
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QTime, QSettings
@@ -8,15 +6,18 @@ from PyQt5.QtGui import QPalette, QColor, QIntValidator
 from control import control
 from control.errors import MyCustomError
 from db import queries
+from db.connection import ConnectionManager
 
 from gui.filtered_table import FilteredTable
 from gui.velg_løp_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):
-    def __init__(self):
+    def __init__(self, config, conn_mgr):
         super().__init__()
-        mysql_config = self.hent_mysql_config("trekkeplan.cfg")
+        self.config = config
+        self.conn_mgr: ConnectionManager = conn_mgr
+
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
         self.setGeometry(0, 0, 1800, 900)
@@ -132,7 +133,7 @@ class MainWindow(QWidget):
         #
         # Les fra MySQL initielt.
         #
-#        print("refresh 1", self.raceId)
+        if self.log: print("refresh 1", self.raceId)
         self.refresh_first_start(self.raceId)
 #        print("refresh 1 ferdig")
 
@@ -254,9 +255,9 @@ class MainWindow(QWidget):
 
     def refresh_first_start(self, raceid):
         if self.log: print("refresh_first_start")
-        self.raceID = raceid
+#        self.raceID = raceid
 #        print("raceId", self.raceID)
-        rows0, columns0 = queries.read_race(self.raceId)
+        rows0, columns0 = queries.read_race(self.conn_mgr, self.raceId)
         if not rows0: return
         race = rows0[0]
 #        print("race", race)
@@ -600,7 +601,7 @@ class MainWindow(QWidget):
             control.insert_class_start(self, self.raceId, blocklag_id, classid, gap, sort_value)
 
         # Oppdater redundante kolonner og oppfrisk tabellene.
-        queries.rebuild_class_starts(self.raceId)
+        queries.rebuild_class_starts(self.conn_mgr, self.raceId)
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
 
@@ -727,19 +728,3 @@ class MainWindow(QWidget):
     def make_starterlist(self):
         if self.log: print("make_starterlist")
         control.make_starterlist(self, self.raceId)
-
-    @staticmethod
-    def hent_mysql_config(self, filnavn="trekkeplan.cfg"):
-        config = configparser.ConfigParser()
-        config.read(filnavn)
-
-        if "mysql" not in config:
-            raise ValueError("Mangler [mysql]-seksjon i config-filen")
-
-        return {
-            "host": config["mysql"].get("host", "localhost"),
-            "port": config["mysql"].getint("port", 3306),
-            "user": config["mysql"]["user"],
-            "password": config["mysql"]["password"],
-            "database": config["mysql"]["database"],
-        }
