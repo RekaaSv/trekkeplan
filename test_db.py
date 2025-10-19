@@ -1,14 +1,14 @@
+import configparser
+
 from db import queries
 from db.connection import ConnectionManager
 
 def test():
-    conn_mgr = ConnectionManager.validate_config("trekkeplan.cfg")
-    if conn_mgr:
-        print("✅ Klar til bruk:", conn_mgr)
-        conn = conn_mgr.get_connection()
-        print("conn:", conn)
-    else:
-        print("❌ Feil i config eller tilkobling")
+    config = configparser.ConfigParser()
+    config.read("trekkeplan.cfg")
+    db_config = config["mysql"]
+
+    conn_mgr = ConnectionManager(db_config)
 
     queries.read_race(conn_mgr, 179)
 

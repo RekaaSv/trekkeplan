@@ -4,48 +4,20 @@ import mysql.connector
 
 
 class ConnectionManager:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, db_config):
+        self.db_config = db_config
         self.log = True
-
-    @staticmethod
-    def validate_config(filnavn="trekkeplan.cfg"):
-        config = configparser.ConfigParser()
-        config.read(filnavn)
-
-        if "mysql" not in config:
-            print("❌ Mangler [mysql]-seksjon i config")
-            return
-
-        db = config["mysql"]
-        required_keys = ["host", "port", "user", "password", "database"]
-        for key in required_keys:
-            if key not in db:
-                print(f"❌ Mangler nøkkel: {key}")
-                return
-
-        print("✅ Config ser OK ut")
-        conn_mgr = ConnectionManager(config)
-        conn = conn_mgr.get_connection()
-        if conn:
-            print("✅ Databaseforbindelse etablert")
-            return conn_mgr
-        else:
-            print("❌ Klarte ikke å koble til databasen")
-            return None
 
     def get_connection(self):
         try:
             if self.log: print("get_connection")
-            db = self.config["mysql"]
+            host = self.db_config.get("host", "localhost")
+            port = self.db_config.getint("port", 3306)
+            user = self.db_config["user"]
+            password = self.db_config["password"]
+            database = self.db_config["database"]
 
-            host = db.get("host", "localhost")
-            port = db.getint("port", 3306)
-            user = db["user"]
-            password = db["password"]
-            database = db["database"]
-
-            print(f"Kobler til: {host}:{port} bruker={user} db={database}")
+            if self.log: print(f"Kobler til: {host}:{port} bruker={user} db={database}")
 
             conn = mysql.connector.connect(
                 host=host,

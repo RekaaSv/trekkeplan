@@ -6,15 +6,11 @@ from PyQt5.QtWidgets import QApplication
 import sys
 
 def main():
-    conn_mgr = ConnectionManager.validate_config("trekkeplan.cfg")
-    config = None
-    if conn_mgr:
-        print("✅ Klar til bruk:", conn_mgr)
-        conn = conn_mgr.get_connection()
-        config = conn_mgr.config
-        print("conn:", conn)
-    else:
-        print("❌ Feil i config eller tilkobling")
+    config = configparser.ConfigParser()
+    config.read("trekkeplan.cfg")
+    db_config = config["mysql"]
+
+    conn_mgr = ConnectionManager(db_config)
 
     app = QApplication(sys.argv)
 
