@@ -1,6 +1,4 @@
-import configparser
-
-import mysql.connector
+import pymysql
 
 
 class ConnectionManager:
@@ -19,7 +17,7 @@ class ConnectionManager:
 
             if self.log: print(f"Kobler til: {host}:{port} bruker={user} db={database}")
 
-            conn = mysql.connector.connect(
+            conn = pymysql.connect(
                 host=host,
                 port=port,
                 user=user,
