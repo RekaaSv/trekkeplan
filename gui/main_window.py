@@ -1,20 +1,22 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QTime, QSettings
-from PyQt5.QtGui import QPalette, QColor, QIntValidator
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon
 
 from control import control
 from control.errors import MyCustomError
 from db import queries
 from db.connection import ConnectionManager
+from gui.about_dialog import AboutDialog
 
 from gui.filtered_table import FilteredTable
 from gui.velg_løp_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):
-    def __init__(self, config, conn_mgr):
+    def __init__(self, config, conn_mgr, icon_path):
         super().__init__()
+        self.icon_path = icon_path
         self.config = config
         self.conn_mgr: ConnectionManager = conn_mgr
 
@@ -92,6 +94,16 @@ class MainWindow(QWidget):
         self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
 
+        layout = QVBoxLayout()
+        self.aboutButton = QPushButton("Om Trekkeplan")
+        self.aboutButton.setFixedWidth(150)
+#        self.aboutButton.setToolTip("Velg et annet løp.")
+        self.aboutButton.clicked.connect(self.vis_about_dialog)
+        layout.addWidget(self.aboutButton)
+        central = QWidget()
+        central.setLayout(layout)
+#        self.setCentralWidget(central)
+
         self.raceButton = QPushButton("Velg løp")
         self.raceButton.setFixedWidth(150)
         self.raceButton.setToolTip("Velg et annet løp.")
@@ -138,8 +150,12 @@ class MainWindow(QWidget):
 #        print("refresh 1 ferdig")
 
 #        self.setWindowTitle(self.race_name + "   " + self.race_date_str + "             Trekkeplan")
-        if not self.race_name: self.setWindowTitle("Brikkesys Trekkeplan - ")
-        else: self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str )
+        if not self.race_name: self.setWindowTitle("Brikkesys/SvR Trekkeplan - ")
+        else: self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_str )
+
+
+
+        self.setWindowIcon(QIcon(self.icon_path))
 
         self.field_first_start.editingFinished.connect(self.first_start_edited)
         if self.q_time: self.field_first_start.setTime(self.q_time)
@@ -201,6 +217,7 @@ class MainWindow(QWidget):
         main_layout.addWidget(bottom_ramme)
 
         top_layout.addWidget(self.raceButton)
+        top_layout.addWidget(self.aboutButton)
         top_layout.addStretch()
 
         column1_layout = QVBoxLayout()
@@ -640,9 +657,17 @@ class MainWindow(QWidget):
         print("System error: return row_idx=None")
         return None
 
+    def vis_about_dialog(self):
+        dialog = AboutDialog()
+        dialog.setWindowIcon(QIcon(self.icon_path))
+        dialog.exec_()
+
+
     def select_race(self: QWidget):
         if self.log: print("select_race")
         dialog = SelectRaceDialog([])
+        dialog.setWindowIcon(QIcon(self.icon_path))
+
         control.refresh_race_list(self, dialog)
 
         if dialog.exec_() == QDialog.Accepted:
@@ -655,7 +680,7 @@ class MainWindow(QWidget):
 
             self.refresh_first_start(self.raceId)
             self.field_first_start.setTime(self.q_time)
-            self.setWindowTitle("Brikkesys Trekkeplan - " + self.race_name + "   " + self.race_date_str)
+            self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_str)
             self.lagre_raceid(self.raceId)
         else:
             print("Brukeren avbrøt")

@@ -1,12 +1,14 @@
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QHeaderView, QSizePolicy
+    QPushButton, QHeaderView
 )
 from PyQt5.QtCore import Qt
 
 class SelectRaceDialog(QDialog):
     def __init__(self, løp_liste: list[tuple[int, str]], parent=None):
         super().__init__(parent)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowTitle("Velg et annet løp")
         self.resize(700, 300)
 

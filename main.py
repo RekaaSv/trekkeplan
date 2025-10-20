@@ -8,6 +8,8 @@ import sys
 
 def main():
     app = QApplication(sys.argv)
+    icon_path = resource_path("terning.ico")
+
     try:
         # Sikrer at det fungerer også når exe-filen startes fra annet sted.
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -24,10 +26,16 @@ def main():
         sys.exit(1)
 
     # DB-kobling OK, fortsett.
-    window = MainWindow(config, conn_mgr)
+    window = MainWindow(config, conn_mgr, icon_path)
     window.show()
 
     sys.exit(app.exec_())
+
+def resource_path(relative_path):
+    """Finner riktig bane til ressursen, uansett om det kjøres fra .py eller .exe"""
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
 
 
 if __name__ == "__main__":
