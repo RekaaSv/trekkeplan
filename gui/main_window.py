@@ -10,6 +10,7 @@ from db.connection import ConnectionManager
 from gui.about_dialog import AboutDialog
 
 from gui.filtered_table import FilteredTable
+from gui.split_club_mates import SplitClubMates
 from gui.velg_løp_dialog import SelectRaceDialog
 
 
@@ -86,8 +87,8 @@ class MainWindow(QWidget):
         self.tableBlockLag.customContextMenuRequested.connect(self.block_lag_menu)
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
-        self.tableClassStart.setMinimumSize(800, 100)
-        self.tableClassStart.setMaximumSize(800, 2000)
+        self.tableClassStart.setMinimumSize(660, 100)
+        self.tableClassStart.setMaximumSize(660, 2000)
         self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
@@ -133,6 +134,11 @@ class MainWindow(QWidget):
         self.buttonClearStartTimes.setFixedWidth(150)
         self.buttonClearStartTimes.setToolTip("Fjern starttider for alle klasser i trekkeplanen.")
         self.buttonClearStartTimes.clicked.connect(self.clear_start_times)
+
+        self.buttonClubMates = QPushButton("Splitt klubbkamerater")
+        self.buttonClubMates.setFixedWidth(250)
+        self.buttonClubMates.setToolTip("Løpere fra samme klubb som starter etter hverandre i samme klasse.")
+        self.buttonClubMates.clicked.connect(self.handle_club_mates)
 
         self.startListButton = QPushButton("Startliste")
         self.startListButton.setFixedWidth(150)
@@ -186,6 +192,7 @@ class MainWindow(QWidget):
 
         self.tableClassStart.setColumnHidden(0, True)
         self.tableClassStart.setColumnHidden(1, True)
+        self.tableClassStart.setColumnHidden(4, True) # Sortorder
         self.tableClassStart.resizeColumnsToContents()
         self.tableClassStart.resizeRowsToContents()
         self.tableClassStart.itemChanged.connect(self.classStart_item_changed)
@@ -258,6 +265,7 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.startListButton)
         bottom_layout.addWidget(self.starterListButton)
         bottom_layout.addStretch()
+        bottom_layout.addWidget(self.buttonClubMates)
         bottom_layout.addWidget(self.buttonClearStartTimes)
         bottom_layout.addWidget(self.buttonDrawStartTimes)
 
@@ -325,6 +333,7 @@ class MainWindow(QWidget):
 #        table.setMaximumHeight(100)
 
         self.tableClassStart.blockSignals(False)
+        if self.log: print("populate_table end")
 
     def keep_selection_colour(self, table):
         if self.log: print("keep_selection_colour")
@@ -690,6 +699,20 @@ class MainWindow(QWidget):
             self.lagre_raceid(self.raceId)
         else:
             print("Brukeren avbrøt")
+
+    def handle_club_mates(self):
+        if self.log: print("handle_club_mates")
+        rows, columns = queries.read_club_mates(self.conn_mgr, self.raceId)
+        if self.log: print("columns", columns)
+        if self.log: print("rows", rows)
+
+        dialog = SplitClubMates(rows, columns, None, self)
+        dialog.setWindowIcon(QIcon(self.icon_path))
+
+        dialog.exec_() # modal visning.
+
+#        control.refresh_club_mates(self, dialog)
+
 
     def sett_redigerbare_kolonner(self, table, redigerbare_kolonner: list[int]):
         if self.log: print("sett_redigerbare_kolonner")

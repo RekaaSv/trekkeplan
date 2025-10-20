@@ -88,6 +88,22 @@ def refresh_race_list(self, dialog):
 
     dialog.table_race.setColumnHidden(3, True)
 
+def refresh_club_mates(self, dialog):
+    if self.log: print("control.refresh_club_mates")
+    rows, columns = None, None
+    rows, columns = queries.read_club_mates(self.conn_mgr, self.raceId)
+    if self.log: print("control.refresh_club_mates, columns", columns)
+    if self.log: print("control.refresh_club_mates, rows", rows)
+
+    self.populate_table(dialog.venstre, columns, rows)
+
+#    dialog.venstre.setColumnHidden(3, True)
+
+def read_names(self, classid):
+    if self.log: print("control.read_names")
+    return queries.read_names(self.conn_mgr, self.raceId, classid)
+
+
 """
     Leser høyeste Neste (neste starttid) for bås/slep blocklagid
 """

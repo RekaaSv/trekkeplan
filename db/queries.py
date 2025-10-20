@@ -6,12 +6,44 @@ def read_race_list(conn_mgr):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT r.racedate, r.name, r.first_start, r.id
+SELECT r.racedate Dag, r.name Løp, TIME(r.first_start) Starttid, r.id
 FROM races r
 ORDER BY r.created DESC
 """
     cursor.execute(sql)
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
+
+"""
+Løpere som har klubbkamerat i samme klasse rett før.
+"""
+def read_club_mates(conn_mgr, raceid):
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT a.id, a.classid
+     , a.classname, time(a.starttime) starttime, a.name, a.club FROM
+(SELECT n.id, n.starttime
+     , n.`name`
+     , n.club
+     , cl.id classid
+     , cl.`name` classname
+-- Bytte starttid nedover.
+     , LAG(n.club) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) prevclub
+     , LEAD(n.id) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) nextid
+     , LEAD(n.club) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) nextclub
+FROM names n
+JOIN races r ON r.id = n.raceid
+JOIN classes cl ON cl.id = n.classid
+WHERE r.id = %s
+  AND n.starttime IS NOT NULL
+) a
+WHERE a.club = a.prevclub
+"""
+    cursor.execute(sql, (raceid,))
+    return cursor.fetchall(), [desc[0] for desc in cursor.description]
+
+
+
 
 def read_race(conn_mgr, raceid):
     print("read_race", raceid)
@@ -567,4 +599,18 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
     except Exception as e:
         print(f"Uventet feil: {e}")
 
-
+"""
+Alle løpere i gitt klasse, i start-rekkefølge.
+"""
+def read_names(conn_mgr, classid):
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT n.id, n.classid, n.name, n.club, time(n.starttime)
+FROM NAMES n
+WHERE n.classid = %s
+  AND n.starttime is not null
+ORDER BY n.starttime
+"""
+    cursor.execute(sql, (classid,))
+    return cursor.fetchall(), [desc[0] for desc in cursor.description]
