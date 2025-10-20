@@ -23,10 +23,10 @@ Generere .spec-filer (kun første gang eller ved endringer)
 Kjør disse i PyCharm-terminalen for å lage .spec-filer:
 
 GUI uten konsoll:
-> pyinstaller main.py --onefile --noconsole --icon=terning.ico --add-data "trekkeplan.cfg;." --add-data "terning.ico;." --version-file=version.txt --name Trekkeplan
+pyinstaller main.py --onefile --noconsole --icon=terning.ico --add-data "trekkeplan.cfg;." --add-data "terning.ico;." --add-data "hjelp.pdf;." --version-file=version.txt --name Trekkeplan
 
 GUI med konsoll:
-> pyinstaller main.py --onefile --icon=terning.ico --add-data "trekkeplan.cfg;." --add-data "terning.ico;." --version-file=version.txt --name Trekkeplan_debug
+pyinstaller main.py --onefile --icon=terning.ico --add-data "trekkeplan.cfg;." --add-data "terning.ico;." --add-data "hjelp.pdf;." --version-file=version.txt --name Trekkeplan_debug
 
 ---
 

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
-from PyQt5.QtCore import Qt, QTime, QSettings
-from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon
+from PyQt5.QtCore import Qt, QTime, QSettings, QUrl
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices
 
 from control import control
 from control.errors import MyCustomError
@@ -14,9 +14,10 @@ from gui.velg_løp_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):
-    def __init__(self, config, conn_mgr, icon_path):
+    def __init__(self, config, conn_mgr, icon_path, pdf_path):
         super().__init__()
         self.icon_path = icon_path
+        self.pdf_path = pdf_path
         self.config = config
         self.conn_mgr: ConnectionManager = conn_mgr
 
@@ -93,6 +94,10 @@ class MainWindow(QWidget):
         self.tableClassStart.setSortingEnabled(False)
         self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
+
+        self.hjelp_knapp = QPushButton("Hjelp")
+        self.hjelp_knapp.setFixedWidth(150)
+        self.hjelp_knapp.clicked.connect(self.vis_hjelp)
 
         layout = QVBoxLayout()
         self.aboutButton = QPushButton("Om Trekkeplan")
@@ -217,6 +222,7 @@ class MainWindow(QWidget):
         main_layout.addWidget(bottom_ramme)
 
         top_layout.addWidget(self.raceButton)
+        top_layout.addWidget(self.hjelp_knapp)
         top_layout.addWidget(self.aboutButton)
         top_layout.addStretch()
 
@@ -753,3 +759,6 @@ class MainWindow(QWidget):
     def make_starterlist(self):
         if self.log: print("make_starterlist")
         control.make_starterlist(self, self.raceId)
+
+    def vis_hjelp(self):
+        QDesktopServices.openUrl(QUrl.fromLocalFile(self.pdf_path))

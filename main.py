@@ -9,6 +9,7 @@ import sys
 def main():
     app = QApplication(sys.argv)
     icon_path = resource_path("terning.ico")
+    pdf_path = resource_path("hjelp.pdf")
 
     try:
         # Sikrer at det fungerer også når exe-filen startes fra annet sted.
@@ -26,7 +27,7 @@ def main():
         sys.exit(1)
 
     # DB-kobling OK, fortsett.
-    window = MainWindow(config, conn_mgr, icon_path)
+    window = MainWindow(config, conn_mgr, icon_path, pdf_path)
     window.show()
 
     sys.exit(app.exec_())

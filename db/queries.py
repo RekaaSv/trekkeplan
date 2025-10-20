@@ -400,8 +400,8 @@ VALUES (%s, %s)
         conn.commit()
         conn.close()
         return ny_id
-    except pymysql.errors.IntegrityError as err:
-        if err.errno == 1062:
+    except pymysql.IntegrityError as err:
+        if err.args[0] == 1062:
             raise MyCustomError("Bås med det navnet finnes fra før!")
         else:
             print(f"MySQL-feil: {err}")
@@ -428,8 +428,8 @@ VALUES (%s, %s, %s)
 #        print("add_blocklag 3")
         conn.close()
         return ny_id
-    except pymysql.errors.IntegrityError as err:
-        if err.errno == 1062:
+    except pymysql.IntegrityError as err:
+        if err.args[0] == 1062:
             print(f"MySQL-feil: {err}")
             raise MyCustomError("Denne kombinasjonen av Bås/tidsslep finnes fra før!")
         else:
