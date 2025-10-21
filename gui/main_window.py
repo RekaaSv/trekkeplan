@@ -702,16 +702,9 @@ class MainWindow(QWidget):
 
     def handle_club_mates(self):
         if self.log: print("handle_club_mates")
-        rows, columns = queries.read_club_mates(self.conn_mgr, self.raceId)
-        if self.log: print("columns", columns)
-        if self.log: print("rows", rows)
-
-        dialog = SplitClubMates(rows, columns, None, self)
+        dialog = SplitClubMates(self)
         dialog.setWindowIcon(QIcon(self.icon_path))
-
         dialog.exec_() # modal visning.
-
-#        control.refresh_club_mates(self, dialog)
 
     def print_col_width(self, table):
         for kol in range(table.columnCount()):

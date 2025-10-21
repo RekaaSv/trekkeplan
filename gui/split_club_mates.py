@@ -7,7 +7,7 @@ from db import queries
 
 
 class SplitClubMates(QDialog):
-    def __init__(self, rows, columns, klasse_data_func, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         if parent.log: print("SplitClubMates")
         self.parent = parent
@@ -41,24 +41,10 @@ class SplitClubMates(QDialog):
         self.refresh_button = QPushButton("Oppfrisk")
 
         self.close_button = QPushButton("Avslutt")
-#        self.refresh_button.clicked.connect(self._frisk_opp)
+        self.refresh_button.clicked.connect(self.refresh_left)
         self.close_button.clicked.connect(self.close)
 
-
-
-        if parent.log: print("SplitClubMates")
-        parent.populate_table(self.venstre, columns, rows)
-
-#        self.venstre.resizeColumnsToContents()
-        parent.set_fixed_widths(self.venstre, [0, 0, 0, 80, 200, 250, 70])
-        self.venstre.resizeRowsToContents()
-
-#        parent.print_col_width(self.venstre)
-
-        self.parent.juster_tabellhøyde(self.venstre)
-
-#        self._populate_venstre(problem_liste)
-        self.venstre.itemSelectionChanged.connect(self._oppdater_hoyre)
+        self.venstre.itemSelectionChanged.connect(self.refresh_right)
 
         # Layout: hovedboks
         hoved_layout = QVBoxLayout()
@@ -104,19 +90,31 @@ class SplitClubMates(QDialog):
 
         parent.keep_selection_colour(self)
 
-        if self.venstre.rowCount() > 0:
-            self.venstre.selectRow(0)
+        self.refresh_left()
 
         if parent.log: print("SplitClubMates layout end")
 
-#        self.klasse_data_func = klasse_data_func  # funksjon som henter klassevis data
 
-    def refresh_left(self, data):
-        rows, columns = queries.read_club_mates(self.conn_mgr, self.raceId)
+    def refresh_left(self):
+        if self.parent.log: print("refresh_left")
+        rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.raceId)
+        if self.parent.log: print("columns", columns)
+        if self.parent.log: print("rows", rows)
+
+        if self.parent.log: print("SplitClubMates")
+        self.parent.populate_table(self.venstre, columns, rows)
+
+        #        self.venstre.resizeColumnsToContents()
+        #        parent.print_col_width(self.venstre)
+        self.parent.set_fixed_widths(self.venstre, [0, 0, 0, 80, 200, 250, 70])
+        self.venstre.resizeRowsToContents()
+        self.parent.juster_tabellhøyde(self.venstre)
+        if self.venstre.rowCount() > 0:
+            self.venstre.selectRow(0)
 
 
-    def _oppdater_hoyre(self):
-        if self.parent.log: print("_oppdater_hoyre")
+    def refresh_right(self):
+        if self.parent.log: print("refresh_right")
         # Finn verdier fra selektert rad.
 #        selected = self.venstre.currentRow()
 
@@ -220,7 +218,7 @@ class SplitClubMates(QDialog):
         print("id2", id2)
         queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.raceId)
 
-        self._oppdater_hoyre()
+        self.refresh_right()
 
     def get_label(self,tekst):
         lable = QLabel(tekst)
