@@ -20,14 +20,15 @@ def read_club_mates(conn_mgr, raceid):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT a.id, a.classid
-     , a.classname, time(a.starttime) starttime, a.name, a.club FROM
+SELECT a.id, a.previd, a.classid
+     , a.classname Klasse, a.name Løper, a.club Klubb, time(a.starttime) Starttid FROM
 (SELECT n.id, n.starttime
      , n.`name`
      , n.club
      , cl.id classid
      , cl.`name` classname
 -- Bytte starttid nedover.
+     , LAG(n.id) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) previd
      , LAG(n.club) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) prevclub
      , LEAD(n.id) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) nextid
      , LEAD(n.club) OVER (PARTITION BY cl.`name` ORDER BY n.starttime ASC) nextclub
@@ -606,8 +607,9 @@ def read_names(conn_mgr, classid):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT n.id, n.classid, n.name, n.club, time(n.starttime)
+SELECT n.id, n.classid, cl.name Klasse, n.name Løper, n.club Klubb, time(n.starttime) Starttid
 FROM NAMES n
+JOIN classes cl on cl.id = n.classid and cl.cource = 0
 WHERE n.classid = %s
   AND n.starttime is not null
 ORDER BY n.starttime

@@ -1,3 +1,5 @@
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QTableWidgetItem
 
 from db import queries
@@ -31,6 +33,13 @@ class SplitClubMates(QDialog):
         layout.addWidget(self.venstre)
         layout.addWidget(self.hoyre)
         self.setLayout(layout)
+
+        self.venstre.setColumnHidden(0, True)
+        self.venstre.setColumnHidden(1, True)
+        self.venstre.setColumnHidden(2, True)
+
+        parent.keep_selection_colour(self)
+
         if parent.log: print("SplitClubMates layout end")
 
 #        self.klasse_data_func = klasse_data_func  # funksjon som henter klassevis data
@@ -45,12 +54,62 @@ class SplitClubMates(QDialog):
 
     def _oppdater_hoyre(self):
         if self.parent.log: print("_oppdater_hoyre")
+        # Finn verdier fra selektert rad.
         selected = self.venstre.currentRow()
-        classid = self.venstre.item(selected, 1).text()
+        left_id = self.venstre.item(selected, 0).text()
+        previd = self.venstre.item(selected, 1).text()
+        classid = self.venstre.item(selected, 2).text()
         if self.parent.log: print("_oppdater_hoyre", classid)
+        if self.parent.log: print("left_id", left_id)
 
+        # Populer høyre tabell.
         rows, columns = queries.read_names(self.parent.conn_mgr, classid)
+        if self.parent.log: print("columns", columns)
+        if self.parent.log: print("rows", rows)
         self.parent.populate_table(self.hoyre, columns, rows)
+
+        # Marker radene med id og previd.
+        first_found_row_inx = None
+        for rad_inx in range(self.hoyre.rowCount()):
+            print("rad_inx", rad_inx)
+            my_id = self.hoyre.item(rad_inx, 0).text()
+            print("my_id", my_id)
+            match = (my_id == left_id) or (my_id == previd)
+            print("match", match)
+            if match:
+                if first_found_row_inx is None:
+#                    self.hoyre.scrollToItem(self.hoyre.item(rad_inx, 3))
+#                    QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(rad_inx, 0)))
+                    first_found_row_inx = rad_inx
+            self.marker_rad(rad_inx, match)
+
+        self.hoyre.setColumnHidden(0, True)
+        self.hoyre.setColumnHidden(1, True)
+
+        if first_found_row_inx is not None:
+#            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))
+            QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3)))
+            print("scrollToItem, rad_inx", first_found_row_inx)
+        else:
+            print("ERROR: first_found_row_inx is None!")
+
+    def marker_rad(self, rad_inx, match):
+        if self.parent.log: print("SplitClubMates.marker_rad", rad_inx, match)
+        lys_bla = QColor(220, 235, 255)
+        standard = QColor(Qt.white)
+
+        for kol_inx in range(self.hoyre.columnCount()):
+            if self.parent.log: print("kol_inx", kol_inx)
+            item = self.hoyre.item(rad_inx, kol_inx)
+            if self.parent.log: print("item", item)
+            if item is None:
+                continue
+
+            if match:
+                item.setBackground(lys_bla)
+            else:
+                item.setBackground(standard)
+
 
 """
         for r, row in enumerate(rows):
