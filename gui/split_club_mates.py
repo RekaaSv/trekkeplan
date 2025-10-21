@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QTableWidgetItem, QMenu, QAction
+from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QTableWidgetItem, QMenu, QAction, QLabel, QPushButton, \
+    QVBoxLayout
 
 from db import queries
 
@@ -10,9 +11,12 @@ class SplitClubMates(QDialog):
         super().__init__(parent)
         if parent.log: print("SplitClubMates")
         self.parent = parent
-        self.setWindowTitle("SplitClubMates")
-        self.resize(1500, 700)
+        self.setWindowTitle("Splitt klubbkompiser")
+        self.resize(1000, 700)
 
+        self.setFont(parent.font())  # arver font fra hovedvinduet
+
+        # Tabeller
         self.venstre = QTableWidget()
         self.venstre.setSelectionBehavior(QTableWidget.SelectRows)
         self.venstre.setSelectionMode(QTableWidget.SingleSelection)
@@ -24,15 +28,70 @@ class SplitClubMates(QDialog):
         self.hoyre.setContextMenuPolicy(Qt.CustomContextMenu)
         self.hoyre.customContextMenuRequested.connect(self.menu_swap_times)
 
+        # Overskrifter
+#        venstre_label = QLabel("🔍 Klubbkamerater rett etter hverandre")
+        venstre_label = self.get_label("Løpere med klubbkamerat rett før")
+        venstre_label.setStyleSheet(parent.style_table_header)
+
+        hoyre_label = self.get_label("Startrekkefølge (bytte starttider)")
+        hoyre_label.setStyleSheet(parent.style_table_header)
+
+        # Knapper
+        self.refresh_button = QPushButton("Oppfrisk")
+
+        self.close_button = QPushButton("Avslutt")
+#        self.refresh_button.clicked.connect(self._frisk_opp)
+        self.close_button.clicked.connect(self.close)
+
+
+
         if parent.log: print("SplitClubMates")
         parent.populate_table(self.venstre, columns, rows)
+
+        self.venstre.resizeColumnsToContents()
+        self.venstre.resizeRowsToContents()
+#        self.parent.juster_tabellhøyde(self.venstre)
+
 #        self._populate_venstre(problem_liste)
         self.venstre.itemSelectionChanged.connect(self._oppdater_hoyre)
 
-        layout = QHBoxLayout()
-        layout.addWidget(self.venstre)
-        layout.addWidget(self.hoyre)
-        self.setLayout(layout)
+        # Layout: hovedboks
+        hoved_layout = QVBoxLayout()
+
+        # Midtboks
+        midtboks = QHBoxLayout()
+
+        # Tabellbunnboks
+        tabellbunn_boks = QHBoxLayout()
+        tabellbunn_boks.addWidget(self.refresh_button)
+        tabellbunn_boks.addStretch()
+
+        # Venstreboks
+        venstre_boks = QVBoxLayout()
+        venstre_boks.addWidget(venstre_label)
+        venstre_boks.addWidget(self.venstre)
+        venstre_boks.addLayout(tabellbunn_boks)
+#        venstre_boks.addWidget(self.refresh_button, Qt.AlignLeft)
+        venstre_boks.addStretch()
+
+        # Høyreboks
+        hoyre_boks = QVBoxLayout()
+        hoyre_boks.addWidget(hoyre_label)
+        hoyre_boks.addWidget(self.hoyre)
+        hoyre_boks.addStretch()
+
+        midtboks.addLayout(venstre_boks)
+        midtboks.addLayout(hoyre_boks)
+
+        # Bunnboks
+        bunnboks = QHBoxLayout()
+        bunnboks.addStretch()
+        bunnboks.addWidget(self.close_button)
+
+        # Sett sammen
+        hoved_layout.addLayout(midtboks)
+        hoved_layout.addLayout(bunnboks)
+        self.setLayout(hoved_layout)
 
         self.venstre.setColumnHidden(0, True)
         self.venstre.setColumnHidden(1, True)
@@ -100,6 +159,10 @@ class SplitClubMates(QDialog):
         self.hoyre.setColumnHidden(0, True)
         self.hoyre.setColumnHidden(1, True)
 
+        self.hoyre.resizeColumnsToContents()
+        self.hoyre.resizeRowsToContents()
+#        self.parent.juster_tabellhøyde(self.hoyre)
+
         if first_found_row_inx is not None:
 #            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))
             QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3)))
@@ -154,4 +217,12 @@ class SplitClubMates(QDialog):
         queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.raceId)
 
         self._oppdater_hoyre()
+
+    def get_label(self,tekst):
+        lable = QLabel(tekst)
+        font = lable.font()
+        font.setBold(True)
+        font.setPointSize(11)
+        lable.setFont(font)
+        return lable
 

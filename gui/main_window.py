@@ -33,15 +33,15 @@ class MainWindow(QWidget):
         # Komponenter
         #
 #        self.status = QLabel("Status: Ikke tilkoblet")
-        style_table_header = "font-weight: bold; font-size: 16px; margin: 10px 0;"
+        self.style_table_header = "font-weight: bold; font-size: 16px; margin: 10px 0;"
         title_non_planned = QLabel("Ikke-planlagte klasser")
-        title_non_planned.setStyleSheet(style_table_header)
+        title_non_planned.setStyleSheet(self.style_table_header)
         title_block_lag = QLabel("Bås/tidsslep/gap")
-        title_block_lag.setStyleSheet(style_table_header)
+        title_block_lag.setStyleSheet(self.style_table_header)
         title_class_start = QLabel("Trekkeplan")
-        title_class_start.setStyleSheet(style_table_header)
+        title_class_start.setStyleSheet(self.style_table_header)
         title_first_start = QLabel("Første start:")
-        title_first_start.setStyleSheet(style_table_header)
+        title_first_start.setStyleSheet(self.style_table_header)
 
         self.label_first_start = QLabel("Første start: ")
         self.field_first_start = QTimeEdit()
