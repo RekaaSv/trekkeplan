@@ -713,6 +713,14 @@ class MainWindow(QWidget):
 
 #        control.refresh_club_mates(self, dialog)
 
+    def print_col_width(self, table):
+        for kol in range(table.columnCount()):
+            bredde = table.columnWidth(kol)
+            print(f"Kolonne {kol}: {bredde}px")
+
+    def set_fixed_widths(self, table, widths):
+        for col_inx, width in enumerate(widths):
+            table.setColumnWidth(col_inx, width)
 
     def sett_redigerbare_kolonner(self, table, redigerbare_kolonner: list[int]):
         if self.log: print("sett_redigerbare_kolonner")
@@ -759,13 +767,14 @@ class MainWindow(QWidget):
         verdi = settings.value("Race_id", None)
         return int(verdi) if verdi is not None else 0
 
-    def juster_tabellhøyde(self, table):
+    def juster_tabellhøyde(self, table, max_height = 600):
         header_h = table.horizontalHeader().height()
-        rad_høyde = table.verticalHeader().defaultSectionSize()
+        rad_høyde = header_h
         scrollbar_h = table.horizontalScrollBar().height() if table.horizontalScrollBar().isVisible() else 0
         total_høyde = header_h + (rad_høyde * table.rowCount()) + scrollbar_h + 2  # +2 for ramme
-        begrenset_høyde = min(total_høyde, 600)
+        begrenset_høyde = min(total_høyde, max_height)
         table.setFixedHeight(begrenset_høyde)
+#        print("høyder", header_h, rad_høyde, scrollbar_h, total_høyde, begrenset_høyde)
 
     def draw_start_times(self):
         if self.log: print("draw_start_times")
@@ -785,3 +794,8 @@ class MainWindow(QWidget):
 
     def vis_hjelp(self):
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.pdf_path))
+
+    def closeEvent(self, event):
+        size = self.size()
+        print(f"Vinduet avsluttes med størrelse: {size.width()} x {size.height()}")
+        super().closeEvent(event)

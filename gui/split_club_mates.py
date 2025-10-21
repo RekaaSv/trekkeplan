@@ -12,7 +12,8 @@ class SplitClubMates(QDialog):
         if parent.log: print("SplitClubMates")
         self.parent = parent
         self.setWindowTitle("Splitt klubbkompiser")
-        self.resize(1000, 700)
+#        self.resize(1000, 700)
+        self.resize(1287, 707)
 
         self.setFont(parent.font())  # arver font fra hovedvinduet
 
@@ -48,9 +49,13 @@ class SplitClubMates(QDialog):
         if parent.log: print("SplitClubMates")
         parent.populate_table(self.venstre, columns, rows)
 
-        self.venstre.resizeColumnsToContents()
+#        self.venstre.resizeColumnsToContents()
+        parent.set_fixed_widths(self.venstre, [0, 0, 0, 80, 200, 250, 70])
         self.venstre.resizeRowsToContents()
-#        self.parent.juster_tabellhøyde(self.venstre)
+
+#        parent.print_col_width(self.venstre)
+
+        self.parent.juster_tabellhøyde(self.venstre)
 
 #        self._populate_venstre(problem_liste)
         self.venstre.itemSelectionChanged.connect(self._oppdater_hoyre)
@@ -106,13 +111,9 @@ class SplitClubMates(QDialog):
 
 #        self.klasse_data_func = klasse_data_func  # funksjon som henter klassevis data
 
-    def _populate_venstre(self, data):
-        self.venstre.setRowCount(len(data))
-        self.venstre.setColumnCount(len(data[0]))
-        self.venstre.setHorizontalHeaderLabels(["Navn", "Klubb", "Klasse", "Starttid"])
-        for r, row in enumerate(data):
-            for c, val in enumerate(row):
-                self.venstre.setItem(r, c, QTableWidgetItem(str(val)))
+    def refresh_left(self, data):
+        rows, columns = queries.read_club_mates(self.conn_mgr, self.raceId)
+
 
     def _oppdater_hoyre(self):
         if self.parent.log: print("_oppdater_hoyre")
@@ -159,7 +160,9 @@ class SplitClubMates(QDialog):
         self.hoyre.setColumnHidden(0, True)
         self.hoyre.setColumnHidden(1, True)
 
-        self.hoyre.resizeColumnsToContents()
+#        self.hoyre.resizeColumnsToContents()
+        self.parent.set_fixed_widths(self.hoyre, [0, 0, 80, 200, 250, 70])
+
         self.hoyre.resizeRowsToContents()
 #        self.parent.juster_tabellhøyde(self.hoyre)
 
@@ -205,7 +208,8 @@ class SplitClubMates(QDialog):
         model_indexes = self.hoyre.selectionModel().selectedRows()
 
         if len(model_indexes) != 2:
-            self.parent.vis_brukermelding("Du må velge nøyaktig to rader. Det er disse to som skal bytte starttider!")
+            self.parent.vis_brukermelding("Du må velge de to løperne som skal bytte starttider!")
+            return
         inx1 = model_indexes[0].row()
         inx2 = model_indexes[1].row()
 
@@ -226,3 +230,7 @@ class SplitClubMates(QDialog):
         lable.setFont(font)
         return lable
 
+    def closeEvent(self, event):
+        size = self.size()
+        print(f"Vinduet avsluttes med størrelse: {size.width()} x {size.height()}")
+        super().closeEvent(event)
