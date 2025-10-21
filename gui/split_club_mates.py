@@ -162,7 +162,7 @@ class SplitClubMates(QDialog):
         self.parent.set_fixed_widths(self.hoyre, [0, 0, 80, 200, 250, 70])
 
         self.hoyre.resizeRowsToContents()
-#        self.parent.juster_tabellhøyde(self.hoyre)
+        self.parent.juster_tabellhøyde(self.hoyre)
 
         if first_found_row_inx is not None:
 #            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))

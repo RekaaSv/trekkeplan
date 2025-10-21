@@ -24,7 +24,8 @@ class MainWindow(QWidget):
 
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
-        self.setGeometry(0, 0, 1800, 900)
+#        self.setGeometry(0, 0, 1800, 900)
+        self.setGeometry(0, 0, 1677, 812)
 
         self.log = True
         self.race_name = None
@@ -64,8 +65,8 @@ class MainWindow(QWidget):
 
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.tableNotPlanned.setMinimumSize(300, 100)
-        self.tableNotPlanned.setMaximumSize(300, 800)
+#        self.tableNotPlanned.setMinimumSize(300, 100)
+#        self.tableNotPlanned.setMaximumSize(300, 800)
         self.tableNotPlanned.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableNotPlanned.verticalHeader().setVisible(False)
         self.tableNotPlanned.setSortingEnabled(True)
@@ -77,8 +78,8 @@ class MainWindow(QWidget):
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.tableBlockLag.setMinimumSize(210, 100)
-        self.tableBlockLag.setMaximumSize(210, 2000)
+#        self.tableBlockLag.setMinimumSize(210, 100)
+#        self.tableBlockLag.setMaximumSize(210, 2000)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
@@ -87,8 +88,8 @@ class MainWindow(QWidget):
         self.tableBlockLag.customContextMenuRequested.connect(self.block_lag_menu)
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
-        self.tableClassStart.setMinimumSize(660, 100)
-        self.tableClassStart.setMaximumSize(660, 2000)
+#        self.tableClassStart.setMinimumSize(660, 100)
+#        self.tableClassStart.setMaximumSize(660, 2000)
         self.tableClassStart.setSelectionMode(QTableWidget.SingleSelection)
         self.tableClassStart.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableClassStart.verticalHeader().setVisible(False)
@@ -177,27 +178,45 @@ class MainWindow(QWidget):
 
         self.tableNotPlanned.setColumnHidden(0, True)
         self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
-        self.tableNotPlanned.resizeColumnsToContents()
+#        self.tableNotPlanned.resizeColumnsToContents()
+        self.set_fixed_widths(self.tableNotPlanned, [0, 120, 50, 100, 60])
         self.tableNotPlanned.resizeRowsToContents()
-        header = self.tableNotPlanned.horizontalHeader()
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        self.juster_tabellhøyde(self.tableNotPlanned)
+        self.juster_tabell_vidde(self.tableNotPlanned)
+
+#        header = self.tableNotPlanned.horizontalHeader()
+#        header.setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.tableBlockLag.setColumnHidden(0, True)
         self.tableBlockLag.setColumnHidden(1, True)
         self.tableBlockLag.sortItems(2, order=Qt.AscendingOrder)
-        self.tableBlockLag.resizeColumnsToContents()
+#        self.tableBlockLag.resizeColumnsToContents()
+        self.set_fixed_widths(self.tableBlockLag, [0, 0, 100, 50, 50, 70])
+        self.print_col_width(self.tableNotPlanned)
         self.tableBlockLag.resizeRowsToContents()
-        header2 = self.tableBlockLag.horizontalHeader()
-        header2.setSectionResizeMode(1, QHeaderView.Stretch)
+        self.juster_tabellhøyde(self.tableBlockLag)
+        self.juster_tabell_vidde(self.tableBlockLag)
+
+#        header2 = self.tableBlockLag.horizontalHeader()
+#        header2.setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.tableClassStart.setColumnHidden(0, True)
         self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.setColumnHidden(4, True) # Sortorder
-        self.tableClassStart.resizeColumnsToContents()
+#        self.tableClassStart.resizeColumnsToContents()
+        self.set_fixed_widths(self.tableClassStart, [0, 0, 100, 50, 0, 120, 100, 60, 50, 60, 70, 70, 70, 70])
         self.tableClassStart.resizeRowsToContents()
+        self.juster_tabellhøyde(self.tableClassStart)
+        self.juster_tabell_vidde(self.tableClassStart)
         self.tableClassStart.itemChanged.connect(self.classStart_item_changed)
-        header3 = self.tableClassStart.horizontalHeader()
-        header3.setSectionResizeMode(1, QHeaderView.Stretch)
+#        header3 = self.tableClassStart.horizontalHeader()
+#        header3.setSectionResizeMode(1, QHeaderView.Stretch)
+
+#        self.print_col_width(self.tableNotPlanned)
+#        self.print_col_width(self.tableBlockLag)
+#        self.print_col_width(self.tableClassStart)
+
+
 
         # Behold samme farge når tabell ikke er i fokus.
         self.keep_selection_colour(self)
@@ -270,9 +289,10 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.buttonDrawStartTimes)
 
         column4_layout.addWidget(title_class_start)
-        column4_layout.addWidget(self.tableClassStart, 4)
-        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        column4_layout.addItem(spacer)
+#        column4_layout.addWidget(self.tableClassStart, 4)
+        column4_layout.addWidget(self.tableClassStart)
+#        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+#        column4_layout.addItem(spacer)
         column4_layout.addStretch()
 
         center_layout.addLayout(column1_layout)
@@ -329,6 +349,7 @@ class MainWindow(QWidget):
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
         self.juster_tabellhøyde(table)
+        self.juster_tabell_vidde(table)
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 #        table.setMaximumHeight(100)
 
@@ -768,6 +789,13 @@ class MainWindow(QWidget):
         begrenset_høyde = min(total_høyde, max_height)
         table.setFixedHeight(begrenset_høyde)
 #        print("høyder", header_h, rad_høyde, scrollbar_h, total_høyde, begrenset_høyde)
+
+    def juster_tabell_vidde(self, tabell, ekstra_margin=2):
+        total_bredde = sum(tabell.columnWidth(kol) for kol in range(tabell.columnCount()))
+        vertikal_scroll = tabell.verticalScrollBar().sizeHint().width() # if tabell.verticalScrollBar().isVisible() else 0
+        ramme = tabell.frameWidth() * 2
+        tabell.setFixedWidth(total_bredde + vertikal_scroll + ramme + ekstra_margin)
+        print("vertikal_scroll", vertikal_scroll)
 
     def draw_start_times(self):
         if self.log: print("draw_start_times")
