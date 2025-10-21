@@ -616,3 +616,28 @@ ORDER BY n.starttime
 """
     cursor.execute(sql, (classid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
+
+def swap_start_times(conn_mgr, id1, id2, raceId):
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+with n1 as (
+select n.id, n.name, n.club, n.starttime
+ , ifnull(LAG(n.starttime) OVER (ORDER BY n.starttime ASC), LEAD(n.starttime) OVER (ORDER BY n.starttime ASC)) othertime
+from names n
+where n.id in 
+(%s,%s)
+  and n.raceid = %s -- dobeltsikring mot å skrive feil id. Langdistanse.
+)
+update names n2
+join n1 on n1.id = n2.id
+set n2.starttime = n1.othertime
+"""
+        cursor.execute(sql, (id1, id2, raceId,))
+        conn.commit()
+        conn.close()
+    except pymysql.Error as err:
+        print(f"MySQL-feil: {err}")
+    except Exception as e:
+        print(f"Uventet feil: {e}")
