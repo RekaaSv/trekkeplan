@@ -25,6 +25,27 @@ class MainWindow(QWidget):
         self.col_widths_block_lag = [0, 0, 100, 50, 50, 70]
         self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 60, 60, 70, 70]
 
+        self.button_style = """
+            QPushButton {
+                background-color: rgb(200, 220, 240);
+                border: 1px solid #888;
+                padding: 4px 10px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: rgb(170, 200, 230);
+            }
+            QPushButton:pressed {
+                background-color: rgb(150, 180, 220);
+            }
+        """
+        field_input_style = """
+        QLineEdit {
+            background-color: rgb(255, 250, 205);  /* svak gul */
+        }
+        """
+
+
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
 #        self.resize(1677, 780)
@@ -49,17 +70,28 @@ class MainWindow(QWidget):
         title_first_start = QLabel("Første start:")
         title_first_start.setStyleSheet(self.style_table_header)
         self.field_first_start = QTimeEdit()
+        self.field_first_start.setStyleSheet("""
+        QAbstractSpinBox {
+            background-color: rgb(255, 250, 205);  /* svak gul */
+            border: 1px solid #aaa;
+            padding: 2px;
+            border-radius: 3px;
+        }
+        """)
         self.field_first_start.setDisplayFormat("HH:mm")
         self.field_first_start.setFixedWidth(70)
         self.field_block = QLineEdit()
+        self.field_block.setStyleSheet(field_input_style)
         self.field_block.setReadOnly(False)
         self.field_block.setFixedWidth(100)
         self.field_lag = QLineEdit()
+        self.field_lag.setStyleSheet(field_input_style)
         self.field_lag.setReadOnly(False)
         self.field_lag.setFixedWidth(50)
         self.field_lag.setValidator(QIntValidator(0, 999))
         self.field_lag.setText("0")
         self.field_gap = QLineEdit()
+        self.field_gap.setStyleSheet(field_input_style)
         self.field_gap.setReadOnly(False)
         self.field_gap.setFixedWidth(50)
         self.field_gap.setValidator(QIntValidator(0, 999))
@@ -98,11 +130,13 @@ class MainWindow(QWidget):
         self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
 
         self.hjelp_knapp = QPushButton("Hjelp")
+        self.hjelp_knapp.setStyleSheet(self.button_style)
         self.hjelp_knapp.setFixedWidth(150)
         self.hjelp_knapp.clicked.connect(self.vis_hjelp)
 
         layout = QVBoxLayout()
         self.aboutButton = QPushButton("Om Trekkeplan")
+        self.aboutButton.setStyleSheet(self.button_style)
         self.aboutButton.setFixedWidth(150)
 #        self.aboutButton.setToolTip("Velg et annet løp.")
         self.aboutButton.clicked.connect(self.vis_about_dialog)
@@ -112,41 +146,49 @@ class MainWindow(QWidget):
 #        self.setCentralWidget(central)
 
         self.raceButton = QPushButton("Velg løp")
+        self.raceButton.setStyleSheet(self.button_style)
         self.raceButton.setFixedWidth(150)
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
-        self.moveButton = QPushButton("==>")
+        self.moveButton = QPushButton("📥 Flytt hit")
+        self.moveButton.setStyleSheet(self.button_style)
         self.moveButton.setFixedWidth(100)
         self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
         self.moveButton.clicked.connect(self.move_class_to_plan)
 
-        self.addBlockButton = QPushButton("+")
+        self.addBlockButton = QPushButton("➕ Legg til")
+        self.addBlockButton.setStyleSheet(self.button_style)
         self.addBlockButton.setFixedWidth(157)
         self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
         self.addBlockButton.clicked.connect(self.add_block_lag)
 
         self.buttonDrawStartTimes = QPushButton("Trekk starttider")
+        self.buttonDrawStartTimes.setStyleSheet(self.button_style)
         self.buttonDrawStartTimes.setFixedWidth(150)
         self.buttonDrawStartTimes.setToolTip("Trekk starttider for alle klasser i trekkeplanen.")
         self.buttonDrawStartTimes.clicked.connect(self.draw_start_times)
 
         self.buttonClearStartTimes = QPushButton("Fjern starttider")
+        self.buttonClearStartTimes.setStyleSheet(self.button_style)
         self.buttonClearStartTimes.setFixedWidth(150)
         self.buttonClearStartTimes.setToolTip("Fjern starttider for alle klasser i trekkeplanen.")
         self.buttonClearStartTimes.clicked.connect(self.clear_start_times)
 
         self.buttonClubMates = QPushButton("Splitt klubbkamerater")
-        self.buttonClubMates.setFixedWidth(250)
+        self.buttonClubMates.setStyleSheet(self.button_style)
+        self.buttonClubMates.setFixedWidth(150)
         self.buttonClubMates.setToolTip("Løpere fra samme klubb som starter etter hverandre i samme klasse.")
         self.buttonClubMates.clicked.connect(self.handle_club_mates)
 
         self.startListButton = QPushButton("Startliste")
+        self.startListButton.setStyleSheet(self.button_style)
         self.startListButton.setFixedWidth(150)
         self.startListButton.setToolTip("Lag startliste pr. klasse.")
         self.startListButton.clicked.connect(self.make_startlist)
 
         self.starterListButton = QPushButton("Starter-liste")
+        self.starterListButton.setStyleSheet(self.button_style)
         self.starterListButton.setFixedWidth(150)
         self.starterListButton.setToolTip("Lag startliste pr. starttid.")
         self.starterListButton.clicked.connect(self.make_starterlist)
@@ -486,8 +528,6 @@ class MainWindow(QWidget):
         classstartid = self.tableClassStart.model().index(rad_index, 0).data()
         blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
         klasse = self.tableClassStart.model().index(rad_index, 4).data()
-
-#        print("Slett rad med klasse = " + klasse)
 
         control.delete_class_start_row(self, self.raceId, classstartid)
 

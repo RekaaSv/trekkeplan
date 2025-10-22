@@ -41,8 +41,12 @@ class SplitClubMates(QDialog):
 
         # Knapper
         self.refresh_button = QPushButton("Oppfrisk")
+        self.refresh_button.setStyleSheet(self.parent.button_style)
+
 
         self.close_button = QPushButton("Avslutt")
+        self.close_button.setStyleSheet(self.parent.button_style)
+
         self.refresh_button.clicked.connect(self.refresh_left)
         self.close_button.clicked.connect(self.close)
 

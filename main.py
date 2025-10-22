@@ -11,6 +11,15 @@ def main():
     icon_path = resource_path("terning.ico")
     pdf_path = resource_path("hjelp.pdf")
 
+    app.setStyleSheet("""
+    QToolTip {
+        background-color: rgb(255, 255, 220);  /* svak gul */
+        color: black;
+        border: 1px solid gray;
+        padding: 4px;
+        font-size: 10pt;
+    }
+    """)
     try:
         # Sikrer at det fungerer også når exe-filen startes fra annet sted.
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
