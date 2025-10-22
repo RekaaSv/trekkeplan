@@ -278,8 +278,7 @@ class MainWindow(QWidget):
 #        center_layout.addLayout(column2_layout)
         center_layout.addLayout(column3_layout)
         center_layout.addLayout(column4_layout)
-
-#        bottom_layout.addLayout(button_layout)
+        center_layout.addStretch()
 
         self.setLayout(main_layout)
 
