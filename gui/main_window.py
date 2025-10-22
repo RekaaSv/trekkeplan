@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
-    QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
+     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer
 from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices
 
@@ -23,14 +23,12 @@ class MainWindow(QWidget):
         self.conn_mgr: ConnectionManager = conn_mgr
         self.col_widths_not_planned = [0, 120, 50, 100, 60]
         self.col_widths_block_lag = [0, 0, 100, 50, 50, 70]
-        self.col_widths_class_start = [0, 0, 100, 50, 0, 120, 100, 60, 50, 60, 70, 70, 70, 70]
+        self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 60, 60, 70, 70]
 
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
-#        self.setGeometry(0, 0, 1800, 900)
-#        self.setGeometry(0, 0, 1677, 812)
-#        self.setGeometry(0, 0, 1677, 780)
-        self.resize(1677, 780)
+#        self.resize(1677, 780)
+        self.resize(1497, 780)
         self.move(0, 0)
 
         self.log = True
@@ -47,31 +45,28 @@ class MainWindow(QWidget):
         title_block_lag.setStyleSheet(self.style_table_header)
         title_class_start = QLabel("Trekkeplan")
         title_class_start.setStyleSheet(self.style_table_header)
+
         title_first_start = QLabel("Første start:")
         title_first_start.setStyleSheet(self.style_table_header)
-
-        self.label_first_start = QLabel("Første start: ")
         self.field_first_start = QTimeEdit()
         self.field_first_start.setDisplayFormat("HH:mm")
         self.field_first_start.setFixedWidth(70)
         self.field_block = QLineEdit()
         self.field_block.setReadOnly(False)
-        self.field_block.setFixedWidth(60)
+        self.field_block.setFixedWidth(100)
         self.field_lag = QLineEdit()
         self.field_lag.setReadOnly(False)
-        self.field_lag.setFixedWidth(40)
+        self.field_lag.setFixedWidth(50)
         self.field_lag.setValidator(QIntValidator(0, 999))
         self.field_lag.setText("0")
         self.field_gap = QLineEdit()
         self.field_gap.setReadOnly(False)
-        self.field_gap.setFixedWidth(40)
+        self.field_gap.setFixedWidth(50)
         self.field_gap.setValidator(QIntValidator(0, 999))
         self.field_gap.setText("60")
 
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
-#        self.tableNotPlanned.setMinimumSize(300, 100)
-#        self.tableNotPlanned.setMaximumSize(300, 800)
         self.tableNotPlanned.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableNotPlanned.verticalHeader().setVisible(False)
         self.tableNotPlanned.setSortingEnabled(True)
@@ -127,7 +122,7 @@ class MainWindow(QWidget):
         self.moveButton.clicked.connect(self.move_class_to_plan)
 
         self.addBlockButton = QPushButton("+")
-        self.addBlockButton.setFixedWidth(120)
+        self.addBlockButton.setFixedWidth(157)
         self.addBlockButton.setToolTip("Legg til en ny bås/slep med vedier fra feltene over.\nHvis du har valgt ut en rad i tabellen under,\nvil bås feltet bli hentet herfra.")
         self.addBlockButton.clicked.connect(self.add_block_lag)
 
@@ -230,10 +225,12 @@ class MainWindow(QWidget):
         top_layout.addWidget(self.raceButton)
         top_layout.addWidget(self.hjelp_knapp)
         top_layout.addWidget(self.aboutButton)
+        top_layout.addWidget(title_first_start)
+        top_layout.addWidget(self.field_first_start)
         top_layout.addStretch()
 
         column1_layout = QVBoxLayout()
-        column2_layout = QVBoxLayout()
+#        column2_layout = QVBoxLayout()
         new_blocklag_layout = QHBoxLayout()
         column3_layout = QVBoxLayout()
         column4_layout = QVBoxLayout()
@@ -243,15 +240,16 @@ class MainWindow(QWidget):
         column1_layout.addWidget(self.tableNotPlanned)
         column1_layout.addStretch()
 
-        column2_layout.addWidget(title_first_start)
-        column2_layout.addWidget(self.field_first_start)
-        column2_layout.addSpacing(200)
-        column2_layout.addWidget(self.moveButton)
-        column2_layout.addStretch()
+#        column2_layout.addWidget(title_first_start)
+#        column2_layout.addWidget(self.field_first_start)
+#        column2_layout.addSpacing(200)
+#        column2_layout.addWidget(self.moveButton)
+#        column2_layout.addStretch()
 
         new_blocklag_layout.addWidget(self.field_block)
         new_blocklag_layout.addWidget(self.field_lag)
         new_blocklag_layout.addWidget(self.field_gap)
+        new_blocklag_layout.addStretch()
 
         column3_layout.addWidget(title_block_lag)
         column3_layout.addLayout(new_blocklag_layout)
@@ -268,15 +266,16 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.buttonClearStartTimes)
         bottom_layout.addWidget(self.buttonDrawStartTimes)
 
-        column4_layout.addWidget(title_class_start)
-#        column4_layout.addWidget(self.tableClassStart, 4)
+        header_class_start_layout = QHBoxLayout()
+        header_class_start_layout.addWidget(self.moveButton)
+        header_class_start_layout.addWidget(title_class_start)
+
+        column4_layout.addLayout(header_class_start_layout)
         column4_layout.addWidget(self.tableClassStart)
-#        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-#        column4_layout.addItem(spacer)
         column4_layout.addStretch()
 
         center_layout.addLayout(column1_layout)
-        center_layout.addLayout(column2_layout)
+#        center_layout.addLayout(column2_layout)
         center_layout.addLayout(column3_layout)
         center_layout.addLayout(column4_layout)
 

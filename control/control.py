@@ -83,9 +83,6 @@ def refresh_table(self, table):
     self.populate_table(table, columns, rows)
     self.set_table_sizes(table, col_widths)
 
-    if table == self.tableClassStart:
-        self.sett_redigerbare_kolonner(self.tableClassStart, [10, 11])
-
 def read_names(self, classid):
     if self.log: print("control.read_names")
     return queries.read_names(self.conn_mgr, self.raceId, classid)

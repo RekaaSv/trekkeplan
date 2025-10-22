@@ -58,6 +58,8 @@ class FilteredTable(QTableWidget):
         if self.log: print("FilteredTable.set_rad_valgbar")
         self.blockSignals(True)
         lys_bla = QColor(220, 235, 255)
+#        edit_colour = QColor(245, 245, 220)
+        edit_colour = QColor(255, 250, 205)
         standard = QColor(Qt.white)
 
         for kol in range(self.columnCount()):
@@ -66,15 +68,18 @@ class FilteredTable(QTableWidget):
                 continue
 
             try:
-                index = self.indexFromItem(item)
-#                if self.selectionModel().isSelected(index):
-#                    self.setItemSelected(item, False)
                 flags = item.flags()
                 if valgbar:
                     item.setFlags(flags | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                    item.setBackground(lys_bla)
+                    if (kol==10 or kol==11):
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        item.setBackground(edit_colour)
+                    else:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                        item.setBackground(lys_bla)
                 else:
                     item.setFlags(flags & ~Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                     item.setBackground(standard)
             except Exception as e:
                 print(f"Feil i set_rad_valgbar på rad {rad_index}, kol {kol}: {e}")
