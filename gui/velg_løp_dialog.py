@@ -1,3 +1,5 @@
+import logging
+
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QHeaderView
@@ -10,7 +12,7 @@ from db import queries
 class SelectRaceDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        if parent.log: print("SelectRaceDialog")
+        logging.info("SelectRaceDialog")
         self.parent = parent
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowTitle("Velg et løp")
@@ -18,7 +20,7 @@ class SelectRaceDialog(QDialog):
         self.setFont(parent.font())  # arver font fra hovedvinduet
         self.col_widths_races = [100, 400, 70, 0]
 
-        if parent.log: print("SelectRaceDialog 2")
+        logging.info("SelectRaceDialog 2")
 
         self.valgt_løpsid = None
 
@@ -30,7 +32,7 @@ class SelectRaceDialog(QDialog):
         self.table_race.verticalHeader().setVisible(False)
 #        self.table_race.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
-        if parent.log: print("SelectRaceDialog 3")
+        logging.info("SelectRaceDialog 3")
 
         # Knapper
         knapp_layout = QHBoxLayout()
@@ -43,7 +45,7 @@ class SelectRaceDialog(QDialog):
 
         ok_btn.clicked.connect(self.ok_klikket)
         avbryt_btn.clicked.connect(self.reject)
-        if parent.log: print("SelectRaceDialog 4")
+        logging.info("SelectRaceDialog 4")
 
         layout = QVBoxLayout()
         layout.addWidget(self.table_race)
@@ -53,10 +55,9 @@ class SelectRaceDialog(QDialog):
         self.refresh()
 
     def refresh(self):
-        if self.parent.log: print("SelectRaceDialog.refresh")
+        logging.info("SelectRaceDialog.refresh")
         rows, columns = None, None
         rows, columns = queries.read_race_list(self.parent.conn_mgr)
-        if self.parent.log: print("SelectRaceDialog.refresh columns", columns)
         self.parent.populate_table(self.table_race, columns, rows)
         self.table_race.setColumnHidden(3, True)
 

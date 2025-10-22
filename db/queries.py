@@ -1,6 +1,7 @@
+import logging
+
 import pymysql
 from control.errors import MyCustomError
-from db import connection
 
 def read_race_list(conn_mgr):
     conn = conn_mgr.get_connection()
@@ -47,7 +48,7 @@ WHERE a.club = a.prevclub
 
 
 def read_race(conn_mgr, raceid):
-    print("read_race", raceid)
+    logging.info("read_race", raceid)
     conn = conn_mgr.get_connection()
 
     cursor = conn.cursor()
@@ -147,9 +148,9 @@ WHERE id = %s
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 """
  Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
@@ -201,9 +202,9 @@ SET stcl2.sortorder = classst.newsortorder
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def rebuild_class_starts_partition(conn_mgr, raceid, blocklagid):
     try:
@@ -256,9 +257,9 @@ SET stcl2.sortorder = classst.newsortorder
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_row(conn_mgr, raceId, classstartId):
     try:
@@ -271,9 +272,9 @@ DELETE FROM classstarts WHERE id = %s
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_rows(conn_mgr, raceId, blocklagId):
     try:
@@ -285,12 +286,10 @@ DELETE FROM classstarts WHERE blocklagid = %s
         cursor.execute(sql, (blocklagId,))
         conn.commit()
         conn.close()
-#        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
-#        return cursor
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_all(conn_mgr, raceId):
     try:
@@ -309,12 +308,10 @@ WHERE cl.cource = 0
         cursor.execute(sql, (raceId,))
         conn.commit()
         conn.close()
-#        print("Slettet " + str(cursor.rowcount) + " rader i classstarts.")
-#        return cursor
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 
 def delete_blocklag(conn_mgr, raceId, blocklagId):
@@ -335,9 +332,9 @@ WHERE sbl.id = %s
         conn.close()
         return to_return
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def delete_block(conn_mgr, raceId, blockId):
     try:
@@ -357,13 +354,12 @@ WHERE sb.id = %s
         conn.close()
         return to_return
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def insert_class_start_not(conn_mgr, raceId, classId):
     try:
-#        print("Inserting class start not=" + classId)
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -374,13 +370,12 @@ INSERT INTO classstarts_not (classid)
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_not(conn_mgr, raceId):
     try:
-#        print("delete_class_start_not=" + str(raceId))
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -396,14 +391,12 @@ WHERE csn.classid in (
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder):
     try:
-#        print("Inserting class start=")
-#        print(classId)
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -414,14 +407,13 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 
 def add_block(conn_mgr, raceId, block):
     try:
-#        print("Inserting block")
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
@@ -437,40 +429,36 @@ VALUES (%s, %s)
         if err.args[0] == 1062:
             raise MyCustomError("Bås med det navnet finnes fra før!")
         else:
-            print(f"MySQL-feil: {err}")
+            logging.error(f"MySQL-feil: {err}")
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 
 def add_blocklag(conn_mgr, blockid, lag, gap):
     try:
-#        print("Inserting blocklag")
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 INSERT INTO startblocklags (startblockid, timelag, defaulttimegap)
 VALUES (%s, %s, %s)
 """
-#        print("add_blocklag 1", blockid, lag)
         cursor.execute(sql, (blockid, lag, gap))
         conn.commit()
-#        print("add_blocklag 2")
         ny_id = cursor.lastrowid
-#        print("add_blocklag 3")
         conn.close()
         return ny_id
     except pymysql.IntegrityError as err:
         if err.args[0] == 1062:
-            print(f"MySQL-feil: {err}")
+            logging.error(f"MySQL-feil: {err}")
             raise MyCustomError("Denne kombinasjonen av Bås/tidsslep finnes fra før!")
         else:
-            print(f"MySQL-feil: {err}")
+            logging.error(f"MySQL-feil: {err}")
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 
 def upd_class_start_free_before(conn_mgr, raceId, classstartid, new_value):
@@ -486,9 +474,9 @@ WHERE id = %s
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def upd_class_start_free_after(conn_mgr, raceId, classstartid, new_value):
     try:
@@ -503,9 +491,9 @@ WHERE id = %s
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def sql_start_list(conn_mgr, raceid):
     conn = conn_mgr.get_connection()
@@ -523,9 +511,9 @@ ORDER BY cl.sortorder, n.starttime
         cursor.execute(sql, (raceid,))
         return cursor.fetchall(), [desc[0] for desc in cursor.description]
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def sql_starter_list(conn_mgr, raceid):
     conn = conn_mgr.get_connection()
@@ -545,9 +533,9 @@ ORDER BY n.starttime, cl.sortorder
         cursor.execute(sql, (raceid,))
         return cursor.fetchall(), [desc[0] for desc in cursor.description]
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 
 def clear_start_times(conn_mgr, raceId):
@@ -570,9 +558,9 @@ SET n.starttime = null
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 def draw_start_times(conn_mgr, raceId):
     try:
@@ -596,9 +584,9 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")
 
 """
 Alle løpere i gitt klasse, i start-rekkefølge.
@@ -638,6 +626,6 @@ set n2.starttime = n1.othertime
         conn.commit()
         conn.close()
     except pymysql.Error as err:
-        print(f"MySQL-feil: {err}")
+        logging.error(f"MySQL-feil: {err}")
     except Exception as e:
-        print(f"Uventet feil: {e}")
+        logging.error(f"Uventet feil: {e}")

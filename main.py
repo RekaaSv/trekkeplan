@@ -19,9 +19,12 @@ def global_exception_hook(exctype, value, tb):
 def main():
     # Logging-oppsett
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()]
+        handlers=[
+            logging.FileHandler("trekkeplan.log", encoding="utf-8"),
+            logging.StreamHandler()
+        ]
     )
 
     # Global feilhåndtering

@@ -1,3 +1,5 @@
+import logging
+
 import pymysql
 
 
@@ -8,14 +10,14 @@ class ConnectionManager:
 
     def get_connection(self):
         try:
-            if self.log: print("get_connection")
+            logging.info("get_connection")
             host = self.db_config.get("host", "localhost")
             port = self.db_config.getint("port", 3306)
             user = self.db_config["user"]
             password = self.db_config["password"]
             database = self.db_config["database"]
 
-            if self.log: print(f"Kobler til: {host}:{port} bruker={user} db={database}")
+            logging.info(f"Kobler til: {host}:{port} bruker={user} db={database}")
 
             conn = pymysql.connect(
                 host=host,
@@ -24,8 +26,8 @@ class ConnectionManager:
                 password=password,
                 database=database
             )
-            if self.log: print("Connection established")
+            logging.info("Connection established")
             return conn
         except Exception as e:
-            print("❌ Feil ved tilkobling:", e)
+            logging.error("❌ Feil ved tilkobling: %s", e)
             raise

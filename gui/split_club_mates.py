@@ -1,3 +1,5 @@
+import logging
+
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QTableWidgetItem, QMenu, QAction, QLabel, QPushButton, \
@@ -9,7 +11,7 @@ from db import queries
 class SplitClubMates(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        if parent.log: print("SplitClubMates")
+        logging.info("SplitClubMates")
         self.parent = parent
         self.setWindowTitle("Splitt klubbkompiser")
 #        self.resize(1000, 700)
@@ -23,6 +25,7 @@ class SplitClubMates(QDialog):
         self.venstre.setSelectionBehavior(QTableWidget.SelectRows)
         self.venstre.setSelectionMode(QTableWidget.SingleSelection)
         self.venstre.verticalHeader().setVisible(False)
+        parent.keep_selection_colour(self.venstre)
 
         self.right_columns = [0, 0, 80, 200, 250, 70]
         self.hoyre = QTableWidget()
@@ -30,6 +33,7 @@ class SplitClubMates(QDialog):
         self.hoyre.verticalHeader().setVisible(False)
         self.hoyre.setContextMenuPolicy(Qt.CustomContextMenu)
         self.hoyre.customContextMenuRequested.connect(self.menu_swap_times)
+        parent.keep_selection_colour(self.hoyre)
 
         # Overskrifter
 #        venstre_label = QLabel("🔍 Klubbkamerater rett etter hverandre")
@@ -100,14 +104,14 @@ class SplitClubMates(QDialog):
 
         self.refresh_left()
 
-        if parent.log: print("SplitClubMates layout end")
+        logging.info("SplitClubMates layout end")
 
 
     def refresh_left(self):
-        if self.parent.log: print("SplitClubMates.refresh_left")
+        logging.info("SplitClubMates.refresh_left")
         rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.raceId)
-        if self.parent.log: print("columns", columns)
-        if self.parent.log: print("rows", rows)
+        logging.debug("columns: %s", columns)
+        logging.debug("rows: %s", rows)
 
         self.parent.populate_table(self.venstre, columns, rows)
 
@@ -119,7 +123,7 @@ class SplitClubMates(QDialog):
             self.venstre.selectRow(0)
 
     def refresh_right(self):
-        if self.parent.log: print("SplitClubMates.refresh_right")
+        logging.info("SplitClubMates.refresh_right")
         # Finn verdier fra selektert rad i venstre tabell.
         selected = None
         model_indexes = self.venstre.selectionModel().selectedRows()
@@ -133,23 +137,23 @@ class SplitClubMates(QDialog):
         left_id = self.venstre.item(selected, 0).text()
         previd = self.venstre.item(selected, 1).text()
         classid = self.venstre.item(selected, 2).text()
-        if self.parent.log: print("_oppdater_hoyre", classid)
-        if self.parent.log: print("left_id", left_id)
+        logging.debug("_oppdater_hoyre: %s", classid)
+        logging.debug("left_id: %s", left_id)
 
         # Populer høyre tabell.
         rows, columns = queries.read_names(self.parent.conn_mgr, classid)
-        if self.parent.log: print("columns", columns)
-        if self.parent.log: print("rows", rows)
+        logging.debug("columns: %s", columns)
+        logging.debug("rows: %s", rows)
         self.parent.populate_table(self.hoyre, columns, rows)
 
         # Marker radene som har id lik venstre tabell sin id eller previd.
         first_found_row_inx = None
         for rad_inx in range(self.hoyre.rowCount()):
-            print("rad_inx", rad_inx)
+            logging.debug("rad_inx: %s", rad_inx)
             my_id = self.hoyre.item(rad_inx, 0).text()
-            print("my_id", my_id)
+            logging.debug("my_id: %s", my_id)
             match = (my_id == left_id) or (my_id == previd)
-            print("match", match)
+            logging.debug("match: %s", match)
             if match:
                 # Husk den første match'en for scrollToItem lenger ned i koden.
                 if first_found_row_inx is None:
@@ -166,23 +170,20 @@ class SplitClubMates(QDialog):
 #            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))
             # Feilet av og til. Lag forsinkelse med singleShot
             QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3)))
-            print("scrollToItem, rad_inx", first_found_row_inx)
+            logging.info("scrollToItem, rad_inx: %s", first_found_row_inx)
         else:
-            print("ERROR: first_found_row_inx is None!")
-
-#        if self.parent.log: print("verticalScrollBar 1", self.hoyre.verticalScrollBar().isVisible())
-#        if self.parent.log: QTimer.singleShot(0, lambda: print("verticalScrollBar 2", self.hoyre.verticalScrollBar().isVisible()))
+            logging.info("ERROR: first_found_row_inx is None!")
 
 
     def marker_rad(self, rad_inx, match):
-        if self.parent.log: print("SplitClubMates.marker_rad", rad_inx, match)
+        logging.info("SplitClubMates.marker_rad: %s, %s", rad_inx, match)
         lys_bla = QColor(220, 235, 255)
         standard = QColor(Qt.white)
 
         for kol_inx in range(self.hoyre.columnCount()):
-            if self.parent.log: print("kol_inx", kol_inx)
+            logging.debug("kol_inx: %s", kol_inx)
             item = self.hoyre.item(rad_inx, kol_inx)
-            if self.parent.log: print("item", item)
+            logging.debug("item: %s", item)
             if item is None:
                 continue
 
@@ -194,7 +195,7 @@ class SplitClubMates(QDialog):
     def menu_swap_times(self, pos):
         rad_index = self.hoyre.rowAt(pos.y())
         if rad_index < 0:
-            print("Ingen rad under musepeker – meny avbrytes")
+            logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
         meny = QMenu(self)
@@ -205,7 +206,7 @@ class SplitClubMates(QDialog):
         meny.exec_(self.hoyre.viewport().mapToGlobal(pos))
 
     def swap_start_times(self):
-        print("swap_start_times")
+        logging.info("swap_start_times")
         model_indexes = self.hoyre.selectionModel().selectedRows()
 
         if len(model_indexes) != 2:
@@ -217,8 +218,8 @@ class SplitClubMates(QDialog):
         id1 = self.hoyre.item(inx1, 0).text()
         id2 = self.hoyre.item(inx2, 0).text()
 
-        print("id1", id1)
-        print("id2", id2)
+        logging.debug("id1: %s", id1)
+        logging.debug("id2: %s", id2)
         queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.raceId)
 
         self.refresh_right()
@@ -233,5 +234,5 @@ class SplitClubMates(QDialog):
 
     def closeEvent(self, event):
         size = self.size()
-        print(f"Vinduet avsluttes med størrelse: {size.width()} x {size.height()}")
+        logging.info(f"Vinduet avsluttes med størrelse: {size.width()} x {size.height()}")
         super().closeEvent(event)

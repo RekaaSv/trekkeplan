@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import defaultdict
 
@@ -23,7 +24,7 @@ class HtmlBuilder:
 
     @staticmethod
     def table(rows, columns, border=1):
-        print("html.table")
+        logging.info("html.table")
         """Lag en <table> med kolonnenavn og rader"""
         html = f"<table border='{border}'>\n  <tr>"
         for col in columns:
