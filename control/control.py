@@ -63,30 +63,28 @@ def refresh_table(self, table):
     if self.log: print("control.refresh_table")
     print("table:",table )
     rows, columns = None, None
+    col_widths = None
     if table == self.tableNotPlanned:
+        if self.log: print("control.refresh_table tableNotPlanned")
         rows, columns = queries.read_not_planned(self.conn_mgr, self.raceId)
+        col_widths = self.col_widths_not_planned
     elif table == self.tableBlockLag:
+        if self.log: print("control.refresh_table tableBlockLag")
         rows, columns = queries.read_block_lags(self.conn_mgr, self.raceId)
+        col_widths = self.col_widths_block_lag
     elif table == self.tableClassStart:
+        if self.log: print("control.refresh_table tableClassStart")
         rows, columns = queries.read_class_starts(self.conn_mgr, self.raceId)
-    elif table == self.table_race:
-        rows, columns = queries.read_race_list(self.conn_mgr)
+        col_widths = self.col_widths_class_start
     else:
         raise Exception("Systemfeil!")
 
+
     self.populate_table(table, columns, rows)
+    self.set_table_sizes(table, col_widths)
+
     if table == self.tableClassStart:
         self.sett_redigerbare_kolonner(self.tableClassStart, [10, 11])
-
-def refresh_race_list(self, dialog):
-    if self.log: print("control.refresh_race_list")
-    rows, columns = None, None
-    rows, columns = queries.read_race_list(self.conn_mgr)
-#    print(columns)
-
-    self.populate_table(dialog.table_race, columns, rows)
-
-    dialog.table_race.setColumnHidden(3, True)
 
 def read_names(self, classid):
     if self.log: print("control.read_names")

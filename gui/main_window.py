@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QHeaderView, QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame
-from PyQt5.QtCore import Qt, QTime, QSettings, QUrl
+from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer
 from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices
 
 from control import control
@@ -21,11 +21,17 @@ class MainWindow(QWidget):
         self.pdf_path = pdf_path
         self.config = config
         self.conn_mgr: ConnectionManager = conn_mgr
+        self.col_widths_not_planned = [0, 120, 50, 100, 60]
+        self.col_widths_block_lag = [0, 0, 100, 50, 50, 70]
+        self.col_widths_class_start = [0, 0, 100, 50, 0, 120, 100, 60, 50, 60, 70, 70, 70, 70]
 
         self.raceId = self.hent_raceid()
         self.str_new_first_start = None
 #        self.setGeometry(0, 0, 1800, 900)
-        self.setGeometry(0, 0, 1677, 812)
+#        self.setGeometry(0, 0, 1677, 812)
+#        self.setGeometry(0, 0, 1677, 780)
+        self.resize(1677, 780)
+        self.move(0, 0)
 
         self.log = True
         self.race_name = None
@@ -61,7 +67,6 @@ class MainWindow(QWidget):
         self.field_gap.setFixedWidth(40)
         self.field_gap.setValidator(QIntValidator(0, 999))
         self.field_gap.setText("60")
-
 
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -178,45 +183,20 @@ class MainWindow(QWidget):
 
         self.tableNotPlanned.setColumnHidden(0, True)
         self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
-#        self.tableNotPlanned.resizeColumnsToContents()
-        self.set_fixed_widths(self.tableNotPlanned, [0, 120, 50, 100, 60])
-        self.tableNotPlanned.resizeRowsToContents()
-        self.juster_tabellhøyde(self.tableNotPlanned)
-        self.juster_tabell_vidde(self.tableNotPlanned)
-
-#        header = self.tableNotPlanned.horizontalHeader()
-#        header.setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.tableBlockLag.setColumnHidden(0, True)
         self.tableBlockLag.setColumnHidden(1, True)
         self.tableBlockLag.sortItems(2, order=Qt.AscendingOrder)
-#        self.tableBlockLag.resizeColumnsToContents()
-        self.set_fixed_widths(self.tableBlockLag, [0, 0, 100, 50, 50, 70])
-        self.print_col_width(self.tableNotPlanned)
-        self.tableBlockLag.resizeRowsToContents()
-        self.juster_tabellhøyde(self.tableBlockLag)
-        self.juster_tabell_vidde(self.tableBlockLag)
-
-#        header2 = self.tableBlockLag.horizontalHeader()
-#        header2.setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.tableClassStart.setColumnHidden(0, True)
         self.tableClassStart.setColumnHidden(1, True)
         self.tableClassStart.setColumnHidden(4, True) # Sortorder
-#        self.tableClassStart.resizeColumnsToContents()
-        self.set_fixed_widths(self.tableClassStart, [0, 0, 100, 50, 0, 120, 100, 60, 50, 60, 70, 70, 70, 70])
-        self.tableClassStart.resizeRowsToContents()
-        self.juster_tabellhøyde(self.tableClassStart)
-        self.juster_tabell_vidde(self.tableClassStart)
+
         self.tableClassStart.itemChanged.connect(self.classStart_item_changed)
-#        header3 = self.tableClassStart.horizontalHeader()
-#        header3.setSectionResizeMode(1, QHeaderView.Stretch)
 
 #        self.print_col_width(self.tableNotPlanned)
 #        self.print_col_width(self.tableBlockLag)
 #        self.print_col_width(self.tableClassStart)
-
-
 
         # Behold samme farge når tabell ikke er i fokus.
         self.keep_selection_colour(self)
@@ -348,10 +328,7 @@ class MainWindow(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 table.setItem(row_idx, col_idx, QTableWidgetItem(item))
         if is_sorted: table.setSortingEnabled(True)
-        self.juster_tabellhøyde(table)
-        self.juster_tabell_vidde(table)
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-#        table.setMaximumHeight(100)
 
         self.tableClassStart.blockSignals(False)
         if self.log: print("populate_table end")
@@ -701,10 +678,12 @@ class MainWindow(QWidget):
 
     def select_race(self: QWidget):
         if self.log: print("select_race")
-        dialog = SelectRaceDialog([])
+#        dialog = SelectRaceDialog([], self)
+        dialog = SelectRaceDialog(self)
         dialog.setWindowIcon(QIcon(self.icon_path))
 
-        control.refresh_race_list(self, dialog)
+#        control.refresh_race_list(self, dialog)
+        if self.log: print("select_race 2")
 
         if dialog.exec_() == QDialog.Accepted:
             valgt_id = dialog.valgt_løpsid
@@ -782,6 +761,7 @@ class MainWindow(QWidget):
         return int(verdi) if verdi is not None else 0
 
     def juster_tabellhøyde(self, table, max_height = 600):
+        if self.log: print("juster_tabellhøyde")
         header_h = table.horizontalHeader().height()
         rad_høyde = header_h
         scrollbar_h = table.horizontalScrollBar().height() if table.horizontalScrollBar().isVisible() else 0
@@ -791,6 +771,7 @@ class MainWindow(QWidget):
 #        print("høyder", header_h, rad_høyde, scrollbar_h, total_høyde, begrenset_høyde)
 
     def juster_tabell_vidde(self, tabell, ekstra_margin=2):
+        if self.log: print("juster_tabell_vidde")
         total_bredde = sum(tabell.columnWidth(kol) for kol in range(tabell.columnCount()))
         vertikal_scroll = tabell.verticalScrollBar().sizeHint().width() # if tabell.verticalScrollBar().isVisible() else 0
         ramme = tabell.frameWidth() * 2
@@ -820,3 +801,9 @@ class MainWindow(QWidget):
         size = self.size()
         print(f"Vinduet avsluttes med størrelse: {size.width()} x {size.height()}")
         super().closeEvent(event)
+
+    def set_table_sizes(self, table, col_sizes):
+        self.set_fixed_widths(table, col_sizes)
+        table.resizeRowsToContents()
+        self.juster_tabellhøyde(table)
+        self.juster_tabell_vidde(table)

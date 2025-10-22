@@ -18,11 +18,13 @@ class SplitClubMates(QDialog):
         self.setFont(parent.font())  # arver font fra hovedvinduet
 
         # Tabeller
+        self.left_columns = [0, 0, 0, 80, 200, 250, 70]
         self.venstre = QTableWidget()
         self.venstre.setSelectionBehavior(QTableWidget.SelectRows)
         self.venstre.setSelectionMode(QTableWidget.SingleSelection)
         self.venstre.verticalHeader().setVisible(False)
 
+        self.right_columns = [0, 0, 80, 200, 250, 70]
         self.hoyre = QTableWidget()
         self.hoyre.setSelectionBehavior(QTableWidget.SelectRows)
         self.hoyre.verticalHeader().setVisible(False)
@@ -87,6 +89,8 @@ class SplitClubMates(QDialog):
         self.venstre.setColumnHidden(0, True)
         self.venstre.setColumnHidden(1, True)
         self.venstre.setColumnHidden(2, True)
+        self.hoyre.setColumnHidden(0, True)
+        self.hoyre.setColumnHidden(1, True)
 
         parent.keep_selection_colour(self)
 
@@ -96,28 +100,23 @@ class SplitClubMates(QDialog):
 
 
     def refresh_left(self):
-        if self.parent.log: print("refresh_left")
+        if self.parent.log: print("SplitClubMates.refresh_left")
         rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.raceId)
         if self.parent.log: print("columns", columns)
         if self.parent.log: print("rows", rows)
 
-        if self.parent.log: print("SplitClubMates")
         self.parent.populate_table(self.venstre, columns, rows)
 
-        #        self.venstre.resizeColumnsToContents()
-        #        parent.print_col_width(self.venstre)
-        self.parent.set_fixed_widths(self.venstre, [0, 0, 0, 80, 200, 250, 70])
-        self.venstre.resizeRowsToContents()
-        self.parent.juster_tabellhøyde(self.venstre)
+        # Dimesjoner tabellen.
+        self.parent.set_table_sizes(self.venstre, self.left_columns)
+
+        # Selekter 1. rad.
         if self.venstre.rowCount() > 0:
             self.venstre.selectRow(0)
 
-
     def refresh_right(self):
-        if self.parent.log: print("refresh_right")
-        # Finn verdier fra selektert rad.
-#        selected = self.venstre.currentRow()
-
+        if self.parent.log: print("SplitClubMates.refresh_right")
+        # Finn verdier fra selektert rad i venstre tabell.
         selected = None
         model_indexes = self.venstre.selectionModel().selectedRows()
         if model_indexes:
@@ -127,7 +126,6 @@ class SplitClubMates(QDialog):
             self.hoyre.setRowCount(0)
             self.hoyre.setColumnCount(0)
             return
-
         left_id = self.venstre.item(selected, 0).text()
         previd = self.venstre.item(selected, 1).text()
         classid = self.venstre.item(selected, 2).text()
@@ -140,7 +138,7 @@ class SplitClubMates(QDialog):
         if self.parent.log: print("rows", rows)
         self.parent.populate_table(self.hoyre, columns, rows)
 
-        # Marker radene med id og previd.
+        # Marker radene som har id lik venstre tabell sin id eller previd.
         first_found_row_inx = None
         for rad_inx in range(self.hoyre.rowCount()):
             print("rad_inx", rad_inx)
@@ -149,27 +147,28 @@ class SplitClubMates(QDialog):
             match = (my_id == left_id) or (my_id == previd)
             print("match", match)
             if match:
+                # Husk den første match'en for scrollToItem lenger ned i koden.
                 if first_found_row_inx is None:
-#                    self.hoyre.scrollToItem(self.hoyre.item(rad_inx, 3))
-#                    QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(rad_inx, 0)))
                     first_found_row_inx = rad_inx
             self.marker_rad(rad_inx, match)
 
-        self.hoyre.setColumnHidden(0, True)
-        self.hoyre.setColumnHidden(1, True)
+#        self.hoyre.setColumnHidden(0, True)
+#        self.hoyre.setColumnHidden(1, True)
 
-#        self.hoyre.resizeColumnsToContents()
-        self.parent.set_fixed_widths(self.hoyre, [0, 0, 80, 200, 250, 70])
-
-        self.hoyre.resizeRowsToContents()
-        self.parent.juster_tabellhøyde(self.hoyre)
+        # Dimesjoner tabellen.
+        self.parent.set_table_sizes(self.hoyre, self.right_columns)
 
         if first_found_row_inx is not None:
 #            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))
+            # Feilet av og til. Lag forsinkelse med singleShot
             QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3)))
             print("scrollToItem, rad_inx", first_found_row_inx)
         else:
             print("ERROR: first_found_row_inx is None!")
+
+#        if self.parent.log: print("verticalScrollBar 1", self.hoyre.verticalScrollBar().isVisible())
+#        if self.parent.log: QTimer.singleShot(0, lambda: print("verticalScrollBar 2", self.hoyre.verticalScrollBar().isVisible()))
+
 
     def marker_rad(self, rad_inx, match):
         if self.parent.log: print("SplitClubMates.marker_rad", rad_inx, match)
