@@ -1,26 +1,48 @@
 import configparser
+import logging
 import os
+import traceback
+
+import pymysql
 
 from db.connection import ConnectionManager
 from gui.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
 import sys
 
-def main():
-    app = QApplication(sys.argv)
-    icon_path = resource_path("terning.ico")
-    pdf_path = resource_path("hjelp.pdf")
+def global_exception_hook(exctype, value, tb):
+    logging.error("Uventet feil", exc_info=(exctype, value, tb))
+    msg = f"{exctype.__name__}: {value}"
+    QMessageBox.critical(None, "Uventet feil", msg)
+    traceback.print_exception(exctype, value, tb)
 
-    app.setStyleSheet("""
-    QToolTip {
-        background-color: rgb(255, 255, 220);  /* svak gul */
-        color: black;
-        border: 1px solid gray;
-        padding: 4px;
-        font-size: 10pt;
-    }
-    """)
+def main():
+    # Logging-oppsett
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.StreamHandler()]
+    )
+
+    # Global feilhåndtering
+    sys.excepthook = global_exception_hook
+
+    # Start GUI
+    app = QApplication(sys.argv)
     try:
+
+        icon_path = resource_path("terning.ico")
+        pdf_path = resource_path("hjelp.pdf")
+
+        app.setStyleSheet("""
+        QToolTip {
+            background-color: rgb(255, 255, 220);  /* svak gul */
+            color: black;
+            border: 1px solid gray;
+            padding: 4px;
+            font-size: 10pt;
+        }
+        """)
         # Sikrer at det fungerer også når exe-filen startes fra annet sted.
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         config_path = os.path.join(base_dir, "trekkeplan.cfg")
@@ -28,24 +50,27 @@ def main():
         config = configparser.ConfigParser()
         config.read(config_path)
         db_config = config["mysql"]
-
         conn_mgr = ConnectionManager(db_config)
         conn_mgr.get_connection()
-    except Exception as e:
+
+        # DB-kobling OK, fortsett.
+        window = MainWindow(config, conn_mgr, icon_path, pdf_path)
+        window.show()
+        sys.exit(app.exec_())
+    except pymysql.Error as e:
         QMessageBox.critical(None, "Feil ved DB-kobling", f"Kunne ikke koble til databasen:\n{e}")
-        sys.exit(1)
+        traceback.print_exc()
+        raise
+    except Exception as e:
+        logging.error("Systemfeil", exc_info=True)
+        QMessageBox.critical(None, "Systemfeil", str(e))
+        raise  # sender videre til global_exception_hook
 
-    # DB-kobling OK, fortsett.
-    window = MainWindow(config, conn_mgr, icon_path, pdf_path)
-    window.show()
-
-    sys.exit(app.exec_())
 
 def resource_path(relative_path):
     """Finner riktig bane til ressursen, uansett om det kjøres fra .py eller .exe"""
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
-
 
 
 if __name__ == "__main__":

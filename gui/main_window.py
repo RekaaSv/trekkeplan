@@ -753,22 +753,6 @@ class MainWindow(QWidget):
         for col_inx, width in enumerate(widths):
             table.setColumnWidth(col_inx, width)
 
-    def sett_redigerbare_kolonner(self, table, redigerbare_kolonner: list[int]):
-        if self.log: print("sett_redigerbare_kolonner")
-        self.tableClassStart.blockSignals(True)
-        for rad in range(table.rowCount()):
-            for kol in range(table.columnCount()):
-                item = table.item(rad, kol)
-                if item is None:
-                    item = QTableWidgetItem()
-                    table.setItem(rad, kol, item)
-
-                if kol in redigerbare_kolonner:
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                else:
-                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-        self.tableClassStart.blockSignals(False)
-
     def classStart_item_changed(self, item):
         if self.log: print("classStart_item_changed")
         self.tableClassStart.blockSignals(True)
