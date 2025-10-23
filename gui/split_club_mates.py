@@ -104,6 +104,14 @@ class SplitClubMates(QDialog):
 
         self.refresh_left()
 
+        # Kontekstmeny med funksjonstast.
+        self.meny = QMenu(self)
+        self.swap_action = QAction("Bytt starttider", self)
+        self.meny.addAction(self.swap_action)
+        self.hoyre.addAction(self.swap_action)
+        self.swap_action.setShortcut("F8")
+        self.swap_action.triggered.connect(lambda: self.swap_start_times())
+
         logging.info("SplitClubMates layout end")
 
 
@@ -198,12 +206,7 @@ class SplitClubMates(QDialog):
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
-        meny = QMenu(self)
-        swap_times = QAction("Bytt starttider", self)
-        swap_times.triggered.connect(lambda: self.swap_start_times())
-        meny.addAction(swap_times)
-
-        meny.exec_(self.hoyre.viewport().mapToGlobal(pos))
+        self.meny.exec_(self.hoyre.viewport().mapToGlobal(pos))
 
     def swap_start_times(self):
         logging.info("swap_start_times")

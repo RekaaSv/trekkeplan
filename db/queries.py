@@ -88,7 +88,7 @@ def read_block_lags(conn_mgr, raceid):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
+SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
    ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
@@ -99,7 +99,7 @@ def read_block_lag(conn_mgr, blocklagid):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.defaulttimegap Gap
+SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
    ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
@@ -441,7 +441,7 @@ def add_blocklag(conn_mgr, blockid, lag, gap):
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO startblocklags (startblockid, timelag, defaulttimegap)
+INSERT INTO startblocklags (startblockid, timelag, timegap)
 VALUES (%s, %s, %s)
 """
         cursor.execute(sql, (blockid, lag, gap))
