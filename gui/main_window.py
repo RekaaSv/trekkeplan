@@ -3,7 +3,7 @@ import logging
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
     QApplication, QShortcut
-from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer
+from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer, QSize
 from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence
 
 from control import control
@@ -154,7 +154,7 @@ class MainWindow(QWidget):
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
-        self.moveButton = QPushButton("===>    F6")
+        self.moveButton = QPushButton("=====>        (F6)")
         self.moveButton.setStyleSheet(self.button_style)
         self.moveButton.setFixedWidth(200)
         self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
@@ -165,7 +165,7 @@ class MainWindow(QWidget):
 #        move_shortcut.activated.connect(self.moveButton.click)  # Simulerer knappetrykk
 #        self.move_shortcut.activated.connect(lambda: print("F6 trykket"))  # Simulerer knappetrykk
 
-        self.removeButton = QPushButton("<===    F7")
+        self.removeButton = QPushButton("<=====        (F7)")
         self.removeButton.setStyleSheet(self.button_style)
         self.removeButton.setFixedWidth(200)
         self.removeButton.setToolTip("Fjern valgt klasse fra Trekkeplan")
@@ -342,14 +342,24 @@ class MainWindow(QWidget):
         new_blocklag_layout.addWidget(self.field_gap)
         new_blocklag_layout.addStretch()
 
+        button_row1_layout = QHBoxLayout()
+        button_row1_layout.addStretch()
+        button_row1_layout.addWidget(self.moveButton)
+        button_row1_layout.addStretch()
+        button_row2_layout = QHBoxLayout()
+        button_row2_layout.addStretch()
+        button_row2_layout.addWidget(self.removeButton)
+        button_row2_layout.addStretch()
+
+
         column3_layout.addWidget(title_block_lag)
         column3_layout.addLayout(new_blocklag_layout)
         column3_layout.addWidget(self.addBlockButton)
         column3_layout.addWidget(self.tableBlockLag)
         column3_layout.addStretch()
-        column3_layout.addWidget(self.moveButton)
+        column3_layout.addLayout(button_row1_layout)
         column3_layout.addStretch()
-        column3_layout.addWidget(self.removeButton)
+        column3_layout.addLayout(button_row2_layout)
         column3_layout.addStretch()
 
 #        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
