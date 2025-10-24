@@ -524,6 +524,7 @@ class MainWindow(QWidget):
         control.delete_class_start_row(self, self.raceId, classstartid)
 
         control.refresh_table(self, self.tableNotPlanned)
+        control.refresh_table(self, self.tableBlockLag)
         control.refresh_table(self, self.tableClassStart)
 
         # Refarge valgbare

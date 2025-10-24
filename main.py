@@ -17,16 +17,6 @@ def global_exception_hook(exctype, value, tb):
     traceback.print_exception(exctype, value, tb)
 
 def main():
-    # Logging-oppsett
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.FileHandler("trekkeplan.log", encoding="utf-8"),
-            logging.StreamHandler()
-        ]
-    )
-
     # Global feilhåndtering
     sys.excepthook = global_exception_hook
 
@@ -46,15 +36,30 @@ def main():
             font-size: 10pt;
         }
         """)
+
         # Sikrer at det fungerer også når exe-filen startes fra annet sted.
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         config_path = os.path.join(base_dir, "trekkeplan.cfg")
-
         config = configparser.ConfigParser()
         config.read(config_path)
         db_config = config["mysql"]
+        log_config = config["logging"]
+
+        # Logging-oppsett ufra konfig fil.
+        log_level = log_config.get("level", fallback="INFO")
+        log_file = log_config.get("file", fallback="trekkeplan.log")
+        logging.basicConfig(
+            level=getattr(logging, log_level.upper(), logging.INFO),
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=[
+                logging.FileHandler(log_file, encoding="utf-8"),
+                logging.StreamHandler()
+            ]
+        )
+
         conn_mgr = ConnectionManager(db_config)
         conn_mgr.get_connection()
+
 
         # DB-kobling OK, fortsett.
         window = MainWindow(config, conn_mgr, icon_path, pdf_path)

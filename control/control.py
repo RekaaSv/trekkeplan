@@ -13,6 +13,7 @@ def first_start_edited(self, raceId, str_new_first_start):
 def delete_class_start_row(self, raceId, classstartId):
     logging.info("control.delete_class_start_row")
     queries.delete_class_start_row(self.conn_mgr, raceId, classstartId)
+    queries.rebuild_class_starts(self.conn_mgr, raceId)
 
 def delete_class_start_rows(self, raceId, blocklagId):
     logging.info("control.delete_class_start_rows")
