@@ -4,6 +4,7 @@ import pymysql
 from control.errors import MyCustomError
 
 def read_race_list(conn_mgr):
+    logging.info("db.read_race_list")
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -18,6 +19,7 @@ ORDER BY r.created DESC
 Løpere som har klubbkamerat i samme klasse rett før.
 """
 def read_club_mates(conn_mgr, raceid):
+    logging.info("db.read_club_mates")
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -61,6 +63,7 @@ WHERE r.id = %s
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_not_planned(conn_mgr, raceid):
+    logging.info("db.read_not_planned, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -85,17 +88,20 @@ WHERE cl.raceid = %s AND cl.cource = 0
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_block_lags(conn_mgr, raceid):
+    logging.info("db.read_block_lags, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
    ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
-JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s"""
+JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
+"""
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_block_lag(conn_mgr, blocklagid):
+    logging.info("db.read_block_lag, blocklagid: %s", blocklagid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -109,6 +115,7 @@ JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
 
 
 def read_class_starts(conn_mgr, raceid):
+    logging.info("db.read_class_starts, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -136,6 +143,7 @@ ORDER BY  sb.name, sbl.timelag, cls.sortorder
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def upd_first_start(conn_mgr, raceid, new_value):
+    logging.info("db.upd_first_start, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -156,6 +164,7 @@ WHERE id = %s
  Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
 """
 def rebuild_class_starts(conn_mgr, raceid):
+    logging.info("db.rebuild_class_starts, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -207,6 +216,7 @@ SET stcl2.sortorder = classst.newsortorder
         logging.error(f"Uventet feil: {e}")
 
 def rebuild_class_starts_partition(conn_mgr, raceid, blocklagid):
+    logging.info("db.rebuild_class_starts_partition, blocklagid %s", blocklagid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -262,6 +272,7 @@ SET stcl2.sortorder = classst.newsortorder
         logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_row(conn_mgr, raceId, classstartId):
+    logging.info("db.delete_class_start_row, id: %s", classstartId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -277,6 +288,7 @@ DELETE FROM classstarts WHERE id = %s
         logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_rows(conn_mgr, raceId, blocklagId):
+    logging.info("db.delete_class_start_rows, blocklagid: %s", blocklagId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -292,6 +304,7 @@ DELETE FROM classstarts WHERE blocklagid = %s
         logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_all(conn_mgr, raceId):
+    logging.info("db.delete_class_start_all, raceid: %s", raceId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -315,6 +328,7 @@ WHERE cl.cource = 0
 
 
 def delete_blocklag(conn_mgr, raceId, blocklagId):
+    logging.info("db.delete_blocklag, blocklagId: %s", blocklagId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -337,6 +351,7 @@ WHERE sbl.id = %s
         logging.error(f"Uventet feil: {e}")
 
 def delete_block(conn_mgr, raceId, blockId):
+    logging.info("db.delete_block, blockId: %s", blockId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -359,6 +374,7 @@ WHERE sb.id = %s
         logging.error(f"Uventet feil: {e}")
 
 def insert_class_start_not(conn_mgr, raceId, classId):
+    logging.info("db.insert_class_start_not, classId: %s", classId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -375,6 +391,7 @@ INSERT INTO classstarts_not (classid)
         logging.error(f"Uventet feil: {e}")
 
 def delete_class_start_not(conn_mgr, raceId):
+    logging.info("db.delete_class_start_not, raceId: %s", raceId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -396,6 +413,7 @@ WHERE csn.classid in (
         logging.error(f"Uventet feil: {e}")
 
 def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder):
+    logging.info("db.insert_class_start, blocklagId: %s, classId: %s", blocklagId, classId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -413,6 +431,7 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
 
 
 def add_block(conn_mgr, raceId, block):
+    logging.info("db.add_block, block: %s", block)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -437,6 +456,7 @@ VALUES (%s, %s)
 
 
 def add_blocklag(conn_mgr, blockid, lag, gap):
+    logging.info("db.add_blocklag, blockid: %s, lag: %s, gap: %s", blockid, lag, gap)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -462,6 +482,7 @@ VALUES (%s, %s, %s)
 
 
 def upd_class_start_free_before(conn_mgr, raceId, classstartid, new_value):
+    logging.info("db.upd_class_start_free_before, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -479,6 +500,7 @@ WHERE id = %s
         logging.error(f"Uventet feil: {e}")
 
 def upd_class_start_free_after(conn_mgr, raceId, classstartid, new_value):
+    logging.info("db.upd_class_start_free_after, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -496,6 +518,7 @@ WHERE id = %s
         logging.error(f"Uventet feil: {e}")
 
 def sql_start_list(conn_mgr, raceid):
+    logging.info("db.sql_start_list, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -516,6 +539,7 @@ ORDER BY cl.sortorder, n.starttime
         logging.error(f"Uventet feil: {e}")
 
 def sql_starter_list(conn_mgr, raceid):
+    logging.info("db.sql_starter_list, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -539,6 +563,7 @@ ORDER BY n.starttime, cl.sortorder
 
 
 def clear_start_times(conn_mgr, raceId):
+    logging.info("db.clear_start_times, raceid: %s", raceId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -563,6 +588,7 @@ SET n.starttime = null
         logging.error(f"Uventet feil: {e}")
 
 def draw_start_times(conn_mgr, raceId):
+    logging.info("db.draw_start_times, raceId: %s", raceId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -592,6 +618,7 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
 Alle løpere i gitt klasse, i start-rekkefølge.
 """
 def read_names(conn_mgr, classid):
+    logging.info("db.read_names, classid: %s", classid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -606,6 +633,7 @@ ORDER BY n.starttime
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def swap_start_times(conn_mgr, id1, id2, raceId):
+    logging.info("db.swap_start_times: %s, %s", id1, id2)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()

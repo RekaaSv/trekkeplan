@@ -2,9 +2,9 @@ import logging
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
-    QApplication
+    QApplication, QShortcut
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer
-from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence
 
 from control import control
 from control.errors import MyCustomError
@@ -106,10 +106,10 @@ class MainWindow(QWidget):
         self.tableNotPlanned.verticalHeader().setVisible(False)
         self.tableNotPlanned.setSortingEnabled(True)
         self.tableNotPlanned.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableNotPlanned.customContextMenuRequested.connect(self.not_planned_menu)
+        self.tableNotPlanned.customContextMenuRequested.connect(self.show_not_planned_menu)
         # Og på header.
         self.tableNotPlanned.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableNotPlanned.horizontalHeader().customContextMenuRequested.connect(self.not_planned_header_menu)
+        self.tableNotPlanned.horizontalHeader().customContextMenuRequested.connect(self.show_not_planned_header_menu)
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -120,7 +120,7 @@ class MainWindow(QWidget):
         self.tableBlockLag.verticalHeader().setVisible(False)
         self.tableBlockLag.setSortingEnabled(True)
         self.tableBlockLag.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableBlockLag.customContextMenuRequested.connect(self.block_lag_menu)
+        self.tableBlockLag.customContextMenuRequested.connect(self.show_block_lag_menu)
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
 #        self.tableClassStart.setMinimumSize(660, 100)
@@ -130,7 +130,7 @@ class MainWindow(QWidget):
         self.tableClassStart.verticalHeader().setVisible(False)
         self.tableClassStart.setSortingEnabled(False)
         self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableClassStart.customContextMenuRequested.connect(self.class_start_menu)
+        self.tableClassStart.customContextMenuRequested.connect(self.show_class_start_menu)
 
         self.hjelp_knapp = QPushButton("Hjelp")
         self.hjelp_knapp.setStyleSheet(self.button_style)
@@ -154,11 +154,22 @@ class MainWindow(QWidget):
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
-        self.moveButton = QPushButton("📥 Flytt hit")
+        self.moveButton = QPushButton("===>    F6")
         self.moveButton.setStyleSheet(self.button_style)
-        self.moveButton.setFixedWidth(100)
+        self.moveButton.setFixedWidth(200)
         self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
         self.moveButton.clicked.connect(self.move_class_to_plan)
+        # F6 simulerer trykk på knappen.
+        self.move_shortcut = QShortcut(QKeySequence("F6"), self)
+        self.move_shortcut.setContext(Qt.WidgetShortcut)  # Kun aktiv når hovedvinduet har fokus
+#        move_shortcut.activated.connect(self.moveButton.click)  # Simulerer knappetrykk
+#        self.move_shortcut.activated.connect(lambda: print("F6 trykket"))  # Simulerer knappetrykk
+
+        self.removeButton = QPushButton("<===    F7")
+        self.removeButton.setStyleSheet(self.button_style)
+        self.removeButton.setFixedWidth(200)
+        self.removeButton.setToolTip("Fjern valgt klasse fra Trekkeplan")
+        self.removeButton.clicked.connect(self.slett_class_start_rad)
 
         self.addBlockButton = QPushButton("➕ Legg til")
         self.addBlockButton.setStyleSheet(self.button_style)
@@ -241,15 +252,17 @@ class MainWindow(QWidget):
 
         # Kontekstmeny med funksjonstast.
         self.menu_non_planned = QMenu(self)
-        self.skjul_rader = QAction("Skjul valgte rader.", self)
-        self.vis_skjulte = QAction("Vis skjulte rader igjen.", self)
-        self.menu_non_planned.addAction(self.skjul_rader)
-        self.menu_non_planned.addAction(self.vis_skjulte)
-        self.skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader())
-        self.vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
+        self.action_moveto_plan = QAction("Flytt til planen.", self)
+        self.action_nonplanned_hide = QAction("Skjul valgte klasser.", self)
+        self.action_nonplanned_show = QAction("Vis skjulte klasser igjen.", self)
+        self.menu_non_planned.addAction(self.action_moveto_plan)
+        self.tableNotPlanned.addAction(self.action_moveto_plan)
+        self.action_moveto_plan.setShortcut("F6")
+        self.menu_non_planned.addAction(self.action_nonplanned_hide)
+        self.menu_non_planned.addAction(self.action_nonplanned_show)
 
         self.menu_head = QMenu(self)
-        self.menu_head.addAction(self.vis_skjulte)
+        self.menu_head.addAction(self.action_nonplanned_show)
 
         self.menu_blocklag = QMenu(self)
         self.action_delete_blocklag = QAction("Slett rad", self)
@@ -259,13 +272,22 @@ class MainWindow(QWidget):
         self.action_rem_classstart = QAction("Fjern klassen fra planen", self)
         self.action_rem_bl_start = QAction("Fjern hele bås/slep seksjon", self)
         self.action_rem_all_start = QAction("Fjern alle fra planen", self)
-
+        self.action_rem_classstart.setShortcut("F7")
         self.menu_class_start.addAction(self.action_rem_classstart)
+        self.tableClassStart.addAction(self.action_rem_classstart)
+
         self.menu_class_start.addAction(self.action_rem_bl_start)
         self.menu_class_start.addAction(self.action_rem_all_start)
 
-        self.action_rem_classstart.setShortcut("F7")
-        self.tableClassStart.addAction(self.action_rem_classstart)
+        self.action_moveto_plan.triggered.connect(lambda: self.move_class_to_plan())
+        self.action_nonplanned_hide.triggered.connect(lambda: self.skjul_valgte_rader())
+        self.action_nonplanned_show.triggered.connect(lambda: self.vis_skjulte_rader())
+        self.action_delete_blocklag.triggered.connect(lambda: self.slett_blocklag_rad())
+
+        self.action_rem_classstart.triggered.connect(lambda: self.slett_class_start_rad())
+        self.action_rem_bl_start.triggered.connect(lambda: self.slett_class_start_bås_slep())
+        self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
+
 
 
     def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
@@ -324,9 +346,14 @@ class MainWindow(QWidget):
         column3_layout.addLayout(new_blocklag_layout)
         column3_layout.addWidget(self.addBlockButton)
         column3_layout.addWidget(self.tableBlockLag)
+        column3_layout.addStretch()
+        column3_layout.addWidget(self.moveButton)
+        column3_layout.addStretch()
+        column3_layout.addWidget(self.removeButton)
+        column3_layout.addStretch()
+
 #        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 #        column3_layout.addItem(spacer)
-        column3_layout.addStretch()
 
         bottom_layout.addWidget(self.startListButton)
         bottom_layout.addWidget(self.starterListButton)
@@ -336,7 +363,7 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.buttonDrawStartTimes)
 
         header_class_start_layout = QHBoxLayout()
-        header_class_start_layout.addWidget(self.moveButton)
+#        header_class_start_layout.addWidget(self.moveButton)
         header_class_start_layout.addWidget(title_class_start)
 
         column4_layout.addLayout(header_class_start_layout)
@@ -411,7 +438,7 @@ class MainWindow(QWidget):
         control.refresh_table(self, self.tableClassStart)
         control.refresh_table(self, self.tableBlockLag)
 
-    def not_planned_menu(self, pos):
+    def show_not_planned_menu(self, pos):
         logging.info("not_planned_menu")
         rad_index = self.tableNotPlanned.rowAt(pos.y())
         logging.debug("rad_index: %s", rad_index)
@@ -421,58 +448,40 @@ class MainWindow(QWidget):
 
         self.menu_non_planned.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
-    def not_planned_header_menu(self, pos):
+    def show_not_planned_header_menu(self, pos):
         logging.info("not_planned_header_menu")
         # Høyreklikk på kolonneheader
         self.menu_head.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
-    def class_start_menu(self, pos):
+    def show_class_start_menu(self, pos):
         logging.info("class_start_menu")
         rad_index = self.tableClassStart.rowAt(pos.y())
-        logging.debug("rad_index: %s", rad_index)
         if rad_index < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
-        selected_indexes = self.tableClassStart.selectionModel().selectedRows()
-        if selected_indexes:
-            row_inx = selected_indexes[0].row()
-            if row_inx == rad_index:
-
-                self.action_rem_classstart.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
-                self.action_rem_bl_start.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
-                self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
-
-                #        meny.addAction(flytt_ned)
-                #        meny.addAction(flytt_opp)
-
-                self.menu_class_start.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
-
-# Andre funksjoner: slett alt, fyttNed, flyttOpp.
-
-#        flytt_ned = QAction("Flytt ned", self)
-#        flytt_ned.triggered.connect(lambda: self.flytt_class_start_ned())
-
-#        flytt_opp = QAction("Flytt opp", self)
-#        flytt_opp.triggered.connect(lambda: self.flytt_class_start_opp())
+        self.menu_class_start.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
 
 
-    def block_lag_menu(self, pos):
+    def show_block_lag_menu(self, pos):
         logging.info("block_lag_menu")
         rad_index = self.tableBlockLag.rowAt(pos.y())
         if rad_index < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
-        self.action_delete_blocklag.triggered.connect(lambda: self.slett_blocklag_rad(rad_index))
         self.menu_blocklag.exec_(self.tableBlockLag.viewport().mapToGlobal(pos))
 
-
-    def slett_blocklag_rad(self, rad_index):
+    def slett_blocklag_rad(self):
         logging.info("slett_blocklag_rad")
-        blocklagid = self.tableBlockLag.model().index(rad_index, 0).data()
-        blockid = self.tableBlockLag.model().index(rad_index, 1).data()
-        block = self.tableBlockLag.model().index(rad_index, 2).data()
-        lag = self.tableBlockLag.model().index(rad_index, 3).data()
+        selected = self.tableBlockLag.selectionModel().selectedRows()
+        if not selected:
+            return
+        row_id = selected[0].row()
+
+        blocklagid = self.tableBlockLag.model().index(row_id, 0).data()
+        blockid = self.tableBlockLag.model().index(row_id, 1).data()
+        block = self.tableBlockLag.model().index(row_id, 2).data()
+        lag = self.tableBlockLag.model().index(row_id, 3).data()
 
         returned = control.delete_blocklag(self, self.raceId, blocklagid, blockid)
         if returned:
@@ -482,7 +491,6 @@ class MainWindow(QWidget):
             # Refarge valgbare
             self.tableClassStart.oppdater_filter()
 
-
     def vis_brukermelding(self, tekst):
         logging.info("vis_brukermelding")
         msg = QMessageBox()
@@ -491,11 +499,17 @@ class MainWindow(QWidget):
         msg.setText(tekst)
         msg.exec_()
 
-    def slett_class_start_rad(self, rad_index):
+    def slett_class_start_rad(self):
         logging.info("slett_class_start_rad")
-        classstartid = self.tableClassStart.model().index(rad_index, 0).data()
-        blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
-        klasse = self.tableClassStart.model().index(rad_index, 4).data()
+        selected = self.tableClassStart.selectionModel().selectedRows()
+        if not selected:
+            self.vis_brukermelding("Du må velge klassen som skal fjernes fra planen!")
+            return
+        row_id = selected[0].row()
+
+        classstartid = self.tableClassStart.model().index(row_id, 0).data()
+        blocklagid = self.tableClassStart.model().index(row_id, 1).data()
+        klasse = self.tableClassStart.model().index(row_id, 4).data()
 
         control.delete_class_start_row(self, self.raceId, classstartid)
 
@@ -508,11 +522,16 @@ class MainWindow(QWidget):
     #
     # Slett classStart rader som tilhører valgt bås/slep
     #
-    def slett_class_start_bås_slep(self, rad_index):
+    def slett_class_start_bås_slep(self):
         logging.info("slett_class_start_bås_slep")
-        classstartid = self.tableClassStart.model().index(rad_index, 0).data()
-        blocklagid = self.tableClassStart.model().index(rad_index, 1).data()
-        klasse = self.tableClassStart.model().index(rad_index, 4).data()
+        selected = self.tableClassStart.selectionModel().selectedRows()
+        if not selected:
+            return
+        row_id = selected[0].row()
+
+        classstartid = self.tableClassStart.model().index(row_id, 0).data()
+        blocklagid = self.tableClassStart.model().index(row_id, 1).data()
+        klasse = self.tableClassStart.model().index(row_id, 4).data()
 
         control.delete_class_start_rows(self, self.raceId, blocklagid)
 
@@ -599,13 +618,13 @@ class MainWindow(QWidget):
             self.vis_brukermelding("Du må velge ei klasse å flytte Trekkeplanen!")
             return
         elif (selected_model_rows.__len__() > 9):
-            self.vis_brukermelding("Du kan ikke flytte flere enn 9 klasser til Trekkeplanen samtidig!")
+            self.vis_brukermelding("Du kan ikke flytte flere enn 9 klasser til Trekkeplanen i en runde!")
             return
 
         # Bås/slep
         block_lag_rows = self.tableBlockLag.selectionModel().selectedRows()
         if not block_lag_rows:
-            self.vis_brukermelding("Du må velge et bås/tidsslep-seksjon å flytte til!")
+            self.vis_brukermelding("Du må velge et bås/tidsslep å flytte til!")
             return
 
         # Hvilken bås/slep skal klassen inn i?
@@ -778,3 +797,4 @@ class MainWindow(QWidget):
         table.resizeRowsToContents()
         self.juster_tabellhøyde(table)
         self.juster_tabell_vidde(table)
+
