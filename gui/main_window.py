@@ -239,6 +239,34 @@ class MainWindow(QWidget):
         self.keep_selection_colour(self.tableBlockLag)
         self.keep_selection_colour(self.tableClassStart)
 
+        # Kontekstmeny med funksjonstast.
+        self.menu_non_planned = QMenu(self)
+        self.skjul_rader = QAction("Skjul valgte rader.", self)
+        self.vis_skjulte = QAction("Vis skjulte rader igjen.", self)
+        self.menu_non_planned.addAction(self.skjul_rader)
+        self.menu_non_planned.addAction(self.vis_skjulte)
+        self.skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader())
+        self.vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
+
+        self.menu_head = QMenu(self)
+        self.menu_head.addAction(self.vis_skjulte)
+
+        self.menu_blocklag = QMenu(self)
+        self.action_delete_blocklag = QAction("Slett rad", self)
+        self.menu_blocklag.addAction(self.action_delete_blocklag)
+
+        self.menu_class_start = QMenu(self)
+        self.action_rem_classstart = QAction("Fjern klassen fra planen", self)
+        self.action_rem_bl_start = QAction("Fjern hele bås/slep seksjon", self)
+        self.action_rem_all_start = QAction("Fjern alle fra planen", self)
+
+        self.menu_class_start.addAction(self.action_rem_classstart)
+        self.menu_class_start.addAction(self.action_rem_bl_start)
+        self.menu_class_start.addAction(self.action_rem_all_start)
+
+        self.action_rem_classstart.setShortcut("F7")
+        self.tableClassStart.addAction(self.action_rem_classstart)
+
 
     def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
                     title_first_start: QLabel | QLabel, title_non_planned: QLabel | QLabel):
@@ -391,36 +419,12 @@ class MainWindow(QWidget):
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
-        meny = QMenu(self)
-
-        skjul_rader = QAction("Skjul valgte rader.", self)
-        skjul_rader.triggered.connect(lambda: self.skjul_valgte_rader())
-        meny.addAction(skjul_rader)
-
-        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
-        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
-        meny.addAction(vis_skjulte)
-
-        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
+        self.menu_non_planned.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
     def not_planned_header_menu(self, pos):
         logging.info("not_planned_header_menu")
         # Høyreklikk på kolonneheader
-        meny = QMenu(self)
-        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
-        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
-        meny.addAction(vis_skjulte)
-
-        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
-
-        meny = QMenu(self)
-
-        vis_skjulte = QAction("Vis skjulte rader igjen.", self)
-        vis_skjulte.triggered.connect(lambda: self.vis_skjulte_rader())
-        meny.addAction(vis_skjulte)
-
-        meny.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
-
+        self.menu_head.exec_(self.tableNotPlanned.viewport().mapToGlobal(pos))
 
     def class_start_menu(self, pos):
         logging.info("class_start_menu")
@@ -434,24 +438,15 @@ class MainWindow(QWidget):
         if selected_indexes:
             row_inx = selected_indexes[0].row()
             if row_inx == rad_index:
-                meny = QMenu(self)
 
-                slett_rad = QAction("Slett rad", self)
-                slett_rad.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
+                self.action_rem_classstart.triggered.connect(lambda: self.slett_class_start_rad(rad_index))
+                self.action_rem_bl_start.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
+                self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
 
-                slett_rader_i_båsslep = QAction("Slett bås/slep seksjon", self)
-                slett_rader_i_båsslep.triggered.connect(lambda: self.slett_class_start_bås_slep(rad_index))
-
-                slett_rader_alle = QAction("Slett alle", self)
-                slett_rader_alle.triggered.connect(lambda: self.slett_class_start_alle())
-
-                meny.addAction(slett_rad)
-                meny.addAction(slett_rader_i_båsslep)
-                meny.addAction(slett_rader_alle)
                 #        meny.addAction(flytt_ned)
                 #        meny.addAction(flytt_opp)
 
-                meny.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
+                self.menu_class_start.exec_(self.tableClassStart.viewport().mapToGlobal(pos))
 
 # Andre funksjoner: slett alt, fyttNed, flyttOpp.
 
@@ -468,15 +463,8 @@ class MainWindow(QWidget):
         if rad_index < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
-
-        meny = QMenu(self)
-
-        slett_rad = QAction("Slett rad", self)
-        slett_rad.triggered.connect(lambda: self.slett_blocklag_rad(rad_index))
-
-        meny.addAction(slett_rad)
-
-        meny.exec_(self.tableBlockLag.viewport().mapToGlobal(pos))
+        self.action_delete_blocklag.triggered.connect(lambda: self.slett_blocklag_rad(rad_index))
+        self.menu_blocklag.exec_(self.tableBlockLag.viewport().mapToGlobal(pos))
 
 
     def slett_blocklag_rad(self, rad_index):

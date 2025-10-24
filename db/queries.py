@@ -48,7 +48,7 @@ WHERE a.club = a.prevclub
 
 
 def read_race(conn_mgr, raceid):
-    logging.info("read_race", raceid)
+    logging.info("read_race: %s", raceid)
     conn = conn_mgr.get_connection()
 
     cursor = conn.cursor()

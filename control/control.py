@@ -132,7 +132,7 @@ def make_starterlist(self, raceId):
     rows, columns = queries.sql_starter_list(self.conn_mgr, raceId)
     html = HtmlBuilder.grouped_rows_in_single_table(rows, columns, 5, "strong", 0)
 
-    HtmlBuilder.download(html, "Startlist.html")
+    HtmlBuilder.download(html, "Starterlist.html")
 
 
 def draw_start_times(self, raceId):
