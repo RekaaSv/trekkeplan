@@ -527,6 +527,9 @@ class MainWindow(QWidget):
         control.refresh_table(self, self.tableBlockLag)
         control.refresh_table(self, self.tableClassStart)
 
+        # Re-selekt!
+        self.select_by_id(self.tableBlockLag, blocklagid)
+
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
 
@@ -809,3 +812,14 @@ class MainWindow(QWidget):
         self.juster_tabellhøyde(table)
         self.juster_tabell_vidde(table)
 
+    def select_by_id(self, table, id):
+        logging.info("select_by_id id: %s", id)
+        found = False
+        found_row = None
+        for row_idx in range(table.rowCount()):
+            item = table.item(row_idx, 0).text()
+            if item == id:
+                logging.info("select_by_id: %s", item)
+                table.selectRow(row_idx)
+                return
+        logging.error("Table row not found, id=%s", id)
