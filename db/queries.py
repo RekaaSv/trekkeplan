@@ -93,11 +93,16 @@ def read_block_lags(conn_mgr, raceid):
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
-   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
+   ,(
+	SELECT time(max(t.nexttime)) Neste FROM (
+	SELECT nexttime FROM classstarts cls WHERE cls.blocklagid =  bll.id
+	UNION
+	SELECT first_start nexttime FROM races WHERE id = %s
+	) t   ) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
 """
-    cursor.execute(sql, (raceid,))
+    cursor.execute(sql, (raceid, raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_block_lag(conn_mgr, blocklagid):
@@ -106,7 +111,7 @@ def read_block_lag(conn_mgr, blocklagid):
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
-   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
+   ,(select time(max(nexttime)) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
 """
@@ -127,8 +132,8 @@ SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep, c
       , (SELECT COUNT(id) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X')) Antall
       , cls.freebefore Ant_før
       , cls.freeafter Ant_bak
-      , cls.classstarttime Starttid
-      , cls.nexttime Nestetid
+      , time(cls.classstarttime) Starttid
+      , time(cls.nexttime) Nestetid
 FROM classstarts cls
 JOIN classes cl ON cl.cource = 0 AND cl.id = cls.classid
 LEFT JOIN classcource cc ON cc.auto_cource_recognition = 0 AND cc.classid = cl.id
