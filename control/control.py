@@ -61,9 +61,9 @@ def insert_class_start(self, raceId, blocklagId, classId, timegap, sortorder):
 
 def refresh_table(self, table):
     logging.info("control.refresh_table")
-    logging.info("table: %s",table )
     rows, columns = None, None
     col_widths = None
+    max_next_time = None # For tableBlockLag returneres max_next_time
     if table == self.tableNotPlanned:
         logging.info("control.refresh_table tableNotPlanned")
         rows, columns = queries.read_not_planned(self.conn_mgr, self.raceId)
@@ -71,6 +71,7 @@ def refresh_table(self, table):
     elif table == self.tableBlockLag:
         logging.info("control.refresh_table tableBlockLag")
         rows, columns = queries.read_block_lags(self.conn_mgr, self.raceId)
+        max_next_time = self.max_value(rows, 5)
         col_widths = self.col_widths_block_lag
     elif table == self.tableClassStart:
         logging.info("control.refresh_table tableClassStart")
@@ -80,9 +81,9 @@ def refresh_table(self, table):
         logging.error("Systemfeil!", exc_info=True)
         raise Exception("Systemfeil!")
 
-
     self.populate_table(table, columns, rows)
     self.set_table_sizes(table, col_widths)
+    return max_next_time
 
 def read_names(self, classid):
     logging.info("control.read_names")
@@ -144,5 +145,4 @@ def draw_start_times(self, raceId):
 def clear_start_times(self, raceId):
     queries.clear_start_times(self.conn_mgr, raceId)
     self.vis_brukermelding("Starttider fjernet, se Startliste!")
-
 

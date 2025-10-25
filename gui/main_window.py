@@ -1,10 +1,12 @@
+import datetime
 import logging
+from typing import Any
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
     QApplication, QShortcut
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer, QSize
-from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont
 
 from control import control
 from control.errors import MyCustomError
@@ -70,19 +72,42 @@ class MainWindow(QWidget):
         title_class_start = QLabel("Trekkeplan")
         title_class_start.setStyleSheet(self.style_table_header)
 
-        title_first_start = QLabel("Første start:")
-        title_first_start.setStyleSheet(self.style_table_header)
-        self.field_first_start = QTimeEdit()
-        self.field_first_start.setStyleSheet("""
-        QAbstractSpinBox {
+        style_shit_time = """
             background-color: rgb(255, 250, 205);  /* svak gul */
             border: 1px solid #aaa;
             padding: 2px;
             border-radius: 3px;
-        }
-        """)
+        """
+        title_first_start = QLabel("Første start:")
+        title_first_start.setStyleSheet(self.style_table_header)
+        self.field_first_start = QTimeEdit()
+        self.field_first_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
+        self.field_first_start.setStyleSheet(style_shit_time)
+
+        style_shit_time_ro = """
+            background-color: transparent;  /* svak gul */
+            border: 1px solid #aaa;
+            padding: 2px;
+            border-radius: 3px;
+        """
+        title_last_start = QLabel("Siste start:")
+        title_last_start.setStyleSheet(self.style_table_header)
+        self.field_last_start = QTimeEdit()
+        self.field_last_start.setReadOnly(True)
+        self.field_last_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
+        self.field_last_start.setStyleSheet(style_shit_time_ro)
+        self.field_last_start.setDisplayFormat("HH:mm")
+        self.field_last_start.setFixedWidth(70)
+
+        time_font = QFont()
+        time_font.setPointSize(10)
+        self.field_first_start.setFont(time_font)
+        self.field_last_start.setFont(time_font)
+
         self.field_first_start.setDisplayFormat("HH:mm")
         self.field_first_start.setFixedWidth(70)
+#        self.field_last_start.setDisplayFormat("HH:mm")
+#        self.field_last_start.setFixedWidth(70)
         self.field_block = QLineEdit()
         self.field_block.setStyleSheet(field_input_style)
         self.field_block.setReadOnly(False)
@@ -207,7 +232,7 @@ class MainWindow(QWidget):
         self.starterListButton.setToolTip("Lag startliste pr. starttid.")
         self.starterListButton.clicked.connect(self.make_starterlist)
 
-        self.make_layout(title_block_lag, title_class_start, title_first_start, title_non_planned)
+        self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_non_planned)
 
         #        self.load_button.clicked.connect(self.load_data)
         #
@@ -225,8 +250,9 @@ class MainWindow(QWidget):
         if self.q_time: self.field_first_start.setTime(self.q_time)
 
         control.refresh_table(self, self.tableNotPlanned)
-        control.refresh_table(self, self.tableBlockLag)
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
         control.refresh_table(self, self.tableClassStart)
+        self.set_last_start_time(max_next_datetime)
 
         self.tableNotPlanned.setColumnHidden(0, True)
         self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
@@ -288,10 +314,8 @@ class MainWindow(QWidget):
         self.action_rem_bl_start.triggered.connect(lambda: self.slett_class_start_bås_slep())
         self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
 
-
-
     def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
-                    title_first_start: QLabel | QLabel, title_non_planned: QLabel | QLabel):
+                    title_first_start: QLabel | QLabel, title_last_start: QLabel | QLabel, title_non_planned: QLabel | QLabel):
         #
         # Layout
         #
@@ -318,6 +342,8 @@ class MainWindow(QWidget):
         top_layout.addWidget(self.aboutButton)
         top_layout.addWidget(title_first_start)
         top_layout.addWidget(self.field_first_start)
+        top_layout.addWidget(title_last_start)
+        top_layout.addWidget(self.field_last_start)
         top_layout.addStretch()
 
         column1_layout = QVBoxLayout()
@@ -446,7 +472,9 @@ class MainWindow(QWidget):
 
         control.first_start_edited(self, self.raceId, self.str_new_first_start)
         control.refresh_table(self, self.tableClassStart)
-        control.refresh_table(self, self.tableBlockLag)
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        logging.debug("max_next_datetime: %s", max_next_datetime)
+        self.set_last_start_time(max_next_datetime)
 
     def show_not_planned_menu(self, pos):
         logging.info("not_planned_menu")
@@ -497,7 +525,9 @@ class MainWindow(QWidget):
         if returned:
             self.vis_brukermelding(returned)
         else:
-            control.refresh_table(self, self.tableBlockLag)
+            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+            self.set_last_start_time(max_next_datetime)
+
             # Refarge valgbare
             self.tableClassStart.oppdater_filter()
 
@@ -524,7 +554,8 @@ class MainWindow(QWidget):
         control.delete_class_start_row(self, self.raceId, classstartid)
 
         control.refresh_table(self, self.tableNotPlanned)
-        control.refresh_table(self, self.tableBlockLag)
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        self.set_last_start_time(max_next_datetime)
         control.refresh_table(self, self.tableClassStart)
 
         # Re-selekt!
@@ -551,6 +582,8 @@ class MainWindow(QWidget):
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        self.set_last_start_time(max_next_datetime)
 
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
@@ -564,7 +597,8 @@ class MainWindow(QWidget):
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
-
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        self.set_last_start_time(max_next_datetime)
 
     def skjul_valgte_rader(self):
         logging.info("skjul_valgte_rader")
@@ -713,7 +747,9 @@ class MainWindow(QWidget):
 
             self.raceId = valgt_id
             control.refresh_table(self, self.tableNotPlanned)
-            control.refresh_table(self, self.tableBlockLag)
+            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+            self.set_last_start_time(max_next_datetime)
+
             control.refresh_table(self, self.tableClassStart)
 
             self.refresh_first_start(self.raceId)
@@ -823,3 +859,18 @@ class MainWindow(QWidget):
                 table.selectRow(row_idx)
                 return
         logging.error("Table row not found, id=%s", id)
+
+    def set_last_start_time(self, max_next_datetime: datetime.time | None):
+        logging.info("set_last_start_time: %s", max_next_datetime)
+
+    def max_value(self, rows, col):
+        logging.info("control.max_value")
+        max = None
+        for row in rows:
+            if max is None:
+                max = row[col]
+            elif row[col] > max:
+                max = row[col]
+        logging.debug("max_value, max: %s", max)
+        return max
+
