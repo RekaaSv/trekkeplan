@@ -825,7 +825,8 @@ class MainWindow(QWidget):
         idx_row = item.row()
 #        if self.tableClassStart.hasFocus():
         if idx_col in [10,11]: # Antall ledige før og etter.
-            new_value = item.text()
+            new_value = item.text().strip()
+            if new_value == "": new_value = None
             item.setText(new_value)
             classstartid = self.tableClassStart.item(idx_row, 0).text()
             blocklagid = self.tableClassStart.item(idx_row, 1).text()
