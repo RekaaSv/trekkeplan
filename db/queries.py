@@ -637,6 +637,26 @@ ORDER BY n.starttime
     cursor.execute(sql, (classid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
+def class_start_down_up(conn_mgr, id, step):
+    logging.info("db.class_start_up_down: %s, %s", id, step)
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+UPDATE classstarts clss
+set sortorder = sortorder + %s
+WHERE id = %s
+"""
+        cursor.execute(sql, (step, id,))
+        conn.commit()
+        conn.close()
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+
+
+
 def swap_start_times(conn_mgr, id1, id2, raceId):
     logging.info("db.swap_start_times: %s, %s", id1, id2)
     try:

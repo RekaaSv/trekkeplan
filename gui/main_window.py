@@ -84,9 +84,10 @@ class MainWindow(QWidget):
         self.field_first_start = QTimeEdit()
         self.field_first_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
         self.field_first_start.setStyleSheet(style_shit_time)
+#        background - color: rgb(76, 154, 154);
 
         style_shit_time_ro = """
-            background-color: transparent;  /* svak gul */
+            background-color: rgb(76, 154, 100);
             border: 1px solid #aaa;
             padding: 2px;
             border-radius: 3px;
@@ -178,18 +179,18 @@ class MainWindow(QWidget):
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
-        self.moveButton = QPushButton("=====>        (F6)")
+        self.moveButton = QPushButton("=====>        (F2)")
         self.moveButton.setStyleSheet(self.button_style)
         self.moveButton.setFixedWidth(200)
         self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
         self.moveButton.clicked.connect(self.move_class_to_plan)
-        # F6 simulerer trykk på knappen.
-        self.move_shortcut = QShortcut(QKeySequence("F6"), self)
+        # F2 simulerer trykk på knappen.
+        self.move_shortcut = QShortcut(QKeySequence("F2"), self)
         self.move_shortcut.setContext(Qt.WidgetShortcut)  # Kun aktiv når hovedvinduet har fokus
 #        move_shortcut.activated.connect(self.moveButton.click)  # Simulerer knappetrykk
-#        self.move_shortcut.activated.connect(lambda: print("F6 trykket"))  # Simulerer knappetrykk
+#        self.move_shortcut.activated.connect(lambda: print("F2 trykket"))  # Simulerer knappetrykk
 
-        self.removeButton = QPushButton("<=====        (F7)")
+        self.removeButton = QPushButton("<=====        (F3)")
         self.removeButton.setStyleSheet(self.button_style)
         self.removeButton.setFixedWidth(200)
         self.removeButton.setToolTip("Fjern valgt klasse fra Trekkeplan")
@@ -282,7 +283,7 @@ class MainWindow(QWidget):
         self.action_nonplanned_show = QAction("Vis skjulte klasser igjen.", self)
         self.menu_non_planned.addAction(self.action_moveto_plan)
         self.tableNotPlanned.addAction(self.action_moveto_plan)
-        self.action_moveto_plan.setShortcut("F6")
+        self.action_moveto_plan.setShortcut("F2")
         self.menu_non_planned.addAction(self.action_nonplanned_hide)
         self.menu_non_planned.addAction(self.action_nonplanned_show)
 
@@ -294,12 +295,20 @@ class MainWindow(QWidget):
         self.menu_blocklag.addAction(self.action_delete_blocklag)
 
         self.menu_class_start = QMenu(self)
+        self.action_move_up = QAction("Dytt klassen opp", self)
+        self.action_move_down = QAction("Dytt klassen ned", self)
         self.action_rem_classstart = QAction("Fjern klassen fra planen", self)
         self.action_rem_bl_start = QAction("Fjern hele bås/slep seksjon", self)
         self.action_rem_all_start = QAction("Fjern alle fra planen", self)
-        self.action_rem_classstart.setShortcut("F7")
+        self.action_move_up.setShortcut("F5")
+        self.action_move_down.setShortcut("F6")
+        self.action_rem_classstart.setShortcut("F3")
+        self.menu_class_start.addAction(self.action_move_up)
+        self.menu_class_start.addAction(self.action_move_down)
         self.menu_class_start.addAction(self.action_rem_classstart)
         self.tableClassStart.addAction(self.action_rem_classstart)
+        self.tableClassStart.addAction(self.action_move_up)
+        self.tableClassStart.addAction(self.action_move_down)
 
         self.menu_class_start.addAction(self.action_rem_bl_start)
         self.menu_class_start.addAction(self.action_rem_all_start)
@@ -309,6 +318,8 @@ class MainWindow(QWidget):
         self.action_nonplanned_show.triggered.connect(lambda: self.vis_skjulte_rader())
         self.action_delete_blocklag.triggered.connect(lambda: self.slett_blocklag_rad())
 
+        self.action_move_up.triggered.connect(lambda: self.class_start_up())
+        self.action_move_down.triggered.connect(lambda: self.class_start_down())
         self.action_rem_classstart.triggered.connect(lambda: self.slett_class_start_rad())
         self.action_rem_bl_start.triggered.connect(lambda: self.slett_class_start_bås_slep())
         self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
@@ -468,10 +479,12 @@ class MainWindow(QWidget):
 
     def first_start_edited(self):
         logging.info("first_start_edited")
-        # Update first start-time, the rebuild redundant in class_starts, and reread.
+        # Update first start-time, then rebuild redundant in class_starts, and reread.
         first_time = self.field_first_start.time().toString("HH:mm:ss")
+        # Tidspunt for start = løpsdag + angitt tid (first_time)
         self.str_new_first_start = self.race_date_str + " " + first_time
 
+        # Ta vare på seletert rad, for reselekt.
         selected_row_id = None
         selected = self.tableBlockLag.selectionModel().selectedRows()
         logging.debug("first_start_edited selected: %s", selected)
@@ -636,14 +649,29 @@ class MainWindow(QWidget):
         # Refresh
         control.refresh_table(self, self.tableNotPlanned)
 
+    def class_start_down_up(self, step):
+        logging.info("class_start_down_up")
+        selected = self.tableClassStart.selectionModel().selectedRows()
+        if not selected:
+            self.vis_brukermelding("Du må velge klassen som skal flyttes et hakk!")
+            return
+        row_id = selected[0].row()
 
-    def flytt_class_start_ned(self):
-        logging.info("flytt_class_start_ned")
-        item = self.currentItem()
-        if item:
-            logging.debug("flytt rad = " + item.text())
-#            tekst = item.text()
-#            QApplication.clipboard().setText(tekst)
+        clas_start_id = self.tableClassStart.model().index(row_id, 0).data()
+        blocklag_id = self.tableClassStart.model().index(row_id, 1).data()
+
+        control.class_start_down_up(self, clas_start_id, step)
+        control.refresh_table(self, self.tableClassStart)
+#        self.select_by_id(self.tableBlockLag, blocklag_id) # Er allerede selektert.
+        self.tableClassStart.oppdater_filter()
+
+    def class_start_down(self):
+        logging.info("class_start_down")
+        self.class_start_down_up(11) # Avstand 10 mellom hver.
+
+    def class_start_up(self):
+        logging.info("class_start_up")
+        self.class_start_down_up(-11) # Avstand 10 mellom hver.
 
     def add_block_lag(self):
         logging.info("add_block_lag")

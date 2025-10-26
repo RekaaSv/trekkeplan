@@ -15,6 +15,11 @@ def delete_class_start_row(self, raceId, classstartId):
     queries.delete_class_start_row(self.conn_mgr, raceId, classstartId)
     queries.rebuild_class_starts(self.conn_mgr, raceId)
 
+def class_start_down_up(self, id, step):
+    logging.info("control.class_start_down_up")
+    queries.class_start_down_up(self.conn_mgr, id, step)
+    queries.rebuild_class_starts(self.conn_mgr, self.raceId)
+
 def delete_class_start_rows(self, raceId, blocklagId):
     logging.info("control.delete_class_start_rows")
     queries.delete_class_start_rows(self.conn_mgr, raceId, blocklagId)
