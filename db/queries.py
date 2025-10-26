@@ -94,7 +94,7 @@ def read_block_lags(conn_mgr, raceid):
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
    ,(
-	SELECT time(max(t.nexttime)) Neste FROM (
+	SELECT max(t.nexttime) Neste FROM (
 	SELECT nexttime FROM classstarts cls WHERE cls.blocklagid =  bll.id
 	UNION
 	SELECT first_start nexttime FROM races WHERE id = %s

@@ -72,6 +72,7 @@ def refresh_table(self, table):
         logging.info("control.refresh_table tableBlockLag")
         rows, columns = queries.read_block_lags(self.conn_mgr, self.raceId)
         max_next_time = self.max_value(rows, 5)
+        logging.debug("control.refresh_table max_next_time: %s", max_next_time)
         col_widths = self.col_widths_block_lag
     elif table == self.tableClassStart:
         logging.info("control.refresh_table tableClassStart")

@@ -13,6 +13,7 @@ from control.errors import MyCustomError
 from db import queries
 from db.connection import ConnectionManager
 from gui.about_dialog import AboutDialog
+from gui.draw_plan_table_item import DrawPlanTableItem
 
 from gui.filtered_table import FilteredTable
 from gui.split_club_mates import SplitClubMates
@@ -439,10 +440,13 @@ class MainWindow(QWidget):
         table.setHorizontalHeaderLabels(columns)
         for row_idx, row_data in enumerate(rows):
             for col_idx, value in enumerate(row_data):
-                item = QTableWidgetItem("") if value is None else QTableWidgetItem(str(value))
-                if isinstance(value, (int, float)) or columns[col_idx] in ("Starttid", "Nestetid"):
-                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                table.setItem(row_idx, col_idx, QTableWidgetItem(item))
+                item = None
+                value_type = type(value)
+                logging.debug("populate_table value_type: %s", value_type)
+
+                item = DrawPlanTableItem.from_value(value)
+
+                table.setItem(row_idx, col_idx, item)
         if is_sorted: table.setSortingEnabled(True)
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -555,6 +559,7 @@ class MainWindow(QWidget):
 
         control.refresh_table(self, self.tableNotPlanned)
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        logging.debug("max_next_datetime: %s", max_next_datetime)
         self.set_last_start_time(max_next_datetime)
         control.refresh_table(self, self.tableClassStart)
 
@@ -871,6 +876,6 @@ class MainWindow(QWidget):
                 max = row[col]
             elif row[col] > max:
                 max = row[col]
+        logging.debug("max_value, type: %s", type(max))
         logging.debug("max_value, max: %s", max)
         return max
-
