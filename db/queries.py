@@ -8,7 +8,7 @@ def read_race_list(conn_mgr):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT r.racedate Dag, r.name Løp, TIME(r.first_start) Starttid, r.id
+SELECT r.racedate Dag, r.name Løp, r.first_start Starttid, r.id
 FROM races r
 ORDER BY r.created DESC
 """
@@ -24,7 +24,7 @@ def read_club_mates(conn_mgr, raceid):
     cursor = conn.cursor()
     sql = """
 SELECT a.id, a.previd, a.classid
-     , a.classname Klasse, a.name Løper, a.club Klubb, time(a.starttime) Starttid FROM
+     , a.classname Klasse, a.name Løper, a.club Klubb, a.starttime Starttid FROM
 (SELECT n.id, n.starttime
      , n.`name`
      , n.club
@@ -111,7 +111,7 @@ def read_block_lag(conn_mgr, blocklagid):
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
-   ,(select time(max(nexttime)) from classstarts cls where cls.blocklagid = bll.id) Neste 
+   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
 """
@@ -132,8 +132,8 @@ SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep, c
       , (SELECT COUNT(id) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X')) Antall
       , cls.freebefore Ant_før
       , cls.freeafter Ant_bak
-      , time(cls.classstarttime) Starttid
-      , time(cls.nexttime) Nestetid
+      , cls.classstarttime Starttid
+      , cls.nexttime Nestetid
 FROM classstarts cls
 JOIN classes cl ON cl.cource = 0 AND cl.id = cls.classid
 LEFT JOIN classcource cc ON cc.auto_cource_recognition = 0 AND cc.classid = cl.id
@@ -627,7 +627,7 @@ def read_names(conn_mgr, classid):
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT n.id, n.classid, cl.name Klasse, n.name Løper, n.club Klubb, time(n.starttime) Starttid
+SELECT n.id, n.classid, cl.name Klasse, n.name Løper, n.club Klubb, n.starttime Starttid
 FROM NAMES n
 JOIN classes cl on cl.id = n.classid and cl.cource = 0
 WHERE n.classid = %s

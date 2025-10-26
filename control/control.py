@@ -86,11 +86,6 @@ def refresh_table(self, table):
     self.set_table_sizes(table, col_widths)
     return max_next_time
 
-def read_names(self, classid):
-    logging.info("control.read_names")
-    return queries.read_names(self.conn_mgr, self.raceId, classid)
-
-
 """
     Leser høyeste Neste (neste starttid) for bås/slep blocklagid
 """

@@ -20,7 +20,10 @@ class DrawPlanTableItem(QTableWidgetItem):
 
     @classmethod
     def from_value(cls, value):
-        """Velger visning, sorteringsverdi og justering basert på type."""
+        """Velger visning, sorteringsverdi og justering basert på type. None vises som blankt."""
+        if value is None:
+            return cls("", "", Qt.AlignLeft | Qt.AlignVCenter)
+
         if isinstance(value, datetime):
             return cls(value.strftime("%H:%M:%S"), value, Qt.AlignCenter)
         elif isinstance(value, date):

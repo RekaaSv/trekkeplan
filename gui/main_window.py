@@ -97,18 +97,16 @@ class MainWindow(QWidget):
         self.field_last_start.setReadOnly(True)
         self.field_last_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
         self.field_last_start.setStyleSheet(style_shit_time_ro)
-        self.field_last_start.setDisplayFormat("HH:mm")
-        self.field_last_start.setFixedWidth(70)
+        self.field_last_start.setDisplayFormat("HH:mm:ss")
+        self.field_last_start.setFixedWidth(80)
 
         time_font = QFont()
         time_font.setPointSize(10)
         self.field_first_start.setFont(time_font)
         self.field_last_start.setFont(time_font)
 
-        self.field_first_start.setDisplayFormat("HH:mm")
-        self.field_first_start.setFixedWidth(70)
-#        self.field_last_start.setDisplayFormat("HH:mm")
-#        self.field_last_start.setFixedWidth(70)
+        self.field_first_start.setDisplayFormat("HH:mm:ss")
+        self.field_first_start.setFixedWidth(80)
         self.field_block = QLineEdit()
         self.field_block.setStyleSheet(field_input_style)
         self.field_block.setReadOnly(False)
@@ -474,11 +472,22 @@ class MainWindow(QWidget):
         first_time = self.field_first_start.time().toString("HH:mm:ss")
         self.str_new_first_start = self.race_date_str + " " + first_time
 
+        selected_row_id = None
+        selected = self.tableBlockLag.selectionModel().selectedRows()
+        logging.debug("first_start_edited selected: %s", selected)
+        if selected: selected_row_id = selected[0].row()
+        logging.debug("first_start_edited selected_row_id: %s", selected_row_id)
+
         control.first_start_edited(self, self.raceId, self.str_new_first_start)
         control.refresh_table(self, self.tableClassStart)
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
         logging.debug("max_next_datetime: %s", max_next_datetime)
         self.set_last_start_time(max_next_datetime)
+
+        if selected_row_id is not None:
+            self.tableBlockLag.selectRow(selected_row_id)
+            self.tableClassStart.oppdater_filter()
+
 
     def show_not_planned_menu(self, pos):
         logging.info("not_planned_menu")
@@ -589,6 +598,9 @@ class MainWindow(QWidget):
         control.refresh_table(self, self.tableClassStart)
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
         self.set_last_start_time(max_next_datetime)
+
+        # Re-selekt!
+        self.select_by_id(self.tableBlockLag, str(blocklagid))
 
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
@@ -705,23 +717,22 @@ class MainWindow(QWidget):
         # Oppdater redundante kolonner og oppfrisk tabellene.
         queries.rebuild_class_starts(self.conn_mgr, self.raceId)
         control.refresh_table(self, self.tableNotPlanned)
+        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+        self.set_last_start_time(max_next_datetime)
         control.refresh_table(self, self.tableClassStart)
 
-        # Hent verdi fra DB.
-        neste = control.read_blocklag_neste(self, blocklag_id)
-        # Finn item og oppdater det med verdien fra basen.
-        self.set_nexttime_on_blocklag(blocklag_id, neste)
-
-        # Refarge valgbare
+        # Re-selekt!
+        self.select_by_id(self.tableBlockLag, str(blocklag_id))
         self.tableClassStart.oppdater_filter()
 
     def set_nexttime_on_blocklag(self, blocklag_id: int, neste):
         logging.info("set_nexttime_on_blocklag")
         self.tableClassStart.blockSignals(True)
         row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
-        item = self.tableBlockLag.item(row_idx, 5)
         logging.debug("neste: %s", neste)
-        item.setText(str(neste))
+        item = DrawPlanTableItem.from_value(neste)
+        self.tableBlockLag.setItem(row_idx, 5, item)
+        item.setData(Qt.UserRole, neste)
         self.tableClassStart.blockSignals(False)
 
     def get_row_idx(self, table: QTableWidget, col_idx: int, col_value):
@@ -855,18 +866,27 @@ class MainWindow(QWidget):
 
     def select_by_id(self, table, id):
         logging.info("select_by_id id: %s", id)
+        logging.debug("select_by_id id type: %s", type(id))
         found = False
         found_row = None
         for row_idx in range(table.rowCount()):
             item = table.item(row_idx, 0).text()
+            item_bas = table.item(row_idx, 2).text()
+            logging.debug("select_by_id item type, value: %s, %s", type(item), item)
+            logging.debug("select_by_id item_bas: %s", item_bas)
             if item == id:
-                logging.info("select_by_id: %s", item)
+                logging.info("select_by_id: item found %s", item)
                 table.selectRow(row_idx)
                 return
         logging.error("Table row not found, id=%s", id)
 
-    def set_last_start_time(self, max_next_datetime: datetime.time | None):
+    def set_last_start_time(self, max_next_datetime: datetime.datetime | None):
         logging.info("set_last_start_time: %s", max_next_datetime)
+        if max_next_datetime:
+            q_time_last = QTime(max_next_datetime.hour, max_next_datetime.minute,
+                                max_next_datetime.second)
+        else: q_time_last = QTime(0, 0)
+        self.field_last_start.setTime(q_time_last)
 
     def max_value(self, rows, col):
         logging.info("control.max_value")
