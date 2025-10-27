@@ -248,10 +248,7 @@ class MainWindow(QWidget):
         self.field_first_start.editingFinished.connect(self.first_start_edited)
         if self.q_time: self.field_first_start.setTime(self.q_time)
 
-        control.refresh_table(self, self.tableNotPlanned)
-        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-        control.refresh_table(self, self.tableClassStart)
-        self.set_last_start_time(max_next_datetime)
+        self.after_plan_changed(None)
 
         self.tableNotPlanned.setColumnHidden(0, True)
         self.tableNotPlanned.sortItems(1, order=Qt.AscendingOrder)
@@ -487,18 +484,17 @@ class MainWindow(QWidget):
         selected_row_id = None
         selected = self.tableBlockLag.selectionModel().selectedRows()
         logging.debug("first_start_edited selected: %s", selected)
-        if selected: selected_row_id = selected[0].row()
+        blocklagid = None
+        if selected:
+            selected_row_id = selected[0].row()
+            blocklagid = self.tableBlockLag.item(selected_row_id, 0)
+
         logging.debug("first_start_edited selected_row_id: %s", selected_row_id)
 
         control.first_start_edited(self, self.raceId, self.str_new_first_start)
         control.refresh_table(self, self.tableClassStart)
-        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-        logging.debug("max_next_datetime: %s", max_next_datetime)
-        self.set_last_start_time(max_next_datetime)
 
-        if selected_row_id is not None:
-            self.tableBlockLag.selectRow(selected_row_id)
-            self.tableClassStart.oppdater_filter()
+        self.after_plan_changed(blocklagid)
 
 
     def show_not_planned_menu(self, pos):
@@ -550,11 +546,7 @@ class MainWindow(QWidget):
         if returned:
             self.vis_brukermelding(returned)
         else:
-            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-            self.set_last_start_time(max_next_datetime)
-
-            # Refarge valgbare
-            self.tableClassStart.oppdater_filter()
+            self.after_plan_changed(None)
 
     def vis_brukermelding(self, tekst):
         logging.info("vis_brukermelding")
@@ -599,6 +591,10 @@ class MainWindow(QWidget):
 
     def rebuild_blocklag_unused(self, table, race_nexttime):
         logging.debug("rebuild_blocklag_unused: %s", race_nexttime)
+
+        duration = race_nexttime - self.race_start_time_db
+        logging.debug("duration: %s", duration)
+
         for row_idx in range(table.rowCount()):
             item = table.item(row_idx, 5)
             if item is None:
@@ -651,8 +647,8 @@ class MainWindow(QWidget):
 
         control.refresh_table(self, self.tableNotPlanned)
         control.refresh_table(self, self.tableClassStart)
-        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-        self.set_last_start_time(max_next_datetime)
+
+        self.after_plan_changed(None)
 
     def skjul_valgte_rader(self):
         logging.info("skjul_valgte_rader")
@@ -801,15 +797,12 @@ class MainWindow(QWidget):
 
             self.raceId = valgt_id
             control.refresh_table(self, self.tableNotPlanned)
-            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-            self.set_last_start_time(max_next_datetime)
-
-            control.refresh_table(self, self.tableClassStart)
-
+#            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
             self.refresh_first_start(self.raceId)
             self.field_first_start.setTime(self.q_time)
             self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_str)
             self.lagre_raceid(self.raceId)
+            self.after_plan_changed(None)
         else:
             logging.debug("Brukeren avbrøt")
 

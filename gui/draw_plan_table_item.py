@@ -35,8 +35,11 @@ class DrawPlanTableItem(QTableWidgetItem):
             hours = total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
-            display = f"{hours:02}:{minutes:02}:{seconds:02}"
-            return cls(display, value, Qt.AlignCenter)
+            if hours > 0:
+                display = f"{hours}:{minutes:02}:{seconds:02}"
+            else:
+                display = f"{minutes}:{seconds:02}"
+            return cls(display, value, Qt.AlignRight | Qt.AlignVCenter)
         elif isinstance(value, int):
             return cls(str(value), value, Qt.AlignRight | Qt.AlignVCenter)
         elif isinstance(value, str):
