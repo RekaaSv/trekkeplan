@@ -124,8 +124,6 @@ class SplitClubMates(QDialog):
 
         logging.info("SplitClubMates layout end")
 
-
-
     def refresh_left(self):
         logging.info("SplitClubMates.refresh_left")
         rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.raceId)
@@ -140,6 +138,9 @@ class SplitClubMates(QDialog):
         # Selekter 1. rad.
         if self.venstre.rowCount() > 0:
             self.venstre.selectRow(0)
+        else:
+            # Refresh høyre tabell for å få kolonner.
+            self.refresh_right()
 
     def refresh_right(self):
         logging.info("SplitClubMates.refresh_right")
@@ -149,15 +150,14 @@ class SplitClubMates(QDialog):
         if model_indexes:
             selected = model_indexes[0].row()
         if selected is None:
-            self.hoyre.clear()
-            self.hoyre.setRowCount(0)
-            self.hoyre.setColumnCount(0)
-            return
-        left_id = self.venstre.item(selected, 0).text()
-        previd = self.venstre.item(selected, 1).text()
-        classid = self.venstre.item(selected, 2).text()
-        logging.debug("_oppdater_hoyre: %s", classid)
-        logging.debug("left_id: %s", left_id)
+            classid = -1 # Gir 0 rader, men får kolonnene.
+            previd = None
+        else:
+            left_id = self.venstre.item(selected, 0).text()
+            previd = self.venstre.item(selected, 1).text()
+            classid = self.venstre.item(selected, 2).text()
+            logging.debug("_oppdater_hoyre: %s", classid)
+            logging.debug("left_id: %s", left_id)
 
         # Populer høyre tabell.
         rows, columns = queries.read_names(self.parent.conn_mgr, classid)
@@ -178,9 +178,6 @@ class SplitClubMates(QDialog):
                 if first_found_row_inx is None:
                     first_found_row_inx = rad_inx
             self.marker_rad(rad_inx, match)
-
-#        self.hoyre.setColumnHidden(0, True)
-#        self.hoyre.setColumnHidden(1, True)
 
         # Dimesjoner tabellen.
         self.parent.set_table_sizes(self.hoyre, self.right_columns)
