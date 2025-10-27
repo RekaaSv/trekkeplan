@@ -1,6 +1,5 @@
 import datetime
 import logging
-from typing import Any
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
@@ -585,6 +584,9 @@ class MainWindow(QWidget):
 
     def after_plan_changed(self, blocklagid):
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
+
+        self.rebuild_blocklag_unused(self.tableBlockLag, max_next_datetime)
+
         logging.debug("max_next_datetime: %s", max_next_datetime)
         self.set_last_start_time(max_next_datetime)
         control.refresh_table(self, self.tableClassStart)
@@ -594,6 +596,31 @@ class MainWindow(QWidget):
 
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
+
+    def rebuild_blocklag_unused(self, table, race_nexttime):
+        logging.debug("rebuild_blocklag_unused: %s", race_nexttime)
+        for row_idx in range(table.rowCount()):
+            item = table.item(row_idx, 5)
+            if item is None:
+                continue
+
+            # Hent underliggende verdi (skal være datetime)
+            blocklag_nexttime = item.data(Qt.UserRole)
+            logging.debug("starttid_bås verdi: %s", blocklag_nexttime)
+            logging.debug("starttid_bås type: %s", type(blocklag_nexttime))
+            if not isinstance(blocklag_nexttime, datetime.datetime):
+                continue
+
+            # Beregn differanse
+            idletime = race_nexttime - blocklag_nexttime  # timedelta
+
+            # Lag nytt item med differansen
+            idle_item = DrawPlanTableItem.from_value(idletime)
+            table.setItem(row_idx, 6, idle_item)
+
+
+
+
 
     #
     # Slett classStart rader som tilhører valgt bås/slep
