@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLab
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
     QApplication, QShortcut
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer, QSize
-from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont, QBrush
 
 from control import control
 from control.errors import MyCustomError
@@ -72,7 +72,7 @@ class MainWindow(QWidget):
         title_class_start = QLabel("Trekkeplan")
         title_class_start.setStyleSheet(self.style_table_header)
 
-        style_shit_time = """
+        style_sheet_time = """
             background-color: rgb(255, 250, 205);  /* svak gul */
             border: 1px solid #aaa;
             padding: 2px;
@@ -82,11 +82,11 @@ class MainWindow(QWidget):
         title_first_start.setStyleSheet(self.style_table_header)
         self.field_first_start = QTimeEdit()
         self.field_first_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
-        self.field_first_start.setStyleSheet(style_shit_time)
+        self.field_first_start.setStyleSheet(style_sheet_time)
 #        background - color: rgb(76, 154, 154);
 
-        style_shit_time_ro = """
-            background-color: rgb(76, 154, 100);
+        style_sheet_time_ro = """
+            background-color: rgb(255, 200, 200);
             border: 1px solid #aaa;
             padding: 2px;
             border-radius: 3px;
@@ -96,14 +96,20 @@ class MainWindow(QWidget):
         self.field_last_start = QTimeEdit()
         self.field_last_start.setReadOnly(True)
         self.field_last_start.setButtonSymbols(QTimeEdit.NoButtons)  # Skjuler opp/ned-piler
-        self.field_last_start.setStyleSheet(style_shit_time_ro)
+        self.field_last_start.setStyleSheet(style_sheet_time_ro)
         self.field_last_start.setDisplayFormat("HH:mm:ss")
         self.field_last_start.setFixedWidth(80)
+
+        title_duration = QLabel("Varighet:")
+        title_duration.setStyleSheet(self.style_table_header)
+        self.field_duration = QLabel()
+        self.field_duration.setStyleSheet(style_sheet_time_ro)
 
         time_font = QFont()
         time_font.setPointSize(10)
         self.field_first_start.setFont(time_font)
         self.field_last_start.setFont(time_font)
+        self.field_duration.setFont(time_font)
 
         self.field_first_start.setDisplayFormat("HH:mm:ss")
         self.field_first_start.setFixedWidth(80)
@@ -231,7 +237,9 @@ class MainWindow(QWidget):
         self.starterListButton.setToolTip("Lag startliste pr. starttid.")
         self.starterListButton.clicked.connect(self.make_starterlist)
 
-        self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_non_planned)
+        self.field_duration.setFixedHeight(30)
+
+        self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_non_planned)
 
         #        self.load_button.clicked.connect(self.load_data)
         #
@@ -248,6 +256,7 @@ class MainWindow(QWidget):
         self.field_first_start.editingFinished.connect(self.first_start_edited)
         if self.q_time: self.field_first_start.setTime(self.q_time)
 
+        control.refresh_table(self, self.tableNotPlanned)
         self.after_plan_changed(None)
 
         self.tableNotPlanned.setColumnHidden(0, True)
@@ -321,7 +330,7 @@ class MainWindow(QWidget):
         self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
 
     def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
-                    title_first_start: QLabel | QLabel, title_last_start: QLabel | QLabel, title_non_planned: QLabel | QLabel):
+                    title_first_start: QLabel | QLabel, title_last_start: QLabel | QLabel, title_duration: QLabel | QLabel, title_non_planned: QLabel | QLabel):
         #
         # Layout
         #
@@ -350,6 +359,8 @@ class MainWindow(QWidget):
         top_layout.addWidget(self.field_first_start)
         top_layout.addWidget(title_last_start)
         top_layout.addWidget(self.field_last_start)
+        top_layout.addWidget(title_duration)
+        top_layout.addWidget(self.field_duration)
         top_layout.addStretch()
 
         column1_layout = QVBoxLayout()
@@ -450,7 +461,6 @@ class MainWindow(QWidget):
                 logging.debug("populate_table value_type: %s", value_type)
 
                 item = DrawPlanTableItem.from_value(value)
-
                 table.setItem(row_idx, col_idx, item)
         if is_sorted: table.setSortingEnabled(True)
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -577,7 +587,7 @@ class MainWindow(QWidget):
     def after_plan_changed(self, blocklagid):
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
 
-        self.rebuild_blocklag_unused(self.tableBlockLag, max_next_datetime)
+        self.rebuild_blocklag_idle(self.tableBlockLag, max_next_datetime)
 
         logging.debug("max_next_datetime: %s", max_next_datetime)
         self.set_last_start_time(max_next_datetime)
@@ -589,9 +599,11 @@ class MainWindow(QWidget):
         # Refarge valgbare
         self.tableClassStart.oppdater_filter()
 
-    def rebuild_blocklag_unused(self, table, race_nexttime):
+    def rebuild_blocklag_idle(self, table, race_nexttime):
         logging.debug("rebuild_blocklag_unused: %s", race_nexttime)
 
+        if race_nexttime is None or self.race_start_time_db is None:
+            return
         duration = race_nexttime - self.race_start_time_db
         logging.debug("duration: %s", duration)
 
@@ -609,14 +621,21 @@ class MainWindow(QWidget):
 
             # Beregn differanse
             idletime = race_nexttime - blocklag_nexttime  # timedelta
+            idle_ratsio = 1 if duration == datetime.timedelta(0) else idletime / duration
 
             # Lag nytt item med differansen
             idle_item = DrawPlanTableItem.from_value(idletime)
+            idle_item.setBackground(self.color_idle_time(idle_ratsio))
+
             table.setItem(row_idx, 6, idle_item)
 
+    def color_idle_time(self, idle_ratsio):
+        # Juster intensitet (lav = lys rosa, høy = mørk rød)
+        r = int(255)
+        g = int(200 * (1 - idle_ratsio))  # fra 200 ned mot 0
+        b = int(200 * (1 - idle_ratsio))  # fra 200 ned mot 0
 
-
-
+        return QColor(r, g, b)
 
     #
     # Slett classStart rader som tilhører valgt bås/slep
@@ -722,8 +741,9 @@ class MainWindow(QWidget):
                 control.add_block_lag(self, self.raceId, block, lag, gap)
             except MyCustomError as e:
                 self.vis_brukermelding(e.message)
-        # Refresh
-        control.refresh_table(self, self.tableBlockLag)
+
+        self.after_plan_changed(None)
+
 
     def move_class_to_plan(self):
         logging.info("move_class_to_plan")
@@ -910,11 +930,24 @@ class MainWindow(QWidget):
 
     def set_last_start_time(self, max_next_datetime: datetime.datetime | None):
         logging.info("set_last_start_time: %s", max_next_datetime)
-        if max_next_datetime:
+        q_time_duration = None
+        if max_next_datetime is not None and self.race_start_time_db is not None:
             q_time_last = QTime(max_next_datetime.hour, max_next_datetime.minute,
                                 max_next_datetime.second)
+            q_time_duration = max_next_datetime - self.race_start_time_db
+            logging.debug("q_time_duration: %s", q_time_duration)
         else: q_time_last = QTime(0, 0)
+
         self.field_last_start.setTime(q_time_last)
+
+        self.field_duration.setText(self.format_duration(q_time_duration))
+
+    def format_duration(self, td: datetime.timedelta) -> str:
+        if td is None: return "      "
+        total_seconds = int(td.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours}:{minutes:02}:{seconds:02}"
 
     def max_value(self, rows, col):
         logging.info("max_value")

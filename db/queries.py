@@ -99,7 +99,7 @@ SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.tim
 	UNION
 	SELECT first_start nexttime FROM races WHERE id = %s
 	) t   ) Neste
-    , NULL Ubrukt
+    , NULL Ledig
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
 """
