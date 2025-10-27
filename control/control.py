@@ -137,13 +137,10 @@ def make_starterlist(self, raceId):
 
     HtmlBuilder.download(html, "Starterlist.html")
 
-
 def draw_start_times(self, raceId):
     queries.draw_start_times(self.conn_mgr, raceId)
     self.vis_brukermelding("Trekking foretatt, se Startliste!")
 
-
 def clear_start_times(self, raceId):
     queries.clear_start_times(self.conn_mgr, raceId)
     self.vis_brukermelding("Starttider fjernet, se Startliste!")
-

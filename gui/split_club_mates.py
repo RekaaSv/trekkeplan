@@ -25,6 +25,8 @@ class SplitClubMates(QDialog):
         self.venstre.setSelectionBehavior(QTableWidget.SelectRows)
         self.venstre.setSelectionMode(QTableWidget.SingleSelection)
         self.venstre.verticalHeader().setVisible(False)
+        self.venstre.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.venstre.customContextMenuRequested.connect(self.menu_draw_class)
         parent.keep_selection_colour(self.venstre)
 
         self.right_columns = [0, 0, 80, 200, 250, 70]
@@ -34,6 +36,8 @@ class SplitClubMates(QDialog):
         self.hoyre.setContextMenuPolicy(Qt.CustomContextMenu)
         self.hoyre.customContextMenuRequested.connect(self.menu_swap_times)
         parent.keep_selection_colour(self.hoyre)
+
+
 
         # Overskrifter
 #        venstre_label = QLabel("🔍 Klubbkamerater rett etter hverandre")
@@ -46,7 +50,6 @@ class SplitClubMates(QDialog):
         # Knapper
         self.refresh_button = QPushButton("Oppfrisk")
         self.refresh_button.setStyleSheet(self.parent.button_style)
-
 
         self.close_button = QPushButton("Avslutt")
         self.close_button.setStyleSheet(self.parent.button_style)
@@ -105,14 +108,22 @@ class SplitClubMates(QDialog):
         self.refresh_left()
 
         # Kontekstmeny med funksjonstast.
-        self.meny = QMenu(self)
+        self.menu_right = QMenu(self)
         self.swap_action = QAction("Bytt starttider", self)
-        self.meny.addAction(self.swap_action)
+        self.menu_right.addAction(self.swap_action)
         self.hoyre.addAction(self.swap_action)
-        self.swap_action.setShortcut("F8")
+        self.swap_action.setShortcut("F9")
         self.swap_action.triggered.connect(lambda: self.swap_start_times())
 
+        self.menu_left = QMenu(self)
+        self.redraw_action = QAction("Trekk denne klassen om igjen", self)
+        self.menu_left.addAction(self.redraw_action)
+        self.venstre.addAction(self.redraw_action)
+        self.redraw_action.setShortcut("F10")
+        self.redraw_action.triggered.connect(lambda: self.draw_start_times_class())
+
         logging.info("SplitClubMates layout end")
+
 
 
     def refresh_left(self):
@@ -200,13 +211,22 @@ class SplitClubMates(QDialog):
             else:
                 item.setBackground(standard)
 
+    def menu_draw_class(self, pos):
+        rad_index = self.venstre.rowAt(pos.y())
+        if rad_index < 0:
+            logging.debug("Ingen rad under musepeker – meny avbrytes")
+            return
+
+        self.menu_left.exec_(self.venstre.viewport().mapToGlobal(pos))
+
+
     def menu_swap_times(self, pos):
         rad_index = self.hoyre.rowAt(pos.y())
         if rad_index < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
-        self.meny.exec_(self.hoyre.viewport().mapToGlobal(pos))
+        self.menu_right.exec_(self.hoyre.viewport().mapToGlobal(pos))
 
     def swap_start_times(self):
         logging.info("swap_start_times")
@@ -226,6 +246,19 @@ class SplitClubMates(QDialog):
         queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.raceId)
 
         self.refresh_right()
+
+    def draw_start_times_class(self):
+        logging.info("draw_start_times_class")
+        model_indexes = self.venstre.selectionModel().selectedRows()
+        if len(model_indexes) != 1:
+            self.parent.vis_brukermelding("Du må velge en rad å omtrekke starttider for!")
+            return
+        inx = model_indexes[0].row()
+        class_id = self.venstre.item(inx, 2).text()
+
+        queries.draw_start_times_class(self.parent.conn_mgr, class_id)
+        self.refresh_left()
+        self.parent.select_by_id(self.venstre, class_id, 2)
 
     def get_label(self,tekst):
         lable = QLabel(tekst)

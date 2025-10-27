@@ -619,6 +619,37 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
 
+#
+# Trekk starttider for ei klasse
+#
+def draw_start_times_class(conn_mgr, classid):
+    logging.info("db.draw_start_times_class, classId: %s", classid)
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+WITH n1 AS (
+SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
+	      ,ROW_NUMBER() OVER(PARTITION BY cls.id ORDER BY RAND())-1+COALESCE(cls.freebefore, 0) nowithinclass
+	      ,cls.classstarttime, cls.timegap 
+	FROM names n 
+	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 AND classid = %s
+	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X')
+)
+UPDATE names n
+JOIN n1 ON n.id = n1.id
+SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap SECOND)
+"""
+        cursor.execute(sql, (classid,))
+        conn.commit()
+        conn.close()
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+
+
 """
 Alle løpere i gitt klasse, i start-rekkefølge.
 """

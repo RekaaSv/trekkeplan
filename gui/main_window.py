@@ -664,6 +664,7 @@ class MainWindow(QWidget):
         control.refresh_table(self, self.tableClassStart)
 #        self.select_by_id(self.tableBlockLag, blocklag_id) # Er allerede selektert.
         self.tableClassStart.oppdater_filter()
+        self.select_by_id(self.tableClassStart, clas_start_id)
 
     def class_start_down(self):
         logging.info("class_start_down")
@@ -893,16 +894,12 @@ class MainWindow(QWidget):
         self.juster_tabellhøyde(table)
         self.juster_tabell_vidde(table)
 
-    def select_by_id(self, table, id):
+    def select_by_id(self, table, id, col=0):
         logging.info("select_by_id id: %s", id)
         logging.debug("select_by_id id type: %s", type(id))
-        found = False
-        found_row = None
         for row_idx in range(table.rowCount()):
-            item = table.item(row_idx, 0).text()
-            item_bas = table.item(row_idx, 2).text()
+            item = table.item(row_idx, col).text()
             logging.debug("select_by_id item type, value: %s, %s", type(item), item)
-            logging.debug("select_by_id item_bas: %s", item_bas)
             if item == id:
                 logging.info("select_by_id: item found %s", item)
                 table.selectRow(row_idx)
