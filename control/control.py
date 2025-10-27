@@ -23,6 +23,7 @@ def class_start_down_up(self, id, step):
 def delete_class_start_rows(self, raceId, blocklagId):
     logging.info("control.delete_class_start_rows")
     queries.delete_class_start_rows(self.conn_mgr, raceId, blocklagId)
+    queries.rebuild_class_starts(self.conn_mgr, raceId)
 
 def delete_class_start_all(self, raceId):
     logging.info("control.delete_class_start_all")
@@ -91,16 +92,6 @@ def refresh_table(self, table):
     self.set_table_sizes(table, col_widths)
     return max_next_time
 
-"""
-    Leser høyeste Neste (neste starttid) for bås/slep blocklagid
-"""
-def read_blocklag_neste(self, blocklagid ):
-    logging.info("control.read_blocklag_neste")
-    rows, columns = queries.read_block_lag(self.conn_mgr, blocklagid)
-    return rows[0][5]
-    # return rows
-
-
 def class_start_free_updated(self, raceId, classstartid, blocklagid, new_value, cellno):
     logging.info("control.class_start_free_updated")
     logging.info("Signal av")
@@ -112,14 +103,9 @@ def class_start_free_updated(self, raceId, classstartid, blocklagid, new_value, 
     # Rebuild
     queries.rebuild_class_starts(self.conn_mgr, raceId)
     refresh_table(self, self.tableClassStart)
-    self.tableClassStart.oppdater_filter()
 
-    # Hent verdi fra DB.
-    neste = read_blocklag_neste(self, blocklagid)
-    logging.debug("neste: %s", neste)
-    # Finn item og oppdater det med verdien fra basen.
-    self.set_nexttime_on_blocklag(blocklagid, neste)
-    logging.debug("Signal på")
+    self.after_plan_changed(blocklagid)
+
     self.tableClassStart.blockSignals(False)
     logging.debug("control.class_start_free_updated end")
 

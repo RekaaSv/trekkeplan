@@ -28,7 +28,7 @@ class MainWindow(QWidget):
         self.config = config
         self.conn_mgr: ConnectionManager = conn_mgr
         self.col_widths_not_planned = [0, 120, 50, 100, 60]
-        self.col_widths_block_lag = [0, 0, 100, 50, 50, 70]
+        self.col_widths_block_lag = [0, 0, 100, 50, 50, 70, 70]
         self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 60, 60, 70, 70]
 
         self.button_style = """
@@ -580,6 +580,10 @@ class MainWindow(QWidget):
         control.delete_class_start_row(self, self.raceId, classstartid)
 
         control.refresh_table(self, self.tableNotPlanned)
+
+        self.after_plan_changed(blocklagid)
+
+    def after_plan_changed(self, blocklagid):
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
         logging.debug("max_next_datetime: %s", max_next_datetime)
         self.set_last_start_time(max_next_datetime)
@@ -608,15 +612,8 @@ class MainWindow(QWidget):
         control.delete_class_start_rows(self, self.raceId, blocklagid)
 
         control.refresh_table(self, self.tableNotPlanned)
-        control.refresh_table(self, self.tableClassStart)
-        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-        self.set_last_start_time(max_next_datetime)
-
-        # Re-selekt!
-        self.select_by_id(self.tableBlockLag, str(blocklagid))
-
-        # Refarge valgbare
-        self.tableClassStart.oppdater_filter()
+#        control.refresh_table(self, self.tableClassStart)
+        self.after_plan_changed(blocklagid)
 
     #
     # Slett alle classStart rader for dette løpet.
@@ -746,23 +743,8 @@ class MainWindow(QWidget):
         # Oppdater redundante kolonner og oppfrisk tabellene.
         queries.rebuild_class_starts(self.conn_mgr, self.raceId)
         control.refresh_table(self, self.tableNotPlanned)
-        max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-        self.set_last_start_time(max_next_datetime)
-        control.refresh_table(self, self.tableClassStart)
 
-        # Re-selekt!
-        self.select_by_id(self.tableBlockLag, str(blocklag_id))
-        self.tableClassStart.oppdater_filter()
-
-    def set_nexttime_on_blocklag(self, blocklag_id: int, neste):
-        logging.info("set_nexttime_on_blocklag")
-        self.tableClassStart.blockSignals(True)
-        row_idx = self.get_row_idx(self.tableBlockLag, 0, blocklag_id)
-        logging.debug("neste: %s", neste)
-        item = DrawPlanTableItem.from_value(neste)
-        self.tableBlockLag.setItem(row_idx, 5, item)
-        item.setData(Qt.UserRole, neste)
-        self.tableClassStart.blockSignals(False)
+        self.after_plan_changed(str(blocklag_id))
 
     def get_row_idx(self, table: QTableWidget, col_idx: int, col_value):
         logging.info("get_row_idx")
@@ -915,7 +897,7 @@ class MainWindow(QWidget):
         self.field_last_start.setTime(q_time_last)
 
     def max_value(self, rows, col):
-        logging.info("control.max_value")
+        logging.info("max_value")
         max = None
         for row in rows:
             if max is None:

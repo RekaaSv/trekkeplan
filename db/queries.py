@@ -98,26 +98,13 @@ SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.tim
 	SELECT nexttime FROM classstarts cls WHERE cls.blocklagid =  bll.id
 	UNION
 	SELECT first_start nexttime FROM races WHERE id = %s
-	) t   ) Neste 
+	) t   ) Neste
+    , NULL Ubrukt
 FROM startblocklags bll
 JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
 """
     cursor.execute(sql, (raceid, raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
-
-def read_block_lag(conn_mgr, blocklagid):
-    logging.info("db.read_block_lag, blocklagid: %s", blocklagid)
-    conn = conn_mgr.get_connection()
-    cursor = conn.cursor()
-    sql = """
-SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
-   ,(select max(nexttime) from classstarts cls where cls.blocklagid = bll.id) Neste 
-FROM startblocklags bll
-JOIN startblocks bl ON bl.id = bll.startblockid AND bll.id = %s
-"""
-    cursor.execute(sql, (blocklagid,))
-    return cursor.fetchall(), [desc[0] for desc in cursor.description]
-
 
 def read_class_starts(conn_mgr, raceid):
     logging.info("db.read_class_starts, raceid: %s", raceid)
