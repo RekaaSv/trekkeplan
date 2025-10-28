@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import pymysql
@@ -55,7 +56,7 @@ def read_race(conn_mgr, raceid):
 
     cursor = conn.cursor()
     sql = """
-SELECT r.id, r.name, r.racedate, r.first_start
+SELECT r.id, r.name, r.racedate, r.first_start, r.drawplan_changed, r.draw_time
 FROM races r 
 WHERE r.id = %s
 """
@@ -149,8 +150,51 @@ WHERE id = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
+
+def upd_drawplan_changed(conn_mgr, raceid, new_value):
+    logging.info("db.upd_drawplan_changed, raceid: %s", raceid)
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+UPDATE races
+set drawplan_changed = %s
+WHERE id = %s
+"""
+        cursor.execute(sql, (new_value, raceid))
+        conn.commit()
+        conn.close()
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+def upd_draw_time(conn_mgr, raceid, new_value):
+    logging.info("db.upd_draw_time, raceid: %s", raceid)
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+UPDATE races
+set draw_time = %s
+WHERE id = %s
+"""
+        cursor.execute(sql, (new_value, raceid))
+        conn.commit()
+        conn.close()
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
 
 """
  Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
@@ -204,8 +248,10 @@ SET stcl2.sortorder = classst.newsortorder
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def rebuild_class_starts_partition(conn_mgr, raceid, blocklagid):
     logging.info("db.rebuild_class_starts_partition, blocklagid %s", blocklagid)
@@ -260,8 +306,10 @@ SET stcl2.sortorder = classst.newsortorder
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def delete_class_start_row(conn_mgr, raceId, classstartId):
     logging.info("db.delete_class_start_row, id: %s", classstartId)
@@ -276,8 +324,10 @@ DELETE FROM classstarts WHERE id = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def delete_class_start_rows(conn_mgr, raceId, blocklagId):
     logging.info("db.delete_class_start_rows, blocklagid: %s", blocklagId)
@@ -292,8 +342,10 @@ DELETE FROM classstarts WHERE blocklagid = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def delete_class_start_all(conn_mgr, raceId):
     logging.info("db.delete_class_start_all, raceid: %s", raceId)
@@ -315,8 +367,10 @@ WHERE cl.cource = 0
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 def delete_blocklag(conn_mgr, raceId, blocklagId):
@@ -339,8 +393,10 @@ WHERE sbl.id = %s
         return to_return
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def delete_block(conn_mgr, raceId, blockId):
     logging.info("db.delete_block, blockId: %s", blockId)
@@ -362,8 +418,10 @@ WHERE sb.id = %s
         return to_return
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def insert_class_start_not(conn_mgr, raceId, classId):
     logging.info("db.insert_class_start_not, classId: %s", classId)
@@ -379,8 +437,10 @@ INSERT INTO classstarts_not (classid)
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def delete_class_start_not(conn_mgr, raceId):
     logging.info("db.delete_class_start_not, raceId: %s", raceId)
@@ -401,8 +461,10 @@ WHERE csn.classid in (
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder):
     logging.info("db.insert_class_start, blocklagId: %s, classId: %s", blocklagId, classId)
@@ -418,8 +480,10 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 def add_block(conn_mgr, raceId, block):
@@ -441,10 +505,13 @@ VALUES (%s, %s)
             raise MyCustomError("Bås med det navnet finnes fra før!")
         else:
             logging.error(f"MySQL-feil: {err}")
+            raise
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 def add_blocklag(conn_mgr, blockid, lag, gap):
@@ -467,10 +534,13 @@ VALUES (%s, %s, %s)
             raise MyCustomError("Denne kombinasjonen av Bås/tidsslep finnes fra før!")
         else:
             logging.error(f"MySQL-feil: {err}")
+            raise
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 def upd_class_start_free_before(conn_mgr, raceId, classstartid, new_value):
@@ -488,8 +558,10 @@ WHERE id = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def upd_class_start_free_after(conn_mgr, raceId, classstartid, new_value):
     logging.info("db.upd_class_start_free_after, classstartid: %s, new_value: %s", classstartid, new_value)
@@ -506,8 +578,10 @@ WHERE id = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def sql_start_list(conn_mgr, raceid):
     logging.info("db.sql_start_list, raceid: %s", raceid)
@@ -527,8 +601,10 @@ ORDER BY cl.sortorder, n.starttime
         return cursor.fetchall(), [desc[0] for desc in cursor.description]
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def sql_starter_list(conn_mgr, raceid):
     logging.info("db.sql_starter_list, raceid: %s", raceid)
@@ -550,8 +626,10 @@ ORDER BY n.starttime, cl.sortorder
         return cursor.fetchall(), [desc[0] for desc in cursor.description]
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 def clear_start_times(conn_mgr, raceId):
@@ -576,8 +654,10 @@ SET n.starttime = null
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 def draw_start_times(conn_mgr, raceId):
     logging.info("db.draw_start_times, raceId: %s", raceId)
@@ -603,8 +683,10 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 #
 # Trekk starttider for ei klasse
@@ -633,8 +715,10 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 """
@@ -670,8 +754,10 @@ WHERE id = %s
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise
 
 
 
@@ -698,5 +784,7 @@ set n2.starttime = n1.othertime
         conn.close()
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
+        raise
     except Exception as e:
         logging.error(f"Uventet feil: {e}")
+        raise

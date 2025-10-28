@@ -1,0 +1,40 @@
+# Bytecode og cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# PyInstaller output
+build/
+dist/
+*.spec
+
+# Konfigurasjonsfiler og metadata
+*.log
+*.tmp
+*.bak
+
+# Virtuelt miljø (endre "venv" hvis du bruker annet navn)
+venv/
+ENV/
+env/
+.venv/
+
+# PyCharm-prosjektfiler
+.idea/
+
+# Systemfiler
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Installerte .exe-filer
+*.exe
+
+# Midlertidige batch-filer (valgfritt)
+*.bat
+
+# Versjonsfil hvis generert automatisk
+version.txt
+
+# Kilde: hjelp.docx
+hjelp.pdf

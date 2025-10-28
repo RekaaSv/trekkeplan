@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from db import queries
@@ -8,26 +9,27 @@ def first_start_edited(self, raceId, str_new_first_start):
     logging.info("control.first_start_edited")
     # Update first start-time, then rebuild redundant columns in class_starts.
     queries.upd_first_start(self.conn_mgr, raceId, str_new_first_start)
-    queries.rebuild_class_starts(self.conn_mgr, raceId)
+    rebuild_class_starts(self, raceId)
 
 def delete_class_start_row(self, raceId, classstartId):
     logging.info("control.delete_class_start_row")
     queries.delete_class_start_row(self.conn_mgr, raceId, classstartId)
-    queries.rebuild_class_starts(self.conn_mgr, raceId)
+    rebuild_class_starts(self, raceId)
 
 def class_start_down_up(self, id, step):
     logging.info("control.class_start_down_up")
     queries.class_start_down_up(self.conn_mgr, id, step)
-    queries.rebuild_class_starts(self.conn_mgr, self.raceId)
+    rebuild_class_starts(self, self.raceId)
 
 def delete_class_start_rows(self, raceId, blocklagId):
     logging.info("control.delete_class_start_rows")
     queries.delete_class_start_rows(self.conn_mgr, raceId, blocklagId)
-    queries.rebuild_class_starts(self.conn_mgr, raceId)
+    rebuild_class_starts(self, raceId)
 
 def delete_class_start_all(self, raceId):
     logging.info("control.delete_class_start_all")
     queries.delete_class_start_all(self.conn_mgr, raceId)
+    rebuild_class_starts(self, raceId)
 
 def delete_blocklag(self, raceId, blocklagId, blockId):
     logging.info("control.delete_blocklag")
@@ -101,7 +103,7 @@ def class_start_free_updated(self, raceId, classstartid, blocklagid, new_value, 
     elif cellno==2:
         queries.upd_class_start_free_after(self.conn_mgr, raceId, classstartid, new_value)
     # Rebuild
-    queries.rebuild_class_starts(self.conn_mgr, raceId)
+    rebuild_class_starts(self, raceId)
     refresh_table(self, self.tableClassStart)
 
     self.after_plan_changed(blocklagid)
@@ -125,8 +127,13 @@ def make_starterlist(self, raceId):
 
 def draw_start_times(self, raceId):
     queries.draw_start_times(self.conn_mgr, raceId)
+    queries.upd_draw_time(self.conn_mgr, raceId, datetime.datetime.now())
     self.vis_brukermelding("Trekking foretatt, se Startliste!")
 
 def clear_start_times(self, raceId):
     queries.clear_start_times(self.conn_mgr, raceId)
     self.vis_brukermelding("Starttider fjernet, se Startliste!")
+
+def rebuild_class_starts(self, raceId):
+    queries.rebuild_class_starts(self.conn_mgr, raceId)
+    queries.upd_drawplan_changed(self.conn_mgr, raceId, datetime.datetime.now())

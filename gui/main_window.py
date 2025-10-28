@@ -784,7 +784,7 @@ class MainWindow(QWidget):
             control.insert_class_start(self, self.raceId, blocklag_id, classid, gap, sort_value)
 
         # Oppdater redundante kolonner og oppfrisk tabellene.
-        queries.rebuild_class_starts(self.conn_mgr, self.raceId)
+        control.rebuild_class_starts(self, self.raceId)
         control.refresh_table(self, self.tableNotPlanned)
 
         self.after_plan_changed(str(blocklag_id))
