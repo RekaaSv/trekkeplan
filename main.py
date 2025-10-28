@@ -2,6 +2,7 @@ import configparser
 import logging
 import os
 import traceback
+from logging.handlers import RotatingFileHandler
 
 import pymysql
 
@@ -48,11 +49,20 @@ def main():
         # Logging-oppsett ufra konfig fil.
         log_level = log_config.get("level", fallback="INFO")
         log_file = log_config.get("file", fallback="trekkeplan.log")
+        log_max_bytes = log_config.getint("max_bytes", fallback=500_000)
+        log_backup_count = log_config.getint("backup_count", fallback=5)
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=log_max_bytes,
+            backupCount=log_backup_count,
+            encoding="utf-8"
+        )
+
         logging.basicConfig(
             level=getattr(logging, log_level.upper(), logging.INFO),
             format="%(asctime)s [%(levelname)s] %(message)s",
             handlers=[
-                logging.FileHandler(log_file, encoding="utf-8"),
+                file_handler,
                 logging.StreamHandler()
             ]
         )

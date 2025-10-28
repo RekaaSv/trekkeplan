@@ -247,7 +247,7 @@ class SplitClubMates(QDialog):
     def draw_start_times_class(self):
         logging.info("draw_start_times_class")
         if self.parent.drawplan_changed > self.parent.draw_time:
-            self.parent.vis_brukermelding("Trekkeplan er endret ettere sist trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre tabell.")
+            self.parent.vis_brukermelding("Trekkeplanen er endret etter siste trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre tabell.")
             return
 
         model_indexes = self.venstre.selectionModel().selectedRows()

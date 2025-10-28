@@ -619,6 +619,7 @@ JOIN classes cl on cl.id = n.classid
 JOIN races r on r.id = cl.raceid
 WHERE r.id = %s
   AND n.status not in ('V','X')
+  AND n.starttime is not null
 ORDER BY n.starttime, cl.sortorder
 """
     try:

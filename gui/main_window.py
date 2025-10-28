@@ -12,6 +12,7 @@ from control.errors import MyCustomError
 from db import queries
 from db.connection import ConnectionManager
 from gui.about_dialog import AboutDialog
+from gui.block_line_edit import BlockLineEdit
 from gui.draw_plan_table_item import DrawPlanTableItem
 
 from gui.filtered_table import FilteredTable
@@ -113,7 +114,7 @@ class MainWindow(QWidget):
 
         self.field_first_start.setDisplayFormat("HH:mm:ss")
         self.field_first_start.setFixedWidth(80)
-        self.field_block = QLineEdit()
+        self.field_block = BlockLineEdit(self)
         self.field_block.setStyleSheet(field_input_style)
         self.field_block.setReadOnly(False)
         self.field_block.setFixedWidth(100)
@@ -173,6 +174,10 @@ class MainWindow(QWidget):
         layout.addWidget(self.aboutButton)
         central = QWidget()
         central.setLayout(layout)
+
+        self.close_button = QPushButton("Avslutt")
+        self.close_button.setStyleSheet(self.button_style)
+        self.close_button.clicked.connect(self.close)
 
         self.raceButton = QPushButton("Velg løp")
         self.raceButton.setStyleSheet(self.button_style)
@@ -410,9 +415,11 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.startListButton)
         bottom_layout.addWidget(self.starterListButton)
         bottom_layout.addStretch()
+        bottom_layout.addWidget(self.buttonDrawStartTimes)
         bottom_layout.addWidget(self.buttonClubMates)
         bottom_layout.addWidget(self.buttonClearStartTimes)
-        bottom_layout.addWidget(self.buttonDrawStartTimes)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(self.close_button)
 
         header_class_start_layout = QHBoxLayout()
 #        header_class_start_layout.addWidget(self.moveButton)
@@ -566,7 +573,7 @@ class MainWindow(QWidget):
         logging.info("vis_brukermelding")
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
-        msg.setWindowTitle("Feil")
+        msg.setWindowTitle("Info")
         msg.setText(tekst)
         msg.exec_()
 
@@ -753,7 +760,7 @@ class MainWindow(QWidget):
         logging.info("move_class_to_plan")
         selected_model_rows = self.tableNotPlanned.selectionModel().selectedRows()
         if not selected_model_rows:
-            self.vis_brukermelding("Du må velge ei klasse å flytte Trekkeplanen!")
+            self.vis_brukermelding("Du må velge ei klasse å flytte til Trekkeplanen!")
             return
         elif (selected_model_rows.__len__() > 9):
             self.vis_brukermelding("Du kan ikke flytte flere enn 9 klasser til Trekkeplanen i en runde!")
@@ -890,11 +897,20 @@ class MainWindow(QWidget):
 
     def draw_start_times(self):
         logging.info("draw_start_times")
-        control.draw_start_times(self, self.raceId)
+        if self.ask_confirmation("Trekk starttider for klasser i planen?"):
+            control.draw_start_times(self, self.raceId)
+        else:
+            logging.debug("Brukeren avbrøt")
+
 
     def clear_start_times(self):
         logging.info("clear_start_times")
-        control.clear_start_times(self, self.raceId)
+
+        if self.ask_confirmation("Slette alle starttider?"):
+            control.clear_start_times(self, self.raceId)
+        else:
+            logging.debug("Brukeren avbrøt")
+
 
     def make_startlist(self):
         logging.info("make_startlist")
@@ -963,3 +979,16 @@ class MainWindow(QWidget):
         logging.debug("max_value, max: %s", max)
         return max
 
+    def block_focus_action(self):
+        logging.info("block_focus_action")
+        self.tableBlockLag.clearSelection()
+
+    def ask_confirmation(parent, message: str) -> bool:
+        reply = QMessageBox.question(
+            parent,
+            "Bekreft handling",
+            message,
+            QMessageBox.Ok | QMessageBox.Cancel,
+            QMessageBox.Cancel
+        )
+        return reply == QMessageBox.Ok
