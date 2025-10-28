@@ -10,6 +10,7 @@ dist/
 
 # Konfigurasjonsfiler og metadata
 *.log
+*.log.*
 *.tmp
 *.bak
 
