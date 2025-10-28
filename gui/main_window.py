@@ -249,7 +249,7 @@ class MainWindow(QWidget):
         self.refresh_first_start(self.raceId)
 
         if not self.race_name: self.setWindowTitle("Brikkesys/SvR Trekkeplan - ")
-        else: self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_str )
+        else: self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_db.isoformat() )
 
         self.setWindowIcon(QIcon(self.icon_path))
 
@@ -438,7 +438,6 @@ class MainWindow(QWidget):
         race = rows0[0]
         self.race_name = race[1]
         self.race_date_db: QDateEdit = race[2]
-        self.race_date_str = race[2].isoformat()
         self.race_start_time_db = race[3]
         if self.race_start_time_db:
             self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute,
@@ -486,9 +485,9 @@ class MainWindow(QWidget):
     def first_start_edited(self):
         logging.info("first_start_edited")
         # Update first start-time, then rebuild redundant in class_starts, and reread.
-        first_time = self.field_first_start.time().toString("HH:mm:ss")
-        # Tidspunt for start = løpsdag + angitt tid (first_time)
-        self.str_new_first_start = self.race_date_str + " " + first_time
+
+        new_first_datetime = datetime.datetime.combine(self.race_date_db, self.field_first_start.time().toPyTime())
+        logging.debug("first_start_edited new_first_datetime: %s", new_first_datetime)
 
         # Ta vare på seletert rad, for reselekt.
         selected_row_id = None
@@ -501,7 +500,7 @@ class MainWindow(QWidget):
 
         logging.debug("first_start_edited selected_row_id: %s", selected_row_id)
 
-        control.first_start_edited(self, self.raceId, self.str_new_first_start)
+        control.first_start_edited(self, self.raceId, new_first_datetime)
         control.refresh_table(self, self.tableClassStart)
 
         self.after_plan_changed(blocklagid)
@@ -820,7 +819,7 @@ class MainWindow(QWidget):
 #            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
             self.refresh_first_start(self.raceId)
             self.field_first_start.setTime(self.q_time)
-            self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_str)
+            self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_db.isoformat())
             self.lagre_raceid(self.raceId)
             self.after_plan_changed(None)
         else:

@@ -5,10 +5,13 @@ from db import queries
 from html.html_builder import HtmlBuilder
 
 
-def first_start_edited(self, raceId, str_new_first_start):
+def first_start_edited(self, raceId, new_first_start_datetime):
     logging.info("control.first_start_edited")
     # Update first start-time, then rebuild redundant columns in class_starts.
-    queries.upd_first_start(self.conn_mgr, raceId, str_new_first_start)
+    queries.upd_first_start(self.conn_mgr, raceId, new_first_start_datetime)
+    logging.debug("control.first_start_edited str_new_first_start: %s", new_first_start_datetime)
+    self.race_start_time_db = new_first_start_datetime
+
     rebuild_class_starts(self, raceId)
 
 def delete_class_start_row(self, raceId, classstartId):
