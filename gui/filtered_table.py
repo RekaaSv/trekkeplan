@@ -17,7 +17,6 @@ class FilteredTable(QTableWidget):
 
         self.referansetabell.itemSelectionChanged.connect(self._planlagt_filteroppdatering)
         self.itemSelectionChanged.connect(self.rens_seleksjon)
-        self.log = True
 
     def oppdater_filter(self):
         logging.info("FilteredTable.oppdater_filter")
@@ -73,6 +72,7 @@ class FilteredTable(QTableWidget):
                     item.setBackground(standard)
             except Exception as e:
                 logging.error(f"Feil i set_rad_valgbar på rad {rad_index}, kol {kol}: {e}")
+                raise
 
         self.blockSignals(False)
         logging.info("FilteredTable.set_rad_valgbar end")

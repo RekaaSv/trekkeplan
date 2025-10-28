@@ -9,8 +9,8 @@ def first_start_edited(self, raceId, new_first_start_datetime):
     logging.info("control.first_start_edited")
     # Update first start-time, then rebuild redundant columns in class_starts.
     queries.upd_first_start(self.conn_mgr, raceId, new_first_start_datetime)
-    logging.debug("control.first_start_edited str_new_first_start: %s", new_first_start_datetime)
-    self.race_start_time_db = new_first_start_datetime
+    logging.debug("control.first_start_edited new_first_start_datetime: %s", new_first_start_datetime)
+    self.race_first_start = new_first_start_datetime
 
     rebuild_class_starts(self, raceId)
 
@@ -130,7 +130,11 @@ def make_starterlist(self, raceId):
 
 def draw_start_times(self, raceId):
     queries.draw_start_times(self.conn_mgr, raceId)
-    queries.upd_draw_time(self.conn_mgr, raceId, datetime.datetime.now())
+    now = datetime.datetime.now()
+    # Sett tidsstempel på at det er trukket, både i basen og global variabel.
+    queries.upd_draw_time(self.conn_mgr, raceId, now)
+    self.draw_time = now
+
     self.vis_brukermelding("Trekking foretatt, se Startliste!")
 
 def clear_start_times(self, raceId):
@@ -139,4 +143,8 @@ def clear_start_times(self, raceId):
 
 def rebuild_class_starts(self, raceId):
     queries.rebuild_class_starts(self.conn_mgr, raceId)
-    queries.upd_drawplan_changed(self.conn_mgr, raceId, datetime.datetime.now())
+
+    # Sett tidsstempel på at planen er endret, både i basen og global variabel.
+    now = datetime.datetime.now()
+    queries.upd_drawplan_changed(self.conn_mgr, raceId, now)
+    self.drawplan_changed = now

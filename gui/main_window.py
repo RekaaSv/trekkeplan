@@ -30,6 +30,11 @@ class MainWindow(QWidget):
         self.col_widths_block_lag = [0, 0, 100, 50, 50, 70, 70]
         self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 60, 60, 70, 70]
 
+        # Globale variable
+        self.raceId = self.hent_raceid() # Lagres i registry.
+        self.race_name = None
+
+
         self.button_style = """
             QPushButton {
                 background-color: rgb(200, 220, 240);
@@ -51,15 +56,10 @@ class MainWindow(QWidget):
         """
 
 
-        self.raceId = self.hent_raceid()
-        self.str_new_first_start = None
 #        self.resize(1677, 780)
         self.resize(1497, 780)
         self.move(0, 0)
 
-        self.log = True
-        self.race_name = None
-        self.q_time = None
         #
         # Komponenter
         #
@@ -143,8 +143,6 @@ class MainWindow(QWidget):
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
-#        self.tableBlockLag.setMinimumSize(210, 100)
-#        self.tableBlockLag.setMaximumSize(210, 2000)
         self.tableBlockLag.setSelectionMode(QTableWidget.SingleSelection)
         self.tableBlockLag.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableBlockLag.verticalHeader().setVisible(False)
@@ -171,12 +169,10 @@ class MainWindow(QWidget):
         self.aboutButton = QPushButton("Om Trekkeplan")
         self.aboutButton.setStyleSheet(self.button_style)
         self.aboutButton.setFixedWidth(150)
-#        self.aboutButton.setToolTip("Velg et annet løp.")
         self.aboutButton.clicked.connect(self.vis_about_dialog)
         layout.addWidget(self.aboutButton)
         central = QWidget()
         central.setLayout(layout)
-#        self.setCentralWidget(central)
 
         self.raceButton = QPushButton("Velg løp")
         self.raceButton.setStyleSheet(self.button_style)
@@ -184,8 +180,11 @@ class MainWindow(QWidget):
         self.raceButton.setToolTip("Velg et annet løp.")
         self.raceButton.clicked.connect(self.select_race)
 
-        self.moveButton = QPushButton("=====>        (F2)")
+        self.moveButton = QPushButton("\u21D2        (F2)")
         self.moveButton.setStyleSheet(self.button_style)
+        font = QFont("Segoe UI Symbol")  # "Segoe UI Symbol" eller "Arial", "Consolas", "Fira Code"
+        font.setPointSize(12)
+        self.moveButton.setFont(font)
         self.moveButton.setFixedWidth(200)
         self.moveButton.setToolTip("Flytt valgte klasser over til Trekkeplan, i den gruppen du har valgt (bås/ slep.")
         self.moveButton.clicked.connect(self.move_class_to_plan)
@@ -195,8 +194,9 @@ class MainWindow(QWidget):
 #        move_shortcut.activated.connect(self.moveButton.click)  # Simulerer knappetrykk
 #        self.move_shortcut.activated.connect(lambda: print("F2 trykket"))  # Simulerer knappetrykk
 
-        self.removeButton = QPushButton("<=====        (F3)")
+        self.removeButton = QPushButton("\u21D0        (F3)")
         self.removeButton.setStyleSheet(self.button_style)
+        self.removeButton.setFont(font)
         self.removeButton.setFixedWidth(200)
         self.removeButton.setToolTip("Fjern valgt klasse fra Trekkeplan")
         self.removeButton.clicked.connect(self.slett_class_start_rad)
@@ -246,7 +246,7 @@ class MainWindow(QWidget):
         # Les fra MySQL initielt.
         #
         logging.debug("refresh 1: %s", self.raceId)
-        self.refresh_first_start(self.raceId)
+        self.refresh_race_times(self.raceId)
 
         if not self.race_name: self.setWindowTitle("Brikkesys/SvR Trekkeplan - ")
         else: self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_db.isoformat() )
@@ -254,7 +254,6 @@ class MainWindow(QWidget):
         self.setWindowIcon(QIcon(self.icon_path))
 
         self.field_first_start.editingFinished.connect(self.first_start_edited)
-        if self.q_time: self.field_first_start.setTime(self.q_time)
 
         control.refresh_table(self, self.tableNotPlanned)
         self.after_plan_changed(None)
@@ -431,18 +430,24 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-    def refresh_first_start(self, raceid):
-        logging.debug("refresh_first_start")
+    def refresh_race_times(self, raceid):
+        logging.debug("refresh_race_times")
         rows0, columns0 = queries.read_race(self.conn_mgr, self.raceId)
         if not rows0: return
         race = rows0[0]
         self.race_name = race[1]
-        self.race_date_db: QDateEdit = race[2]
-        self.race_start_time_db = race[3]
-        if self.race_start_time_db:
-            self.q_time = QTime(self.race_start_time_db.hour, self.race_start_time_db.minute,
-                                self.race_start_time_db.second)
-        else: self.q_time = QTime(0,0)
+        self.race_date_db: datetime.date = race[2]
+        self.race_first_start: datetime.datetime = race[3]
+        self.drawplan_changed: datetime.datetime = race[4]
+        self.draw_time: datetime.datetime = race[5]
+
+        logging.debug("datetime type: %s", type(self.race_date_db))
+
+        if self.race_first_start:
+            q_time = QTime(self.race_first_start.hour, self.race_first_start.minute,
+                                self.race_first_start.second)
+        else: q_time = QTime(0,0)
+        self.field_first_start.setTime(q_time)
 
     def populate_table(self, table, columns: list[any], rows):
         logging.debug("populate_table")
@@ -601,9 +606,9 @@ class MainWindow(QWidget):
     def rebuild_blocklag_idle(self, table, race_nexttime):
         logging.debug("rebuild_blocklag_unused: %s", race_nexttime)
 
-        if race_nexttime is None or self.race_start_time_db is None:
+        if race_nexttime is None or self.race_first_start is None:
             return
-        duration = race_nexttime - self.race_start_time_db
+        duration = race_nexttime - self.race_first_start
         logging.debug("duration: %s", duration)
 
         for row_idx in range(table.rowCount()):
@@ -816,11 +821,9 @@ class MainWindow(QWidget):
 
             self.raceId = valgt_id
             control.refresh_table(self, self.tableNotPlanned)
-#            max_next_datetime = control.refresh_table(self, self.tableBlockLag)
-            self.refresh_first_start(self.raceId)
-            self.field_first_start.setTime(self.q_time)
+            self.refresh_race_times(self.raceId)
             self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_db.isoformat())
-            self.lagre_raceid(self.raceId)
+            self.lagre_raceid(self.raceId) # I registry
             self.after_plan_changed(None)
         else:
             logging.debug("Brukeren avbrøt")
@@ -930,10 +933,10 @@ class MainWindow(QWidget):
     def set_last_start_time(self, max_next_datetime: datetime.datetime | None):
         logging.info("set_last_start_time: %s", max_next_datetime)
         q_time_duration = None
-        if max_next_datetime is not None and self.race_start_time_db is not None:
+        if max_next_datetime is not None and self.race_first_start is not None:
             q_time_last = QTime(max_next_datetime.hour, max_next_datetime.minute,
                                 max_next_datetime.second)
-            q_time_duration = max_next_datetime - self.race_start_time_db
+            q_time_duration = max_next_datetime - self.race_first_start
             logging.debug("q_time_duration: %s", q_time_duration)
         else: q_time_last = QTime(0, 0)
 
@@ -959,3 +962,4 @@ class MainWindow(QWidget):
         logging.debug("max_value, type: %s", type(max))
         logging.debug("max_value, max: %s", max)
         return max
+

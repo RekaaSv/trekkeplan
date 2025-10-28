@@ -6,7 +6,6 @@ import pymysql
 class ConnectionManager:
     def __init__(self, db_config):
         self.db_config = db_config
-        self.log = True
 
     def get_connection(self):
         try:
