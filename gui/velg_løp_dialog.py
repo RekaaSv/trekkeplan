@@ -30,6 +30,7 @@ class SelectRaceDialog(QDialog):
         self.table_race.setSelectionMode(QTableWidget.SingleSelection)
         self.table_race.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_race.verticalHeader().setVisible(False)
+        self.table_race.horizontalHeader().setStyleSheet(self.parent.table_header_style_sheet)
 #        self.table_race.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         logging.info("SelectRaceDialog 3")

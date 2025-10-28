@@ -27,6 +27,8 @@ class SplitClubMates(QDialog):
         self.venstre.verticalHeader().setVisible(False)
         self.venstre.setContextMenuPolicy(Qt.CustomContextMenu)
         self.venstre.customContextMenuRequested.connect(self.menu_draw_class)
+        self.venstre.horizontalHeader().setStyleSheet(self.parent.table_header_style_sheet)
+
         parent.keep_selection_colour(self.venstre)
 
         self.right_columns = [0, 0, 80, 200, 250, 70]
@@ -35,6 +37,7 @@ class SplitClubMates(QDialog):
         self.hoyre.verticalHeader().setVisible(False)
         self.hoyre.setContextMenuPolicy(Qt.CustomContextMenu)
         self.hoyre.customContextMenuRequested.connect(self.menu_swap_times)
+        self.hoyre.horizontalHeader().setStyleSheet(self.parent.table_header_style_sheet)
         parent.keep_selection_colour(self.hoyre)
 
 

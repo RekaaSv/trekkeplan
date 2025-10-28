@@ -3,7 +3,7 @@ import logging
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, QTableWidgetItem, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QDateEdit, QSpacerItem, QSizePolicy, QFrame, \
-    QApplication, QShortcut
+    QApplication, QShortcut, QTableView
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl, QTimer, QSize
 from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont, QBrush
 
@@ -29,7 +29,7 @@ class MainWindow(QWidget):
         self.conn_mgr: ConnectionManager = conn_mgr
         self.col_widths_not_planned = [0, 120, 50, 100, 60]
         self.col_widths_block_lag = [0, 0, 100, 50, 50, 70, 70]
-        self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 60, 60, 70, 70]
+        self.col_widths_class_start = [0, 0, 100, 50, 0, 100, 100, 60, 50, 60, 65, 65, 70, 70]
 
         # Globale variable
         self.raceId = self.hent_raceid() # Lagres i registry.
@@ -131,6 +131,16 @@ class MainWindow(QWidget):
         self.field_gap.setValidator(QIntValidator(0, 999))
         self.field_gap.setText("60")
 
+        self.table_header_style_sheet = """
+            QHeaderView::section {
+                background-color: #f0f0f0;
+                color: #333;
+                font-weight: bold;
+                padding: 1px;
+                border: 1px solid #ccc;
+            }
+        """
+
         self.tableNotPlanned = QTableWidget()
         self.tableNotPlanned.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tableNotPlanned.setSelectionBehavior(QTableWidget.SelectRows)
@@ -141,6 +151,7 @@ class MainWindow(QWidget):
         # Og på header.
         self.tableNotPlanned.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableNotPlanned.horizontalHeader().customContextMenuRequested.connect(self.show_not_planned_header_menu)
+        self.tableNotPlanned.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
 
         self.tableBlockLag = QTableWidget()
         self.tableBlockLag.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -150,6 +161,7 @@ class MainWindow(QWidget):
         self.tableBlockLag.setSortingEnabled(True)
         self.tableBlockLag.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableBlockLag.customContextMenuRequested.connect(self.show_block_lag_menu)
+        self.tableBlockLag.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
 
         self.tableClassStart = FilteredTable(self.tableBlockLag, 0, 1)  #QTableWidget()
 #        self.tableClassStart.setMinimumSize(660, 100)
@@ -160,6 +172,7 @@ class MainWindow(QWidget):
         self.tableClassStart.setSortingEnabled(False)
         self.tableClassStart.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableClassStart.customContextMenuRequested.connect(self.show_class_start_menu)
+        self.tableClassStart.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
 
         self.hjelp_knapp = QPushButton("Hjelp")
         self.hjelp_knapp.setStyleSheet(self.button_style)
@@ -992,3 +1005,4 @@ class MainWindow(QWidget):
             QMessageBox.Cancel
         )
         return reply == QMessageBox.Ok
+
