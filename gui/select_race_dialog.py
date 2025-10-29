@@ -1,8 +1,7 @@
 import logging
 
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QHeaderView
+    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QPushButton
 )
 from PyQt5.QtCore import Qt
 
@@ -22,7 +21,7 @@ class SelectRaceDialog(QDialog):
 
         logging.info("SelectRaceDialog 2")
 
-        self.valgt_løpsid = None
+        self.selected_race_id = None
 
         # Tabell
         self.table_race = QTableWidget()
@@ -31,26 +30,26 @@ class SelectRaceDialog(QDialog):
         self.table_race.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_race.verticalHeader().setVisible(False)
         self.table_race.horizontalHeader().setStyleSheet(self.parent.table_header_style_sheet)
-#        self.table_race.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+#        parent.table_race.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         logging.info("SelectRaceDialog 3")
 
         # Knapper
-        knapp_layout = QHBoxLayout()
+        layout_buttons = QHBoxLayout()
         ok_btn = QPushButton("OK")
         ok_btn.setStyleSheet(self.parent.button_style)
-        avbryt_btn = QPushButton("Avbryt")
-        avbryt_btn.setStyleSheet(self.parent.button_style)
-        knapp_layout.addWidget(ok_btn)
-        knapp_layout.addWidget(avbryt_btn)
+        cancel_btn = QPushButton("Avbryt")
+        cancel_btn.setStyleSheet(self.parent.button_style)
+        layout_buttons.addWidget(ok_btn)
+        layout_buttons.addWidget(cancel_btn)
 
-        ok_btn.clicked.connect(self.ok_klikket)
-        avbryt_btn.clicked.connect(self.reject)
+        ok_btn.clicked.connect(self.ok_clicked)
+        cancel_btn.clicked.connect(self.reject)
         logging.info("SelectRaceDialog 4")
 
         layout = QVBoxLayout()
         layout.addWidget(self.table_race)
-        layout.addLayout(knapp_layout)
+        layout.addLayout(layout_buttons)
         self.setLayout(layout)
 
         self.refresh()
@@ -64,9 +63,9 @@ class SelectRaceDialog(QDialog):
 
         self.parent.set_table_sizes(self.table_race, self.col_widths_races)
 
-    def ok_klikket(self):
+    def ok_clicked(self):
         valgt = self.table_race.currentRow()
         if valgt >= 0:
             id_item = self.table_race.item(valgt, 3)
-            self.valgt_løpsid = int(id_item.text())
+            self.selected_race_id = int(id_item.text())
             self.accept()

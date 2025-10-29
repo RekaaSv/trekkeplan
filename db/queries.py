@@ -311,15 +311,15 @@ SET stcl2.sortorder = classst.newsortorder
         logging.error(f"Uventet feil: {e}")
         raise
 
-def delete_class_start_row(conn_mgr, raceId, classstartId):
-    logging.info("db.delete_class_start_row, id: %s", classstartId)
+def delete_class_start_row(conn_mgr, race_id, classstart_id):
+    logging.info("db.delete_class_start_row, id: %s", classstart_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts WHERE id = %s
     """
-        cursor.execute(sql, (classstartId,))
+        cursor.execute(sql, (classstart_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -329,15 +329,15 @@ DELETE FROM classstarts WHERE id = %s
         logging.error(f"Uventet feil: {e}")
         raise
 
-def delete_class_start_rows(conn_mgr, raceId, blocklagId):
-    logging.info("db.delete_class_start_rows, blocklagid: %s", blocklagId)
+def delete_class_start_rows(conn_mgr, race_id, blocklag_id):
+    logging.info("db.delete_class_start_rows, blocklagid: %s", blocklag_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 DELETE FROM classstarts WHERE blocklagid = %s
     """
-        cursor.execute(sql, (blocklagId,))
+        cursor.execute(sql, (blocklag_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -347,8 +347,8 @@ DELETE FROM classstarts WHERE blocklagid = %s
         logging.error(f"Uventet feil: {e}")
         raise
 
-def delete_class_start_all(conn_mgr, raceId):
-    logging.info("db.delete_class_start_all, raceid: %s", raceId)
+def delete_class_start_all(conn_mgr, race_id):
+    logging.info("db.delete_class_start_all, raceid: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -362,7 +362,7 @@ WHERE cl.cource = 0
   AND r.id = %s
 )
 """
-        cursor.execute(sql, (raceId,))
+        cursor.execute(sql, (race_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -373,8 +373,8 @@ WHERE cl.cource = 0
         raise
 
 
-def delete_blocklag(conn_mgr, raceId, blocklagId):
-    logging.info("db.delete_blocklag, blocklagId: %s", blocklagId)
+def delete_blocklag(conn_mgr, race_id, blocklag_id):
+    logging.info("db.delete_blocklag, blocklag_id: %s", blocklag_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -383,7 +383,7 @@ DELETE FROM startblocklags sbl
 WHERE sbl.id = %s
   AND NOT EXISTS (SELECT NULL FROM classstarts cs WHERE  cs.blocklagid = sbl.id)
 """
-        cursor.execute(sql, (blocklagId, ))
+        cursor.execute(sql, (blocklag_id, ))
         if cursor.rowcount > 0:
             to_return = True
         else:
@@ -398,7 +398,7 @@ WHERE sbl.id = %s
         logging.error(f"Uventet feil: {e}")
         raise
 
-def delete_block(conn_mgr, raceId, blockId):
+def delete_block(conn_mgr, race_id, blockId):
     logging.info("db.delete_block, blockId: %s", blockId)
     try:
         conn = conn_mgr.get_connection()
@@ -423,8 +423,8 @@ WHERE sb.id = %s
         logging.error(f"Uventet feil: {e}")
         raise
 
-def insert_class_start_not(conn_mgr, raceId, classId):
-    logging.info("db.insert_class_start_not, classId: %s", classId)
+def insert_class_start_not(conn_mgr, race_id, class_id):
+    logging.info("db.insert_class_start_not, class_id: %s", class_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -432,7 +432,7 @@ def insert_class_start_not(conn_mgr, raceId, classId):
 INSERT INTO classstarts_not (classid)
     VALUES (%s)
 """
-        cursor.execute(sql, (classId,))
+        cursor.execute(sql, (class_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -442,8 +442,8 @@ INSERT INTO classstarts_not (classid)
         logging.error(f"Uventet feil: {e}")
         raise
 
-def delete_class_start_not(conn_mgr, raceId):
-    logging.info("db.delete_class_start_not, raceId: %s", raceId)
+def delete_class_start_not(conn_mgr, race_id):
+    logging.info("db.delete_class_start_not, race_id: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -456,7 +456,7 @@ WHERE csn.classid in (
 	 AND cl.raceid = %s
 )
 """
-        cursor.execute(sql, (raceId,))
+        cursor.execute(sql, (race_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -466,8 +466,8 @@ WHERE csn.classid in (
         logging.error(f"Uventet feil: {e}")
         raise
 
-def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder):
-    logging.info("db.insert_class_start, blocklagId: %s, classId: %s", blocklagId, classId)
+def insert_class_start(conn_mgr, race_id, blocklag_id, class_id, timegap, sortorder):
+    logging.info("db.insert_class_start, blocklag_id: %s, class_id: %s", blocklag_id, class_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -475,7 +475,7 @@ def insert_class_start(conn_mgr, raceId, blocklagId, classId, timegap, sortorder
 INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
     VALUES (%s, %s, %s, %s)
 """
-        cursor.execute(sql, (blocklagId, classId, timegap, sortorder))
+        cursor.execute(sql, (blocklag_id, class_id, timegap, sortorder))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -486,7 +486,7 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
         raise
 
 
-def add_block(conn_mgr, raceId, block):
+def add_block(conn_mgr, race_id, block):
     logging.info("db.add_block, block: %s", block)
     try:
         conn = conn_mgr.get_connection()
@@ -495,7 +495,7 @@ def add_block(conn_mgr, raceId, block):
 INSERT INTO startblocks (raceid, name)
 VALUES (%s, %s)
 """
-        cursor.execute(sql, (raceId, block))
+        cursor.execute(sql, (race_id, block))
         ny_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -543,7 +543,7 @@ VALUES (%s, %s, %s)
         raise
 
 
-def upd_class_start_free_before(conn_mgr, raceId, classstartid, new_value):
+def upd_class_start_free_before(conn_mgr, race_id, classstartid, new_value):
     logging.info("db.upd_class_start_free_before, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
@@ -563,7 +563,7 @@ WHERE id = %s
         logging.error(f"Uventet feil: {e}")
         raise
 
-def upd_class_start_free_after(conn_mgr, raceId, classstartid, new_value):
+def upd_class_start_free_after(conn_mgr, race_id, classstartid, new_value):
     logging.info("db.upd_class_start_free_after, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
@@ -633,8 +633,8 @@ ORDER BY n.starttime, cl.sortorder
         raise
 
 
-def clear_start_times(conn_mgr, raceId):
-    logging.info("db.clear_start_times, raceid: %s", raceId)
+def clear_start_times(conn_mgr, race_id):
+    logging.info("db.clear_start_times, raceid: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -650,7 +650,7 @@ UPDATE names n
 JOIN n1 ON n.id = n1.id
 SET n.starttime = null
 """
-        cursor.execute(sql, (raceId,))
+        cursor.execute(sql, (race_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -660,8 +660,8 @@ SET n.starttime = null
         logging.error(f"Uventet feil: {e}")
         raise
 
-def draw_start_times(conn_mgr, raceId):
-    logging.info("db.draw_start_times, raceId: %s", raceId)
+def draw_start_times(conn_mgr, race_id):
+    logging.info("db.draw_start_times, race_id: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -679,7 +679,7 @@ UPDATE names n
 JOIN n1 ON n.id = n1.id
 SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap SECOND)
 """
-        cursor.execute(sql, (raceId,))
+        cursor.execute(sql, (race_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:
@@ -693,7 +693,7 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
 # Trekk starttider for ei klasse
 #
 def draw_start_times_class(conn_mgr, classid):
-    logging.info("db.draw_start_times_class, classId: %s", classid)
+    logging.info("db.draw_start_times_class, class_id: %s", classid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -762,7 +762,7 @@ WHERE id = %s
 
 
 
-def swap_start_times(conn_mgr, id1, id2, raceId):
+def swap_start_times(conn_mgr, id1, id2, race_id):
     logging.info("db.swap_start_times: %s, %s", id1, id2)
     try:
         conn = conn_mgr.get_connection()
@@ -780,7 +780,7 @@ update names n2
 join n1 on n1.id = n2.id
 set n2.starttime = n1.othertime
 """
-        cursor.execute(sql, (id1, id2, raceId,))
+        cursor.execute(sql, (id1, id2, race_id,))
         conn.commit()
         conn.close()
     except pymysql.Error as err:

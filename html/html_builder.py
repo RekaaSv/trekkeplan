@@ -1,6 +1,6 @@
 import logging
 import os
-from collections import defaultdict
+
 
 
 class HtmlBuilder:

@@ -2,7 +2,7 @@ import logging
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QTableWidgetItem, QMenu, QAction, QLabel, QPushButton, \
+from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QMenu, QAction, QLabel, QPushButton, \
     QVBoxLayout
 
 from db import queries
@@ -14,7 +14,7 @@ class SplitClubMates(QDialog):
         logging.info("SplitClubMates")
         self.parent = parent
         self.setWindowTitle("Splitt klubbkompiser")
-#        self.resize(1000, 700)
+#        parent.resize(1000, 700)
         self.resize(1287, 707)
 
         self.setFont(parent.font())  # arver font fra hovedvinduet
@@ -78,7 +78,7 @@ class SplitClubMates(QDialog):
         venstre_boks.addWidget(venstre_label)
         venstre_boks.addWidget(self.venstre)
         venstre_boks.addLayout(tabellbunn_boks)
-#        venstre_boks.addWidget(self.refresh_button, Qt.AlignLeft)
+#        venstre_boks.addWidget(parent.refresh_button, Qt.AlignLeft)
         venstre_boks.addStretch()
 
         # Høyreboks
@@ -129,7 +129,7 @@ class SplitClubMates(QDialog):
 
     def refresh_left(self):
         logging.info("SplitClubMates.refresh_left")
-        rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.raceId)
+        rows, columns = queries.read_club_mates(self.parent.conn_mgr, self.parent.race_id)
         logging.debug("columns: %s", columns)
         logging.debug("rows: %s", rows)
 
@@ -142,12 +142,12 @@ class SplitClubMates(QDialog):
         if self.venstre.rowCount() > 0:
             self.venstre.selectRow(0)
         else:
-            # Refresh høyre tabell for å få kolonner.
+            # Refresh høyre table for å få kolonner.
             self.refresh_right()
 
     def refresh_right(self):
         logging.info("SplitClubMates.refresh_right")
-        # Finn verdier fra selektert rad i venstre tabell.
+        # Finn verdier fra selektert rad i venstre table.
         selected = None
         model_indexes = self.venstre.selectionModel().selectedRows()
         if model_indexes:
@@ -162,58 +162,58 @@ class SplitClubMates(QDialog):
             logging.debug("_oppdater_hoyre: %s", classid)
             logging.debug("left_id: %s", left_id)
 
-        # Populer høyre tabell.
+        # Populer høyre table.
         rows, columns = queries.read_names(self.parent.conn_mgr, classid)
         logging.debug("columns: %s", columns)
         logging.debug("rows: %s", rows)
         self.parent.populate_table(self.hoyre, columns, rows)
 
-        # Marker radene som har id lik venstre tabell sin id eller previd.
+        # Marker radene som har id lik venstre table sin id eller previd.
         first_found_row_inx = None
-        for rad_inx in range(self.hoyre.rowCount()):
-            logging.debug("rad_inx: %s", rad_inx)
-            my_id = self.hoyre.item(rad_inx, 0).text()
+        for row_inx in range(self.hoyre.rowCount()):
+            logging.debug("row_inx: %s", row_inx)
+            my_id = self.hoyre.item(row_inx, 0).text()
             logging.debug("my_id: %s", my_id)
             match = (my_id == left_id) or (my_id == previd)
             logging.debug("match: %s", match)
             if match:
                 # Husk den første match'en for scrollToItem lenger ned i koden.
                 if first_found_row_inx is None:
-                    first_found_row_inx = rad_inx
-            self.marker_rad(rad_inx, match)
+                    first_found_row_inx = row_inx
+            self.mark_row(row_inx, match)
 
         # Dimesjoner tabellen.
         self.parent.set_table_sizes(self.hoyre, self.right_columns)
 
         if first_found_row_inx is not None:
-#            self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3))
+#            parent.hoyre.scrollToItem(parent.hoyre.item(first_found_row_inx, 3))
             # Feilet av og til. Lag forsinkelse med singleShot
             QTimer.singleShot(0, lambda: self.hoyre.scrollToItem(self.hoyre.item(first_found_row_inx, 3)))
-            logging.info("scrollToItem, rad_inx: %s", first_found_row_inx)
+            logging.info("scrollToItem, row_inx: %s", first_found_row_inx)
         else:
             logging.info("ERROR: first_found_row_inx is None!")
 
 
-    def marker_rad(self, rad_inx, match):
-        logging.info("SplitClubMates.marker_rad: %s, %s", rad_inx, match)
-        lys_bla = QColor(220, 235, 255)
+    def mark_row(self, row_inx, match):
+        logging.info("SplitClubMates.marker_rad: %s, %s", row_inx, match)
+        light_blue = QColor(220, 235, 255)
         standard = QColor(Qt.white)
 
-        for kol_inx in range(self.hoyre.columnCount()):
-            logging.debug("kol_inx: %s", kol_inx)
-            item = self.hoyre.item(rad_inx, kol_inx)
+        for col_inx in range(self.hoyre.columnCount()):
+            logging.debug("col_inx: %s", col_inx)
+            item = self.hoyre.item(row_inx, col_inx)
             logging.debug("item: %s", item)
             if item is None:
                 continue
 
             if match:
-                item.setBackground(lys_bla)
+                item.setBackground(light_blue)
             else:
                 item.setBackground(standard)
 
     def menu_draw_class(self, pos):
-        rad_index = self.venstre.rowAt(pos.y())
-        if rad_index < 0:
+        row_inx = self.venstre.rowAt(pos.y())
+        if row_inx < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
@@ -221,8 +221,8 @@ class SplitClubMates(QDialog):
 
 
     def menu_swap_times(self, pos):
-        rad_index = self.hoyre.rowAt(pos.y())
-        if rad_index < 0:
+        row_inx = self.hoyre.rowAt(pos.y())
+        if row_inx < 0:
             logging.debug("Ingen rad under musepeker – meny avbrytes")
             return
 
@@ -243,14 +243,14 @@ class SplitClubMates(QDialog):
 
         logging.debug("id1: %s", id1)
         logging.debug("id2: %s", id2)
-        queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.raceId)
+        queries.swap_start_times(self.parent.conn_mgr, id1, id2, self.parent.race_id)
 
         self.refresh_right()
 
     def draw_start_times_class(self):
         logging.info("draw_start_times_class")
         if self.parent.drawplan_changed > self.parent.draw_time:
-            self.parent.vis_brukermelding("Trekkeplanen er endret etter siste trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre tabell.")
+            self.parent.vis_brukermelding("Trekkeplanen er endret etter siste trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre table.")
             return
 
         model_indexes = self.venstre.selectionModel().selectedRows()
@@ -265,12 +265,12 @@ class SplitClubMates(QDialog):
         self.parent.select_by_id(self.venstre, class_id, 2)
 
     def get_label(self,tekst):
-        lable = QLabel(tekst)
-        font = lable.font()
+        label = QLabel(tekst)
+        font = label.font()
         font.setBold(True)
         font.setPointSize(11)
-        lable.setFont(font)
-        return lable
+        label.setFont(font)
+        return label
 
     def closeEvent(self, event):
         size = self.size()
