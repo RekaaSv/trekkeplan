@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import Qt
 from datetime import datetime, date, time, timedelta
@@ -5,6 +6,7 @@ from datetime import datetime, date, time, timedelta
 class DrawPlanTableItem(QTableWidgetItem):
     def __init__(self, display_text: str, sort_value, alignment: Qt.AlignmentFlag):
         super().__init__(display_text)
+        self.setBackground(QColor("white"))
         self.setData(Qt.UserRole, sort_value)
         self.setTextAlignment(alignment)
 

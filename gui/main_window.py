@@ -3,7 +3,7 @@ import logging
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QSizePolicy, QFrame, \
-    QApplication, QShortcut
+    QApplication, QShortcut, QTableView
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl
 from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont, QBrush
 
@@ -136,11 +136,30 @@ class MainWindow(QWidget):
 
         self.table_header_style_sheet = """
             QHeaderView::section {
-                background-color: #f0f0f0;
+                background-color: #e0e0e0;
                 color: #333;
                 font-weight: bold;
                 padding: 1px;
                 border: 1px solid #ccc;
+            }
+        """
+
+        self.table_style_sheet = """
+            QTableView {
+                background-color: #f0f0f0; /* tomme områder */
+                border: none;
+            }
+            QTableView::viewport {
+                background-color: #f0f0f0; /* bak radene */
+            }
+            /*
+            QTableView::item {
+                background-color: white;
+            }
+            */
+            QTableView::item:selected {
+                background-color: #3399ff;  /* klassisk blå */
+                color: white;
             }
         """
 
@@ -155,6 +174,7 @@ class MainWindow(QWidget):
         self.table_not_planned.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_not_planned.horizontalHeader().customContextMenuRequested.connect(self.show_not_planned_header_menu)
         self.table_not_planned.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
+        self.table_not_planned.setStyleSheet(self.table_style_sheet)
 
         self.table_block_lag = QTableWidget()
         self.table_block_lag.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -165,10 +185,11 @@ class MainWindow(QWidget):
         self.table_block_lag.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_block_lag.customContextMenuRequested.connect(self.show_block_lag_menu)
         self.table_block_lag.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
+        self.table_block_lag.setStyleSheet(self.table_style_sheet)
 
         self.table_class_start = FilteredTable(self.table_block_lag, 0, 1)  #QTableWidget()
-#        parent.table_class_start.setMinimumSize(660, 100)
-#        parent.table_class_start.setMaximumSize(660, 2000)
+#        self.table_class_start.setMinimumSize(660, 100)
+#        self.table_class_start.setMaximumSize(660, 2000)
         self.table_class_start.setSelectionMode(QTableWidget.SingleSelection)
         self.table_class_start.setSelectionBehavior(QTableWidget.SelectRows)
         self.table_class_start.verticalHeader().setVisible(False)
@@ -176,6 +197,7 @@ class MainWindow(QWidget):
         self.table_class_start.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_class_start.customContextMenuRequested.connect(self.show_class_start_menu)
         self.table_class_start.horizontalHeader().setStyleSheet(self.table_header_style_sheet)
+        self.table_class_start.setStyleSheet(self.table_style_sheet)
 
         self.help_button = QPushButton("Hjelp")
         self.help_button.setStyleSheet(self.button_style)
@@ -212,8 +234,8 @@ class MainWindow(QWidget):
         # F2 simulerer trykk på knappen.
         self.move_shortcut = QShortcut(QKeySequence("F2"), self)
         self.move_shortcut.setContext(Qt.WidgetShortcut)  # Kun aktiv når hovedvinduet har fokus
-#        move_shortcut.activated.connect(parent.move_button.click)  # Simulerer knappetrykk
-#        parent.move_shortcut.activated.connect(lambda: print("F2 trykket"))  # Simulerer knappetrykk
+#        move_shortcut.activated.connect(self.move_button.click)  # Simulerer knappetrykk
+#        self.move_shortcut.activated.connect(lambda: print("F2 trykket"))  # Simulerer knappetrykk
 
         self.remove_button = QPushButton("\u21D0        (F3)")
         self.remove_button.setStyleSheet(self.button_style)
@@ -260,7 +282,7 @@ class MainWindow(QWidget):
 
         self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_utilization, title_non_planned)
 
-        #        parent.load_button.clicked.connect(parent.load_data)
+        #        self.load_button.clicked.connect(self.load_data)
         #
         # Les fra MySQL initielt.
         #
@@ -292,9 +314,9 @@ class MainWindow(QWidget):
 
         self.table_class_start.itemChanged.connect(self.class_start_item_changed)
 
-#        parent.print_col_width(parent.table_not_planned)
-#        parent.print_col_width(parent.table_block_lag)
-#        parent.print_col_width(parent.table_class_start)
+#        self.print_col_width(self.table_not_planned)
+#        self.print_col_width(self.table_block_lag)
+#        self.print_col_width(self.table_class_start)
 
         # Behold samme farge når table ikke er i fokus.
         self.keep_selection_colour(self.table_not_planned)
@@ -397,9 +419,9 @@ class MainWindow(QWidget):
         column1_layout.addStretch()
 
 #        column2_layout.addWidget(title_first_start)
-#        column2_layout.addWidget(parent.field_first_start)
+#        column2_layout.addWidget(self.field_first_start)
 #        column2_layout.addSpacing(200)
-#        column2_layout.addWidget(parent.move_button)
+#        column2_layout.addWidget(self.move_button)
 #        column2_layout.addStretch()
 
         new_blocklag_layout.addWidget(self.field_block)
@@ -440,7 +462,7 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.close_button)
 
         header_class_start_layout = QHBoxLayout()
-#        header_class_start_layout.addWidget(parent.move_button)
+#        header_class_start_layout.addWidget(self.move_button)
         header_class_start_layout.addWidget(title_class_start)
 
         column4_layout.addLayout(header_class_start_layout)
@@ -667,6 +689,7 @@ class MainWindow(QWidget):
         else:
             sum_idle_ratio = 1
         utilization = 1 - sum_idle_ratio
+        if not utilization: utilization = 0.0
 
         sum_color = self.color_idle_time(sum_idle_ratio)
         hex_color = sum_color.name()
@@ -700,7 +723,7 @@ class MainWindow(QWidget):
         control.delete_class_start_rows(self, self.race_id, blocklagid)
 
         control.refresh_table(self, self.table_not_planned)
-#        control.refresh_table(parent, parent.table_class_start)
+#        control.refresh_table(self, self.table_class_start)
         self.after_plan_changed(blocklagid)
 
     #
@@ -747,7 +770,7 @@ class MainWindow(QWidget):
 
         control.class_start_down_up(self, clas_start_id, step)
         control.refresh_table(self, self.table_class_start)
-#        parent.select_by_id(parent.table_block_lag, blocklag_id) # Er allerede selektert.
+#        self.select_by_id(self.table_block_lag, blocklag_id) # Er allerede selektert.
         self.table_class_start.update_filter()
         self.select_by_id(self.table_class_start, clas_start_id)
 
@@ -890,7 +913,7 @@ class MainWindow(QWidget):
         self.table_class_start.blockSignals(True)
         idx_col = item.column()
         idx_row = item.row()
-#        if parent.table_class_start.hasFocus():
+#        if self.table_class_start.hasFocus():
         if idx_col in [10,11]: # Antall ledige før og etter.
             new_value = item.text().strip()
             if new_value == "": new_value = None
@@ -992,7 +1015,7 @@ class MainWindow(QWidget):
             logging.debug("q_time_duration: %s", q_time_duration)
         else: q_time_last = QTime(0, 0)
 
-        utilization_percent: int = round(utilization * 100)
+        utilization_percent: int = round(utilization * 100) if type(utilization) is float else 0
 
         self.field_last_start.setTime(q_time_last)
         self.field_duration.setText(self.format_duration(q_time_duration))
@@ -1024,9 +1047,9 @@ class MainWindow(QWidget):
         # Hvis ikke så er det båsen i valgt rad som gjelder når man trykker +.
         self.table_block_lag.clearSelection()
 
-    def ask_confirmation(parent, message: str) -> bool:
+    def ask_confirmation(self, message: str) -> bool:
         reply = QMessageBox.question(
-            parent,
+            self,
             "Bekreft handling",
             message,
             QMessageBox.Ok | QMessageBox.Cancel,
