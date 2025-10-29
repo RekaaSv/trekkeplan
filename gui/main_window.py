@@ -675,7 +675,7 @@ class MainWindow(QWidget):
 
             # Beregn differanse
             idletime = race_nexttime - blocklag_nexttime  # timedelta
-            idle_ratio = 1 if duration == datetime.timedelta(0) else idletime / duration
+            idle_ratio = 0 if duration == datetime.timedelta(0) else idletime / duration
             sum_idletime = sum_idletime + idletime
             count_idletime = count_idletime + 1
 
@@ -687,7 +687,7 @@ class MainWindow(QWidget):
         if duration * count_idletime > datetime.timedelta(0):
             sum_idle_ratio = sum_idletime / (duration * count_idletime)
         else:
-            sum_idle_ratio = 1
+            sum_idle_ratio = 0
         utilization = 1 - sum_idle_ratio
         if not utilization: utilization = 0.0
 

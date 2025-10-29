@@ -232,7 +232,7 @@ class SplitClubMates(QDialog):
         model_indexes = self.table_class_startlist.selectionModel().selectedRows()
 
         if len(model_indexes) != 2:
-            self.parent.vis_brukermelding("Du må velge de to løperne som skal bytte starttider!")
+            self.parent.show_message("Du må velge de to løperne som skal bytte starttider!")
             return
         inx1 = model_indexes[0].row()
         inx2 = model_indexes[1].row()
@@ -249,12 +249,12 @@ class SplitClubMates(QDialog):
     def draw_start_times_class(self):
         logging.info("draw_start_times_class")
         if self.parent.drawplan_changed > self.parent.draw_time:
-            self.parent.vis_brukermelding("Trekkeplanen er endret etter siste trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre table.")
+            self.parent.show_message("Trekkeplanen er endret etter siste trekking. Da kan du ikke trekke klassen om igjen. Du må enten gjøre hovedtrekkingen på nytt, eller bruke metoden med bytting av starttider i høyre table.")
             return
 
         model_indexes = self.table_club_mates.selectionModel().selectedRows()
         if len(model_indexes) != 1:
-            self.parent.vis_brukermelding("Du må velge en rad å omtrekke starttider for!")
+            self.parent.show_message("Du må velge en rad å omtrekke starttider for!")
             return
         inx = model_indexes[0].row()
         class_id = self.table_club_mates.item(inx, 2).text()
