@@ -106,11 +106,19 @@ class MainWindow(QWidget):
         self.field_duration = QLabel()
         self.field_duration.setStyleSheet(style_sheet_time_ro)
 
+        title_utilization = QLabel("Utnyttelse (%):")
+        title_utilization.setStyleSheet(self.style_table_header)
+        self.field_utilization = QLabel()
+        self.field_utilization.setStyleSheet(style_sheet_time_ro)
+
         time_font = QFont()
         time_font.setPointSize(10)
         self.field_first_start.setFont(time_font)
         self.field_last_start.setFont(time_font)
         self.field_duration.setFont(time_font)
+        self.field_duration.setFixedHeight(30)
+        self.field_utilization.setFont(time_font)
+        self.field_utilization.setFixedHeight(30)
 
         self.field_first_start.setDisplayFormat("HH:mm:ss")
         self.field_first_start.setFixedWidth(80)
@@ -255,9 +263,7 @@ class MainWindow(QWidget):
         self.starterListButton.setToolTip("Lag startliste pr. starttid.")
         self.starterListButton.clicked.connect(self.make_starterlist)
 
-        self.field_duration.setFixedHeight(30)
-
-        self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_non_planned)
+        self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_utilization, title_non_planned)
 
         #        self.load_button.clicked.connect(self.load_data)
         #
@@ -268,6 +274,8 @@ class MainWindow(QWidget):
 
         if not self.race_name: self.setWindowTitle("Brikkesys/SvR Trekkeplan - ")
         else: self.setWindowTitle("Brikkesys/SvR Trekkeplan - " + self.race_name + "   " + self.race_date_db.isoformat() )
+        table_font = self.tableNotPlanned.font()
+        self.setFont(table_font)
 
         self.setWindowIcon(QIcon(self.icon_path))
 
@@ -347,7 +355,7 @@ class MainWindow(QWidget):
         self.action_rem_all_start.triggered.connect(lambda: self.slett_class_start_alle())
 
     def make_layout(self, title_block_lag: QLabel | QLabel, title_class_start: QLabel | QLabel,
-                    title_first_start: QLabel | QLabel, title_last_start: QLabel | QLabel, title_duration: QLabel | QLabel, title_non_planned: QLabel | QLabel):
+                    title_first_start: QLabel | QLabel, title_last_start: QLabel | QLabel, title_duration: QLabel | QLabel, title_utilization: QLabel | QLabel, title_non_planned: QLabel | QLabel):
         #
         # Layout
         #
@@ -378,6 +386,8 @@ class MainWindow(QWidget):
         top_layout.addWidget(self.field_last_start)
         top_layout.addWidget(title_duration)
         top_layout.addWidget(self.field_duration)
+        top_layout.addWidget(title_utilization)
+        top_layout.addWidget(self.field_utilization)
         top_layout.addStretch()
 
         column1_layout = QVBoxLayout()
@@ -611,10 +621,10 @@ class MainWindow(QWidget):
     def after_plan_changed(self, blocklagid):
         max_next_datetime = control.refresh_table(self, self.tableBlockLag)
 
-        self.rebuild_blocklag_idle(self.tableBlockLag, max_next_datetime)
+        utilization = self.rebuild_blocklag_idle(self.tableBlockLag, max_next_datetime)
 
         logging.debug("max_next_datetime: %s", max_next_datetime)
-        self.set_last_start_time(max_next_datetime)
+        self.set_last_start_time(max_next_datetime, utilization)
         control.refresh_table(self, self.tableClassStart)
 
         # Re-selekt!
@@ -631,6 +641,8 @@ class MainWindow(QWidget):
         duration = race_nexttime - self.race_first_start
         logging.debug("duration: %s", duration)
 
+        sum_idletime = datetime.timedelta(0)
+        count_idletime = 0
         for row_idx in range(table.rowCount()):
             item = table.item(row_idx, 5)
             if item is None:
@@ -645,13 +657,27 @@ class MainWindow(QWidget):
 
             # Beregn differanse
             idletime = race_nexttime - blocklag_nexttime  # timedelta
-            idle_ratsio = 1 if duration == datetime.timedelta(0) else idletime / duration
+            idle_ratio = 1 if duration == datetime.timedelta(0) else idletime / duration
+            sum_idletime = sum_idletime + idletime
+            count_idletime = count_idletime + 1
 
             # Lag nytt item med differansen
             idle_item = DrawPlanTableItem.from_value(idletime)
-            idle_item.setBackground(self.color_idle_time(idle_ratsio))
-
+            idle_item.setBackground(self.color_idle_time(idle_ratio))
             table.setItem(row_idx, 6, idle_item)
+
+        if duration * count_idletime > datetime.timedelta(0):
+            sum_idle_ratio = sum_idletime / (duration * count_idletime)
+        else:
+            sum_idle_ratio = 1
+        utilization = 1 - sum_idle_ratio
+
+        sum_color = self.color_idle_time(sum_idle_ratio)
+        hex_color = sum_color.name()
+        existing_style = self.field_utilization.styleSheet()
+        self.field_utilization.setStyleSheet(existing_style + f"background-color: {hex_color};")
+
+        return utilization
 
     def color_idle_time(self, idle_ratsio):
         # Juster intensitet (lav = lys rosa, høy = mørk rød)
@@ -910,7 +936,7 @@ class MainWindow(QWidget):
 
     def draw_start_times(self):
         logging.info("draw_start_times")
-        if self.ask_confirmation("Trekk starttider for klasser i planen?"):
+        if self.ask_confirmation("Trekk starttider for klassene i planen?"):
             control.draw_start_times(self, self.raceId)
         else:
             logging.debug("Brukeren avbrøt")
@@ -959,7 +985,7 @@ class MainWindow(QWidget):
                 return
         logging.error("Table row not found, id=%s", id)
 
-    def set_last_start_time(self, max_next_datetime: datetime.datetime | None):
+    def set_last_start_time(self, max_next_datetime: datetime.datetime | None, utilization: float):
         logging.info("set_last_start_time: %s", max_next_datetime)
         q_time_duration = None
         if max_next_datetime is not None and self.race_first_start is not None:
@@ -969,9 +995,11 @@ class MainWindow(QWidget):
             logging.debug("q_time_duration: %s", q_time_duration)
         else: q_time_last = QTime(0, 0)
 
-        self.field_last_start.setTime(q_time_last)
+        utilization_percent: int = round(utilization * 100)
 
+        self.field_last_start.setTime(q_time_last)
         self.field_duration.setText(self.format_duration(q_time_duration))
+        self.field_utilization.setText(str(utilization_percent))
 
     def format_duration(self, td: datetime.timedelta) -> str:
         if td is None: return "      "
