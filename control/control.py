@@ -126,6 +126,21 @@ def make_starterlist(parent, race_id):
 
     HtmlBuilder.download(html, "Starterlist.html")
 
+def make_noof_in_cource(parent, race_id):
+    logging.info("control.make_noof_in_cource")
+    rows, columns = queries.sql_noof_in_cource(parent.conn_mgr, race_id)
+    html = HtmlBuilder.grouped_rows_in_single_table(rows, columns, 0, "strong", 0)
+
+    HtmlBuilder.download(html, "Løypeliste.html")
+
+def make_noof_in_control1(parent, race_id):
+    logging.info("control.make_noof_in_control1")
+    rows, columns = queries.sql_noof_in_control1(parent.conn_mgr, race_id)
+    html = HtmlBuilder.grouped_rows_in_single_table(rows, columns, 0, "strong", 0)
+
+    HtmlBuilder.download(html, "Post1list.html")
+
+
 def draw_start_times(parent, race_id):
     queries.draw_start_times(parent.conn_mgr, race_id)
     now = datetime.datetime.now()

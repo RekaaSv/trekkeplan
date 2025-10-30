@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 import pymysql
@@ -621,6 +620,64 @@ WHERE r.id = %s
   AND n.status not in ('V','X')
   AND n.starttime is not null
 ORDER BY n.starttime, cl.sortorder
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+def sql_noof_in_cource(conn_mgr, raceid):
+    logging.info("db.sql_noof_in_cource, raceid: %s", raceid)
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT distinct
+  concat(r.name, ", totalt: ", COUNT(n.NAME) OVER (PARTITION BY r.id), "<br>Løype______________________Antall")
+ ,co.name Løype
+ ,COUNT(n.NAME) OVER (PARTITION BY co.name) Antall 
+FROM names n 
+JOIN races r ON r.id = n.raceid
+JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from classstarts_not)
+JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
+JOIN classes co ON co.id = cc.courceid AND co.cource = 1
+WHERE r.id = %s
+  and n.status NOT IN ('V','X')
+ORDER BY Antall desc
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+def sql_noof_in_control1(conn_mgr, raceid):
+    logging.info("db.sql_noof_in_control1, raceid: %s", raceid)
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT distinct
+  concat(r.name, ", totalt: ", COUNT(n.NAME) OVER (PARTITION BY r.id), "<br>Post1__Antall____Løype__________Antall")
+ ,SUBSTRING_INDEX(co.codes,' ',1) Post1
+ ,COUNT(n.NAME) OVER (PARTITION BY SUBSTRING_INDEX(co.codes,' ',1)) Ant_post1
+ ,co.name Løype
+ ,COUNT(n.NAME) OVER (PARTITION BY co.name) Ant_løype
+FROM names n 
+JOIN races r ON r.id = n.raceid
+JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from classstarts_not)
+JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
+JOIN classes co ON co.id = cc.courceid AND co.cource = 1
+WHERE r.id = %s
+  and n.status NOT IN ('V','X')
+ORDER BY Ant_post1 desc, Ant_løype desc
 """
     try:
         cursor.execute(sql, (raceid,))

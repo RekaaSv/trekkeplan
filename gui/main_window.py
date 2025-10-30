@@ -270,15 +270,27 @@ class MainWindow(QWidget):
 
         self.startListButton = QPushButton("Startliste")
         self.startListButton.setStyleSheet(self.button_style)
-        self.startListButton.setFixedWidth(150)
+ #       self.startListButton.setFixedWidth(150)
         self.startListButton.setToolTip("Lag startliste pr. klasse.")
         self.startListButton.clicked.connect(self.make_startlist)
 
         self.starterListButton = QPushButton("Starter-liste")
         self.starterListButton.setStyleSheet(self.button_style)
-        self.starterListButton.setFixedWidth(150)
+ #       self.starterListButton.setFixedWidth(150)
         self.starterListButton.setToolTip("Lag startliste pr. starttid.")
         self.starterListButton.clicked.connect(self.make_starterlist)
+
+        self.btn_noof_in_cource = QPushButton("# pr løype")
+        self.btn_noof_in_cource.setStyleSheet(self.button_style)
+#        self.btn_noof_in_cource.setFixedWidth(150)
+        self.btn_noof_in_cource.setToolTip("Antall løpere pr læype.")
+        self.btn_noof_in_cource.clicked.connect(self.make_noof_in_cource)
+
+        self.btn_noof_in_control1 = QPushButton("# pr post1")
+        self.btn_noof_in_control1.setStyleSheet(self.button_style)
+#        self.btn_noof_in_control1.setFixedWidth(150)
+        self.btn_noof_in_control1.setToolTip("Antall løpere pr læype.")
+        self.btn_noof_in_control1.clicked.connect(self.make_noof_in_control1)
 
         self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_utilization, title_non_planned)
 
@@ -452,8 +464,11 @@ class MainWindow(QWidget):
 #        spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 #        column3_layout.addItem(spacer)
 
+        bottom_layout.addWidget(self.btn_noof_in_control1)
+        bottom_layout.addWidget(self.btn_noof_in_cource)
         bottom_layout.addWidget(self.startListButton)
         bottom_layout.addWidget(self.starterListButton)
+
         bottom_layout.addStretch()
         bottom_layout.addWidget(self.draw_start_times_button)
         bottom_layout.addWidget(self.club_mates_button)
@@ -977,6 +992,16 @@ class MainWindow(QWidget):
     def make_starterlist(self):
         logging.info("make_starterlist")
         control.make_starterlist(self, self.race_id)
+
+    def make_noof_in_cource(self):
+        logging.info("make_noof_in_cource")
+        control.make_noof_in_cource(self, self.race_id)
+
+    def make_noof_in_control1(self):
+        logging.info("make_noof_in_control1")
+        control.make_noof_in_control1(self, self.race_id)
+
+
 
     def open_help(self):
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.pdf_path))
