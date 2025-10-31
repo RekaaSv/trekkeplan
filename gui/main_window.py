@@ -283,14 +283,26 @@ class MainWindow(QWidget):
         self.btn_noof_in_cource = QPushButton("# pr løype")
         self.btn_noof_in_cource.setStyleSheet(self.button_style)
 #        self.btn_noof_in_cource.setFixedWidth(150)
-        self.btn_noof_in_cource.setToolTip("Antall løpere pr læype.")
+        self.btn_noof_in_cource.setToolTip("Antall løpere pr løype.")
         self.btn_noof_in_cource.clicked.connect(self.make_noof_in_cource)
 
         self.btn_noof_in_control1 = QPushButton("# pr post1")
         self.btn_noof_in_control1.setStyleSheet(self.button_style)
 #        self.btn_noof_in_control1.setFixedWidth(150)
-        self.btn_noof_in_control1.setToolTip("Antall løpere pr læype.")
+        self.btn_noof_in_control1.setToolTip("Antall løpere pr løype.")
         self.btn_noof_in_control1.clicked.connect(self.make_noof_in_control1)
+
+        self.btn_same_time_cource = QPushButton("Samtidige løype")
+        self.btn_same_time_cource.setStyleSheet(self.button_style)
+        #        self.btn_same_time_cource.setFixedWidth(150)
+        self.btn_same_time_cource.setToolTip("Samtidig startende i samme løype.")
+        self.btn_same_time_cource.clicked.connect(self.make_same_time_cource)
+
+        self.btn_same_time_control1 = QPushButton("Samtidige post1")
+        self.btn_same_time_control1.setStyleSheet(self.button_style)
+        #        self.btn_same_time_control1.setFixedWidth(150)
+        self.btn_same_time_control1.setToolTip("Samtidig startende mot samme post 1.")
+        self.btn_same_time_control1.clicked.connect(self.make_same_time_control1)
 
         self.make_layout(title_block_lag, title_class_start, title_first_start, title_last_start, title_duration, title_utilization, title_non_planned)
 
@@ -468,6 +480,8 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(self.btn_noof_in_cource)
         bottom_layout.addWidget(self.startListButton)
         bottom_layout.addWidget(self.starterListButton)
+        bottom_layout.addWidget(self.btn_same_time_cource)
+        bottom_layout.addWidget(self.btn_same_time_control1)
 
         bottom_layout.addStretch()
         bottom_layout.addWidget(self.draw_start_times_button)
@@ -1001,6 +1015,13 @@ class MainWindow(QWidget):
         logging.info("make_noof_in_control1")
         control.make_noof_in_control1(self, self.race_id)
 
+    def make_same_time_cource(self):
+        logging.info("make_same_time_cource")
+        control.make_same_time_cource(self, self.race_id)
+
+    def make_same_time_control1(self):
+        logging.info("make_same_time_control1")
+        control.make_same_time_control1(self, self.race_id)
 
 
     def open_help(self):

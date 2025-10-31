@@ -689,6 +689,70 @@ ORDER BY Ant_post1 desc, Ant_løype desc
         logging.error(f"Uventet feil: {e}")
         raise
 
+#
+# Samtidig startende til samme post1
+#
+def sql_same_time_control1(conn_mgr, raceid):
+    logging.info("db.sql_same_time_control1, raceid: %s", raceid)
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT time(n.starttime) Starttid
+     , SUBSTRING_INDEX(co2.codes,' ',1) Post_1
+     , COUNT(n.NAME) Samtidige
+FROM names n
+JOIN races r ON r.id = n.raceid
+JOIN classes cl ON cl.id = n.classid
+JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
+JOIN classes co2 ON co2.id = cc.courceid AND co2.cource = 1
+WHERE r.id = %s
+  AND n.starttime IS NOT null
+GROUP BY Starttid, Post_1
+HAVING COUNT(n.NAME) > 1
+ORDER BY Starttid, Post_1
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+#
+# Samtidig startende i samme løype
+#
+def sql_same_time_cource(conn_mgr, raceid):
+    logging.info("db.sql_same_time_cource, raceid: %s", raceid)
+    conn = conn_mgr.get_connection()
+    cursor = conn.cursor()
+    sql = """
+SELECT time(n.starttime) Starttid
+     , co2.name Løype
+     , COUNT(n.NAME) Samtidige
+FROM names n
+JOIN races r ON r.id = n.raceid
+JOIN classes cl ON cl.id = n.classid
+JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
+JOIN classes co2 ON co2.id = cc.courceid AND co2.cource = 1
+WHERE r.id = %s
+  AND n.starttime IS NOT null
+GROUP BY Starttid, Løype
+HAVING COUNT(n.NAME) > 1
+ORDER BY Starttid, Løype
+"""
+    try:
+        cursor.execute(sql, (raceid,))
+        return cursor.fetchall(), [desc[0] for desc in cursor.description]
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
 
 def clear_start_times(conn_mgr, race_id):
     logging.info("db.clear_start_times, raceid: %s", race_id)

@@ -140,6 +140,19 @@ def make_noof_in_control1(parent, race_id):
 
     HtmlBuilder.download(html, "Post1list.html")
 
+def make_same_time_cource(parent, race_id):
+    logging.info("control.make_same_time_cource")
+    rows, columns = queries.sql_same_time_cource(parent.conn_mgr, race_id)
+    html = HtmlBuilder.table(rows, columns, 1)
+
+    HtmlBuilder.download(html, "SamtidigeILøype.html")
+
+def make_same_time_control1(parent, race_id):
+    logging.info("control.make_same_time_control1")
+    rows, columns = queries.sql_same_time_control1(parent.conn_mgr, race_id)
+    html = HtmlBuilder.table(rows, columns, 1)
+
+    HtmlBuilder.download(html, "SamtidigeTilPost1.html")
 
 def draw_start_times(parent, race_id):
     queries.draw_start_times(parent.conn_mgr, race_id)
