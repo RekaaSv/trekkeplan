@@ -606,7 +606,11 @@ class MainWindow(QWidget):
         logging.info("show_class_start_menu")
         row_inx = self.table_class_start.rowAt(pos.y())
         if row_inx < 0:
-            logging.debug("Ingen rad under musepeker – meny avbrytes")
+            logging.debug("show_class_start_menu row_index<0")
+            return
+        is_selectable = self.table_class_start.row_is_selectable(row_inx)
+        if not  is_selectable:
+            logging.debug("show_class_start_menu is_selectable = False")
             return
 
         self.menu_class_start.exec_(self.table_class_start.viewport().mapToGlobal(pos))

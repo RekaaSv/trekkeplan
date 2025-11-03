@@ -6,6 +6,7 @@ from logging.handlers import RotatingFileHandler
 
 import pymysql
 
+from db import queries
 from db.connection import ConnectionManager
 from gui.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -69,9 +70,14 @@ def main():
 
         conn_mgr = ConnectionManager(db_config)
         conn_mgr.get_connection()
-
-
         # DB-kobling OK, fortsett.
+
+        # Sjekk om Trekkeplan DB-objekter er på plass.
+        is_installed = queries.is_db_objects_installed(conn_mgr)
+        logging.info(f"DB objects installed: {is_installed}")
+        if not is_installed:
+            queries.install_db_objects(conn_mgr)
+
         window = MainWindow(config, conn_mgr, icon_path, pdf_path)
         window.show()
         sys.exit(app.exec_())

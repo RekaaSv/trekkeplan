@@ -10,7 +10,7 @@ def read_race_list(conn_mgr):
     sql = """
 SELECT r.racedate Dag, r.name Løp, r.first_start Starttid, r.id
 FROM races r
-ORDER BY r.created DESC
+ORDER BY r.racedate DESC, r.created DESC
 """
     cursor.execute(sql)
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
@@ -904,6 +904,100 @@ set n2.starttime = n1.othertime
         cursor.execute(sql, (id1, id2, race_id,))
         conn.commit()
         conn.close()
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+
+#
+# Sjekk om database objektene til Trekkeplan er installert.
+#
+def is_db_objects_installed(conn_mgr):
+    logging.info("db.is_db_objects_installed")
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = """
+SHOW COLUMNS FROM races LIKE 'first_start'
+"""
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        row_count = len(rows)
+        return row_count > 0
+    except pymysql.Error as err:
+        logging.error(f"MySQL-feil: {err}")
+        raise
+    except Exception as e:
+        logging.error(f"Uventet feil: {e}")
+        raise
+
+def install_db_objects(conn_mgr):
+    logging.info("db.install_db_objects")
+    try:
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+        sql = "ALTER TABLE races ADD COLUMN first_start DATETIME"
+        cursor.execute(sql)
+        sql = "ALTER TABLE races ADD COLUMN draw_time DATETIME"
+        cursor.execute(sql)
+        sql = "ALTER TABLE races ADD COLUMN drawplan_changed DATETIME"
+        cursor.execute(sql)
+        sql = """
+CREATE TABLE `startblocks` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`raceid` INT NOT NULL,
+	`name` VARCHAR(80) NOT NULL DEFAULT '',
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `name` (`name` ASC, `raceid` ASC)
+)
+AUTO_INCREMENT=1
+"""
+        cursor.execute(sql)
+        sql = """
+CREATE TABLE `startblocklags` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`startblockid` INT NULL DEFAULT NULL,
+	`timelag` INT NULL DEFAULT NULL,
+	`timegap` INT NULL DEFAULT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `startblockid_lag` (`startblockid`, `timelag`)
+)
+AUTO_INCREMENT=1
+    """
+        cursor.execute(sql)
+        sql = """
+ CREATE TABLE `classstarts` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`blocklagid` INT NOT NULL,
+	`classid` INT NOT NULL,
+	`timegap` INT NULL DEFAULT NULL,
+	`freebefore` INT NULL DEFAULT NULL,
+	`freeafter` INT NULL DEFAULT NULL,
+	`sortorder` INT NOT NULL,
+	`qtybefore` INT NULL DEFAULT NULL,
+	`classstarttime` DATETIME NULL DEFAULT NULL,
+	`nexttime` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `classid` (`classid`)
+)
+AUTO_INCREMENT=1
+"""
+        cursor.execute(sql)
+        sql = """
+CREATE TABLE `classstarts_not` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`classid` INT NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX `classid` (`classid`)
+)
+AUTO_INCREMENT=1
+"""
+        cursor.execute(sql)
+        logging.info("Database objects installed!")
+
     except pymysql.Error as err:
         logging.error(f"MySQL-feil: {err}")
         raise
