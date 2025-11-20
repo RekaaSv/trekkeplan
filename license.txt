@@ -1,0 +1,22 @@
+Trekkeplan – Tilleggsmodul for Brikkesys
+Copyright (C) 2025 Sveinung Rekaa
+sveinung.rekaa@nenett.no
+
+Dette programmet er fri programvare: du kan redistribuere det og/eller endre det
+under betingelsene i GNU General Public License som publisert av Free Software Foundation,
+enten versjon 3 av lisensen, eller (etter ditt valg) enhver senere versjon.
+
+Dette programmet distribueres i håp om at det vil være nyttig,
+men UTEN NOEN GARANTI; uten engang underforstått garanti om SALGBARHET
+eller EGNETHET FOR ET BESTEMT FORMÅL. Se GNU General Public License for detaljer.
+
+Du skal ha mottatt en kopi av GNU General Public License sammen med dette programmet.
+Hvis ikke, se <https://www.gnu.org/licenses/>.
+
+Trekkeplan bruker følgende tredjepartsbiblioteker:
+- Python (PSF License)
+- PyMySQL (MIT License)
+- PyQt5 (GNU GPL v3)
+- PyInstaller (GNU GPL v2)
+
+Ved distribusjon av Trekkeplan må du inkludere denne lisensfilen.
