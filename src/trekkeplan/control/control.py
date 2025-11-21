@@ -1,8 +1,8 @@
 import datetime
 import logging
 
-from db import queries
-from html.html_builder import HtmlBuilder
+from trekkeplan.db import queries
+from trekkeplan.html.html_builder import HtmlBuilder
 
 
 def first_start_edited(parent, race_id, new_first_start_datetime):

@@ -23,7 +23,14 @@ Generere .spec-filer (kun første gang eller ved endringer)
 Kjør disse i PyCharm-terminalen for å lage .spec-filer:
 
 GUI uten konsoll:
-pyinstaller main.py --onefile --noconsole --icon=terning.ico --add-data "terning.ico;." --add-data "hjelp.pdf;." --version-file=version.txt --name Trekkeplan
+pyinstaller src/trekkeplan/main.py `
+  --onefile `
+  --noconsole `
+  --icon=src/trekkeplan/terning.ico `
+  --add-data "src/trekkeplan/terning.ico;." `
+  --add-data "src/trekkeplan/hjelp.pdf;." `
+  --name Trekkeplan
+
 
 ---
 
@@ -33,7 +40,7 @@ Bygge fra .spec-filer (repeterbart)
 Etter at .spec-filene er generert, kan du bygge med:
 
 GUI uten konsoll:
-> python -m PyInstaller Trekkeplan.spec
+python -m PyInstaller Trekkeplan.spec
 
 ---
 
@@ -57,4 +64,4 @@ Tips
 
 ---
 
-Sist oppdatert: 20. oktober 2025
+Sist oppdatert: 21.11.2025

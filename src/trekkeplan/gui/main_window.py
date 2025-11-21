@@ -3,21 +3,21 @@ import logging
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QTableWidget, \
     QTimeEdit, QMenu, QAction, QMessageBox, QLineEdit, QDialog, QSizePolicy, QFrame, \
-    QApplication, QShortcut, QTableView
+    QApplication, QShortcut
 from PyQt5.QtCore import Qt, QTime, QSettings, QUrl
-from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont, QBrush
+from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices, QKeySequence, QFont
 
-from control import control
-from control.errors import MyCustomError
-from db import queries
-from db.connection import ConnectionManager
-from gui.about_dialog import AboutDialog
-from gui.block_line_edit import BlockLineEdit
-from gui.draw_plan_table_item import DrawPlanTableItem
+from trekkeplan.control import control
+from trekkeplan.control.errors import MyCustomError
+from trekkeplan.db import queries
+from trekkeplan.db.connection import ConnectionManager
+from trekkeplan.gui.about_dialog import AboutDialog
+from trekkeplan.gui.block_line_edit import BlockLineEdit
+from trekkeplan.gui.draw_plan_table_item import DrawPlanTableItem
 
-from gui.filtered_table import FilteredTable
-from gui.split_club_mates import SplitClubMates
-from gui.select_race_dialog import SelectRaceDialog
+from trekkeplan.gui.filtered_table import FilteredTable
+from trekkeplan.gui.split_club_mates import SplitClubMates
+from trekkeplan.gui.select_race_dialog import SelectRaceDialog
 
 
 class MainWindow(QWidget):

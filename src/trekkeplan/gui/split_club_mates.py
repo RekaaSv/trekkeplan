@@ -1,11 +1,11 @@
 import logging
 
-from PyQt5.QtCore import Qt, QTimer, right
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDialog, QTableWidget, QHBoxLayout, QMenu, QAction, QLabel, QPushButton, \
     QVBoxLayout
 
-from db import queries
+from trekkeplan.db import queries
 
 
 class SplitClubMates(QDialog):

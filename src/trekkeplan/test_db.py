@@ -1,7 +1,7 @@
 import configparser
 
-from db import queries
-from db.connection import ConnectionManager
+from trekkeplan.db import queries
+from trekkeplan.db.connection import ConnectionManager
 
 def test():
     config = configparser.ConfigParser()

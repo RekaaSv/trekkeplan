@@ -1,7 +1,7 @@
 import logging
 
 import pymysql
-from control.errors import MyCustomError
+from trekkeplan.control.errors import MyCustomError
 
 def read_race_list(conn_mgr):
     logging.info("db.read_race_list")

@@ -7,7 +7,7 @@ NB: Forutsetter at Brikkesys sin MySQL database er oppgradert til minst versjon 
 
 Versjon: 1.0 
 
-Nedlasting: https://github.com/RekaaSv/trekkeplan/releases/latest/download/trekkeplan.zip
+Nedlasting : 
 https://github.com/RekaaSv/trekkeplan
 
 
@@ -29,10 +29,10 @@ Utvikler/Support:
 Sveinung Rekaa 906 53 811 sveinung.rekaa@nenett.no
 
 Ferdig planlagt:
-![img_2.png](img_2.png)
+![img_2.png](docs/img_2.png)
 
 Underveis i planleggingen:
-![img_1.png](img_1.png)
+![img_1.png](docs/img_1.png)
 
 Splitt av klubbkompiser:
-![img_3.png](img_3.png)
+![img_3.png](docs/img_3.png)

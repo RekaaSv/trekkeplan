@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-from db import queries
+from trekkeplan.db import queries
 
 
 class SelectRaceDialog(QDialog):

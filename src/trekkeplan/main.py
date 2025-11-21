@@ -3,12 +3,13 @@ import logging
 import os
 import traceback
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 import pymysql
 
-from db import queries
-from db.connection import ConnectionManager
-from gui.main_window import MainWindow
+from trekkeplan.db import queries
+from trekkeplan.db.connection import ConnectionManager
+from trekkeplan.gui.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
 import sys
 
@@ -93,7 +94,11 @@ def main():
 
 def resource_path(relative_path):
     """Finner riktig bane til ressursen, uansett om det kjøres fra .py eller .exe"""
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+#    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    base_path = getattr(sys, '_MEIPASS', Path(__file__).parent)
+
+#    logging.info("base_path", base_path)
+
     return os.path.join(base_path, relative_path)
 
 
