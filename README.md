@@ -3,7 +3,13 @@
 Trekkeplan er en tilleggsmodul til Brikkesys for å planlegge og gjennomføre trekking av starttider.
 Modulen er i form av et frittstående program som jobber mot Brikkesys databasen.
 
+NB: Forutsetter at Brikkesys sin MySQL database er oppgradert til minst versjon 8.0, ref: https://brikkesys.no/usermanual/installasjon/mysql80
+
 Versjon: 1.0 
+
+Nedlasting: https://github.com/RekaaSv/trekkeplan/releases/latest/download/trekkeplan.zip
+https://github.com/RekaaSv/trekkeplan
+
 
 Funksjonalitet:
 * Planlegge rekkefølge av klasser med støtte gjennom:
