@@ -4,11 +4,11 @@ import pymysql
 from trekkeplan.control.errors import MyCustomError
 
 def read_race_list(conn_mgr):
-    logging.info("db.read_race_list")
+    logging.info("sql.read_race_list")
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
-SELECT r.racedate Dag, r.name Løp, r.first_start Starttid, r.id
+SELECT r.racedate Dag, r.name Løp, r.svr_first_start Starttid, r.id
 FROM races r
 ORDER BY r.racedate DESC, r.created DESC
 """
@@ -19,7 +19,7 @@ ORDER BY r.racedate DESC, r.created DESC
 Løpere som har klubbkamerat i samme klasse rett før.
 """
 def read_club_mates(conn_mgr, raceid):
-    logging.info("db.read_club_mates")
+    logging.info("sql.read_club_mates")
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -55,7 +55,7 @@ def read_race(conn_mgr, raceid):
 
     cursor = conn.cursor()
     sql = """
-SELECT r.id, r.name, r.racedate, r.first_start, r.drawplan_changed, r.draw_time
+SELECT r.id, r.name, r.racedate, r.svr_first_start, r.svr_drawplan_changed, r.svr_draw_time
 FROM races r 
 WHERE r.id = %s
 """
@@ -63,7 +63,7 @@ WHERE r.id = %s
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_not_planned(conn_mgr, raceid):
-    logging.info("db.read_not_planned, raceid: %s", raceid)
+    logging.info("sql.read_not_planned, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -77,37 +77,37 @@ LEFT JOIN classes co ON co.id = cc.courceid
 WHERE cl.raceid = %s AND cl.cource = 0
   AND NOT EXISTS(
       SELECT cl.id
-	  FROM classstarts cls
+	  FROM svr_classstarts cls
 	  WHERE cls.classid = cl.id
      UNION
       SELECT cl.id
-	  FROM classstarts_not clsn
+	  FROM svr_classstarts_not clsn
 	  WHERE clsn.classid = cl.id)
 """
     cursor.execute(sql, (raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_block_lags(conn_mgr, raceid):
-    logging.info("db.read_block_lags, raceid: %s", raceid)
+    logging.info("sql.read_block_lags, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
 SELECT bll.id blocklagid, bl.id blockid, bl.name Bås, bll.timelag Slep, bll.timegap Gap
    ,(
 	SELECT max(t.nexttime) Neste FROM (
-	SELECT nexttime FROM classstarts cls WHERE cls.blocklagid =  bll.id
+	SELECT nexttime FROM svr_classstarts cls WHERE cls.blocklagid =  bll.id
 	UNION
-	SELECT first_start nexttime FROM races WHERE id = %s
+	SELECT svr_first_start nexttime FROM races WHERE id = %s
 	) t   ) Neste
     , NULL Ledig
-FROM startblocklags bll
-JOIN startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
+FROM svr_startblocklags bll
+JOIN svr_startblocks bl ON bl.id = bll.startblockid AND bl.raceid = %s
 """
     cursor.execute(sql, (raceid, raceid,))
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def read_class_starts(conn_mgr, raceid):
-    logging.info("db.read_class_starts, raceid: %s", raceid)
+    logging.info("sql.read_class_starts, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -121,13 +121,13 @@ SELECT cls.id classstartid, sbl.id blocklagid, sb.name Bås, sbl.timelag Slep, c
       , cls.freeafter Ant_bak
       , cls.classstarttime Starttid
       , cls.nexttime Nestetid
-FROM classstarts cls
+FROM svr_classstarts cls
 JOIN classes cl ON cl.cource = 0 AND cl.id = cls.classid
 LEFT JOIN classcource cc ON cc.auto_cource_recognition = 0 AND cc.classid = cl.id
 LEFT JOIN classes co ON co.id = cc.courceid 
 JOIN races r ON r.id = cl.raceid
-JOIN startblocklags sbl ON sbl.id = cls.blocklagid
-JOIN startblocks sb ON sb.id = sbl.startblockid
+JOIN svr_startblocklags sbl ON sbl.id = cls.blocklagid
+JOIN svr_startblocks sb ON sb.id = sbl.startblockid
 WHERE r.id = %s
 ORDER BY  sb.name, sbl.timelag, cls.sortorder 
 """
@@ -135,13 +135,13 @@ ORDER BY  sb.name, sbl.timelag, cls.sortorder
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def upd_first_start(conn_mgr, raceid, new_value):
-    logging.info("db.upd_first_start, raceid: %s", raceid)
+    logging.info("sql.upd_first_start, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE races
-set first_start = %s
+set svr_first_start = %s
 WHERE id = %s
 """
         cursor.execute(sql, (new_value, raceid))
@@ -155,13 +155,13 @@ WHERE id = %s
         raise
 
 def upd_drawplan_changed(conn_mgr, raceid, new_value):
-    logging.info("db.upd_drawplan_changed, raceid: %s", raceid)
+    logging.info("sql.upd_drawplan_changed, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE races
-set drawplan_changed = %s
+set svr_drawplan_changed = %s
 WHERE id = %s
 """
         cursor.execute(sql, (new_value, raceid))
@@ -175,13 +175,13 @@ WHERE id = %s
         raise
 
 def upd_draw_time(conn_mgr, raceid, new_value):
-    logging.info("db.upd_draw_time, raceid: %s", raceid)
+    logging.info("sql.upd_draw_time, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
 UPDATE races
-set draw_time = %s
+set svr_draw_time = %s
 WHERE id = %s
 """
         cursor.execute(sql, (new_value, raceid))
@@ -199,7 +199,7 @@ WHERE id = %s
  Rebuild the redundent fields (sortorder, qtybefore, classstarttime, nexttime).
 """
 def rebuild_class_starts(conn_mgr, raceid):
-    logging.info("db.rebuild_class_starts, raceid: %s", raceid)
+    logging.info("sql.rebuild_class_starts, raceid: %s", raceid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -222,20 +222,20 @@ SELECT cls.id classstartid, cl.name classname
       , (SELECT COUNT(id) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X')) noinclass -- Avmeldt, Arrangør
 		, COALESCE(cls.freebefore,0) freebefore, COALESCE(cls.freeafter,0) freeafter
 		, (ROW_NUMBER() OVER (order BY sb.name, sbl.timelag, cls.sortorder))*10 newsortorder
-      , DATE_ADD( r.first_start, INTERVAL sbl.timelag SECOND) basetime
+      , DATE_ADD( r.svr_first_start, INTERVAL sbl.timelag SECOND) basetime
       , SUM((SELECT COUNT(*) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X'))+COALESCE(cls.freebefore,0)+COALESCE(cls.freeafter,0)) OVER (PARTITION BY sbl.id ORDER BY cls.sortorder) spansqty
-FROM classstarts cls
+FROM svr_classstarts cls
 JOIN classes cl ON cl.cource = 0 AND cl.id = cls.classid
 LEFT JOIN classcource cc ON cc.auto_cource_recognition = 0 AND cc.classid = cl.id
 LEFT JOIN classes co ON co.id = cc.courceid 
 JOIN races r ON r.id = cl.raceid
-JOIN startblocklags sbl ON sbl.id = cls.blocklagid
-JOIN startblocks sb ON sb.id = sbl.startblockid
+JOIN svr_startblocklags sbl ON sbl.id = cls.blocklagid
+JOIN svr_startblocks sb ON sb.id = sbl.startblockid
 WHERE r.id = %s
 ORDER BY cls.sortorder
 ) t1
 )
-UPDATE classstarts stcl2
+UPDATE svr_classstarts stcl2
 JOIN classst ON classst.classstartid = stcl2.id
 SET stcl2.sortorder = classst.newsortorder
    ,stcl2.classstarttime = classst.classstarttime
@@ -253,7 +253,7 @@ SET stcl2.sortorder = classst.newsortorder
         raise
 
 def rebuild_class_starts_partition(conn_mgr, raceid, blocklagid):
-    logging.info("db.rebuild_class_starts_partition, blocklagid %s", blocklagid)
+    logging.info("sql.rebuild_class_starts_partition, blocklagid %s", blocklagid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -279,21 +279,21 @@ SELECT cls.id classstartid, cl.name classname
       , (SELECT COUNT(id) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X')) noinclass -- Avmeldt, Arrangør
 		, COALESCE(cls.freebefore,0) freebefore, COALESCE(cls.freeafter,0) freeafter
 		, (ROW_NUMBER() OVER (order BY cls.sortorder))*10 newsortorder
-      , DATE_ADD( r.first_start, INTERVAL sbl.timelag SECOND) basetime
+      , DATE_ADD( r.svr_first_start, INTERVAL sbl.timelag SECOND) basetime
       , SUM((SELECT COUNT(*) FROM names n WHERE n.classid = cl.id AND n.status NOT IN ('V','X'))+COALESCE(cls.freebefore,0)+COALESCE(cls.freeafter,0)) OVER (PARTITION BY sbl.id ORDER BY cls.sortorder) spansqty
-FROM classstarts cls
+FROM svr_classstarts cls
 JOIN classes cl ON cl.cource = 0 AND cl.id = cls.classid
 LEFT JOIN classcource cc ON cc.auto_cource_recognition = 0 AND cc.classid = cl.id
 LEFT JOIN classes co ON co.id = cc.courceid 
 JOIN races r ON r.id = cl.raceid
-JOIN startblocklags sbl ON sbl.id = cls.blocklagid
-JOIN startblocks sb ON sb.id = sbl.startblockid
+JOIN svr_startblocklags sbl ON sbl.id = cls.blocklagid
+JOIN svr_startblocks sb ON sb.id = sbl.startblockid
 WHERE r.id = %s
   AND sbl.id = %s
 ORDER BY cls.sortorder 
 ) t1
 )
-UPDATE classstarts stcl2
+UPDATE svr_classstarts stcl2
 JOIN classst ON classst.classstartid = stcl2.id
 SET stcl2.sortorder = classst.newsortorder
    ,stcl2.classstarttime = classst.classstarttime
@@ -311,12 +311,12 @@ SET stcl2.sortorder = classst.newsortorder
         raise
 
 def delete_class_start_row(conn_mgr, race_id, classstart_id):
-    logging.info("db.delete_class_start_row, id: %s", classstart_id)
+    logging.info("sql.delete_class_start_row, id: %s", classstart_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM classstarts WHERE id = %s
+DELETE FROM svr_classstarts WHERE id = %s
     """
         cursor.execute(sql, (classstart_id,))
         conn.commit()
@@ -329,12 +329,12 @@ DELETE FROM classstarts WHERE id = %s
         raise
 
 def delete_class_start_rows(conn_mgr, race_id, blocklag_id):
-    logging.info("db.delete_class_start_rows, blocklagid: %s", blocklag_id)
+    logging.info("sql.delete_class_start_rows, blocklagid: %s", blocklag_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM classstarts WHERE blocklagid = %s
+DELETE FROM svr_classstarts WHERE blocklagid = %s
     """
         cursor.execute(sql, (blocklag_id,))
         conn.commit()
@@ -347,12 +347,12 @@ DELETE FROM classstarts WHERE blocklagid = %s
         raise
 
 def delete_class_start_all(conn_mgr, race_id):
-    logging.info("db.delete_class_start_all, raceid: %s", race_id)
+    logging.info("sql.delete_class_start_all, raceid: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM classstarts cls
+DELETE FROM svr_classstarts cls
 WHERE cls.classid in (
 SELECT cl.id
 FROM classes cl
@@ -373,14 +373,14 @@ WHERE cl.cource = 0
 
 
 def delete_blocklag(conn_mgr, race_id, blocklag_id):
-    logging.info("db.delete_blocklag, blocklag_id: %s", blocklag_id)
+    logging.info("sql.delete_blocklag, blocklag_id: %s", blocklag_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM startblocklags sbl
+DELETE FROM svr_startblocklags sbl
 WHERE sbl.id = %s
-  AND NOT EXISTS (SELECT NULL FROM classstarts cs WHERE  cs.blocklagid = sbl.id)
+  AND NOT EXISTS (SELECT NULL FROM svr_classstarts cs WHERE  cs.blocklagid = sbl.id)
 """
         cursor.execute(sql, (blocklag_id, ))
         if cursor.rowcount > 0:
@@ -398,14 +398,14 @@ WHERE sbl.id = %s
         raise
 
 def delete_block(conn_mgr, race_id, blockId):
-    logging.info("db.delete_block, blockId: %s", blockId)
+    logging.info("sql.delete_block, blockId: %s", blockId)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM startblocks sb
+DELETE FROM svr_startblocks sb
 WHERE sb.id = %s
-  AND NOT EXISTS (SELECT NULL FROM startblocklags sbl WHERE  sbl.startblockid = sb.id)
+  AND NOT EXISTS (SELECT NULL FROM svr_startblocklags sbl WHERE  sbl.startblockid = sb.id)
 """
         cursor.execute(sql, (blockId, ))
         if cursor.rowcount > 0:
@@ -423,12 +423,12 @@ WHERE sb.id = %s
         raise
 
 def insert_class_start_not(conn_mgr, race_id, class_id):
-    logging.info("db.insert_class_start_not, class_id: %s", class_id)
+    logging.info("sql.insert_class_start_not, class_id: %s", class_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO classstarts_not (classid)
+INSERT INTO svr_classstarts_not (classid)
     VALUES (%s)
 """
         cursor.execute(sql, (class_id,))
@@ -442,12 +442,12 @@ INSERT INTO classstarts_not (classid)
         raise
 
 def delete_class_start_not(conn_mgr, race_id):
-    logging.info("db.delete_class_start_not, race_id: %s", race_id)
+    logging.info("sql.delete_class_start_not, race_id: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-DELETE FROM classstarts_not csn
+DELETE FROM svr_classstarts_not csn
 WHERE csn.classid in ( 
    SELECT cl.id
    FROM classes cl 
@@ -466,12 +466,12 @@ WHERE csn.classid in (
         raise
 
 def insert_class_start(conn_mgr, race_id, blocklag_id, class_id, timegap, sortorder):
-    logging.info("db.insert_class_start, blocklag_id: %s, class_id: %s", blocklag_id, class_id)
+    logging.info("sql.insert_class_start, blocklag_id: %s, class_id: %s", blocklag_id, class_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
+INSERT INTO svr_classstarts (blocklagid, classid, timegap, sortorder)
     VALUES (%s, %s, %s, %s)
 """
         cursor.execute(sql, (blocklag_id, class_id, timegap, sortorder))
@@ -486,12 +486,12 @@ INSERT INTO classstarts (blocklagid, classid, timegap, sortorder)
 
 
 def add_block(conn_mgr, race_id, block):
-    logging.info("db.add_block, block: %s", block)
+    logging.info("sql.add_block, block: %s", block)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO startblocks (raceid, name)
+INSERT INTO svr_startblocks (raceid, name)
 VALUES (%s, %s)
 """
         cursor.execute(sql, (race_id, block))
@@ -514,12 +514,12 @@ VALUES (%s, %s)
 
 
 def add_blocklag(conn_mgr, blockid, lag, gap):
-    logging.info("db.add_blocklag, blockid: %s, lag: %s, gap: %s", blockid, lag, gap)
+    logging.info("sql.add_blocklag, blockid: %s, lag: %s, gap: %s", blockid, lag, gap)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-INSERT INTO startblocklags (startblockid, timelag, timegap)
+INSERT INTO svr_startblocklags (startblockid, timelag, timegap)
 VALUES (%s, %s, %s)
 """
         cursor.execute(sql, (blockid, lag, gap))
@@ -543,12 +543,12 @@ VALUES (%s, %s, %s)
 
 
 def upd_class_start_free_before(conn_mgr, race_id, classstartid, new_value):
-    logging.info("db.upd_class_start_free_before, classstartid: %s, new_value: %s", classstartid, new_value)
+    logging.info("sql.upd_class_start_free_before, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-UPDATE classstarts
+UPDATE svr_classstarts
 set freebefore = %s
 WHERE id = %s
 """
@@ -563,12 +563,12 @@ WHERE id = %s
         raise
 
 def upd_class_start_free_after(conn_mgr, race_id, classstartid, new_value):
-    logging.info("db.upd_class_start_free_after, classstartid: %s, new_value: %s", classstartid, new_value)
+    logging.info("sql.upd_class_start_free_after, classstartid: %s, new_value: %s", classstartid, new_value)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-UPDATE classstarts
+UPDATE svr_classstarts
 set freeafter = %s
 WHERE id = %s
 """
@@ -583,7 +583,7 @@ WHERE id = %s
         raise
 
 def sql_start_list(conn_mgr, raceid):
-    logging.info("db.sql_start_list, raceid: %s", raceid)
+    logging.info("sql.sql_start_list, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -606,7 +606,7 @@ ORDER BY cl.sortorder, n.starttime
         raise
 
 def sql_starter_list(conn_mgr, raceid):
-    logging.info("db.sql_starter_list, raceid: %s", raceid)
+    logging.info("sql.sql_starter_list, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -632,7 +632,7 @@ ORDER BY n.starttime, cl.sortorder
         raise
 
 def sql_noof_in_cource(conn_mgr, raceid):
-    logging.info("db.sql_noof_in_cource, raceid: %s", raceid)
+    logging.info("sql.sql_noof_in_cource, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -642,7 +642,7 @@ SELECT distinct
  ,COUNT(n.NAME) OVER (PARTITION BY co.name) Antall 
 FROM names n 
 JOIN races r ON r.id = n.raceid
-JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from classstarts_not)
+JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from svr_classstarts_not)
 JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
 JOIN classes co ON co.id = cc.courceid AND co.cource = 1
 WHERE r.id = %s
@@ -660,7 +660,7 @@ ORDER BY Antall desc
         raise
 
 def sql_noof_in_control1(conn_mgr, raceid):
-    logging.info("db.sql_noof_in_control1, raceid: %s", raceid)
+    logging.info("sql.sql_noof_in_control1, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -672,7 +672,7 @@ SELECT distinct
  ,COUNT(n.NAME) OVER (PARTITION BY co.name) Ant_løype
 FROM names n 
 JOIN races r ON r.id = n.raceid
-JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from classstarts_not)
+JOIN classes cl ON cl.id = n.classid AND cl.id not in (select classid from svr_classstarts_not)
 JOIN classcource cc ON cc.raceid = r.id AND cc.classid = cl.id AND cc.auto_cource_recognition = 0
 JOIN classes co ON co.id = cc.courceid AND co.cource = 1
 WHERE r.id = %s
@@ -693,7 +693,7 @@ ORDER BY Ant_post1 desc, Ant_løype desc
 # Samtidig startende til samme post1
 #
 def sql_same_time_control1(conn_mgr, raceid):
-    logging.info("db.sql_same_time_control1, raceid: %s", raceid)
+    logging.info("sql.sql_same_time_control1, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -725,7 +725,7 @@ ORDER BY Starttid, Post_1
 # Samtidig startende i samme løype
 #
 def sql_same_time_cource(conn_mgr, raceid):
-    logging.info("db.sql_same_time_cource, raceid: %s", raceid)
+    logging.info("sql.sql_same_time_cource, raceid: %s", raceid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -755,7 +755,7 @@ ORDER BY Starttid, Løype
 
 
 def clear_start_times(conn_mgr, race_id):
-    logging.info("db.clear_start_times, raceid: %s", race_id)
+    logging.info("sql.clear_start_times, raceid: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -764,7 +764,7 @@ WITH n1 AS (
 	SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
 	FROM names n 
 	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 
-	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN svr_classstarts cls ON cls.classid = cl.id
 	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X') AND r.id = %s
 )
 UPDATE names n
@@ -782,7 +782,7 @@ SET n.starttime = null
         raise
 
 def draw_start_times(conn_mgr, race_id):
-    logging.info("db.draw_start_times, race_id: %s", race_id)
+    logging.info("sql.draw_start_times, race_id: %s", race_id)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -793,7 +793,7 @@ SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
 	      ,cls.classstarttime, cls.timegap 
 	FROM names n 
 	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 
-	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN svr_classstarts cls ON cls.classid = cl.id
 	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X') AND r.id = %s
 )
 UPDATE names n
@@ -814,7 +814,7 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
 # Trekk starttider for ei klasse
 #
 def draw_start_times_class(conn_mgr, classid):
-    logging.info("db.draw_start_times_class, class_id: %s", classid)
+    logging.info("sql.draw_start_times_class, class_id: %s", classid)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -825,7 +825,7 @@ SELECT n.id, n.raceid, n.classid, cl.name classname, n.name, r.racedate
 	      ,cls.classstarttime, cls.timegap 
 	FROM names n 
 	JOIN classes cl ON cl.id = n.classid AND cl.cource = 0 AND classid = %s
-	JOIN classstarts cls ON cls.classid = cl.id
+	JOIN svr_classstarts cls ON cls.classid = cl.id
 	JOIN races r ON r.id = n.raceid AND n.status NOT IN ('V','X')
 )
 UPDATE names n
@@ -847,7 +847,7 @@ SET n.starttime = DATE_ADD(n1.classstarttime, INTERVAL nowithinclass*n1.timegap 
 Alle løpere i gitt klasse, i start-rekkefølge.
 """
 def read_names(conn_mgr, classid):
-    logging.info("db.read_names, classid: %s", classid)
+    logging.info("sql.read_names, classid: %s", classid)
     conn = conn_mgr.get_connection()
     cursor = conn.cursor()
     sql = """
@@ -862,12 +862,12 @@ ORDER BY n.starttime
     return cursor.fetchall(), [desc[0] for desc in cursor.description]
 
 def class_start_down_up(conn_mgr, id, step):
-    logging.info("db.class_start_up_down: %s, %s", id, step)
+    logging.info("sql.class_start_up_down: %s, %s", id, step)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-UPDATE classstarts clss
+UPDATE svr_classstarts clss
 set sortorder = sortorder + %s
 WHERE id = %s
 """
@@ -884,7 +884,7 @@ WHERE id = %s
 
 
 def swap_start_times(conn_mgr, id1, id2, race_id):
-    logging.info("db.swap_start_times: %s, %s", id1, id2)
+    logging.info("sql.swap_start_times: %s, %s", id1, id2)
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
@@ -916,12 +916,12 @@ set n2.starttime = n1.othertime
 # Sjekk om database objektene til Trekkeplan er installert.
 #
 def is_db_objects_installed(conn_mgr):
-    logging.info("db.is_db_objects_installed")
+    logging.info("sql.is_db_objects_installed")
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
         sql = """
-SHOW COLUMNS FROM races LIKE 'first_start'
+SHOW COLUMNS FROM races LIKE 'svr_first_start'
 """
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -935,18 +935,18 @@ SHOW COLUMNS FROM races LIKE 'first_start'
         raise
 
 def install_db_objects(conn_mgr):
-    logging.info("db.install_db_objects")
+    logging.info("sql.install_db_objects")
     try:
         conn = conn_mgr.get_connection()
         cursor = conn.cursor()
-        sql = "ALTER TABLE races ADD COLUMN first_start DATETIME"
+        sql = "ALTER TABLE races ADD COLUMN svr_first_start DATETIME"
         cursor.execute(sql)
-        sql = "ALTER TABLE races ADD COLUMN draw_time DATETIME"
+        sql = "ALTER TABLE races ADD COLUMN svr_draw_time DATETIME"
         cursor.execute(sql)
-        sql = "ALTER TABLE races ADD COLUMN drawplan_changed DATETIME"
+        sql = "ALTER TABLE races ADD COLUMN svr_drawplan_changed DATETIME"
         cursor.execute(sql)
         sql = """
-CREATE TABLE `startblocks` (
+CREATE TABLE `svr_startblocks` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`raceid` INT NOT NULL,
 	`name` VARCHAR(80) NOT NULL DEFAULT '',
@@ -957,7 +957,7 @@ AUTO_INCREMENT=1
 """
         cursor.execute(sql)
         sql = """
-CREATE TABLE `startblocklags` (
+CREATE TABLE `svr_startblocklags` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`startblockid` INT NULL DEFAULT NULL,
 	`timelag` INT NULL DEFAULT NULL,
@@ -969,7 +969,7 @@ AUTO_INCREMENT=1
     """
         cursor.execute(sql)
         sql = """
- CREATE TABLE `classstarts` (
+ CREATE TABLE `svr_classstarts` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`blocklagid` INT NOT NULL,
 	`classid` INT NOT NULL,
@@ -987,7 +987,7 @@ AUTO_INCREMENT=1
 """
         cursor.execute(sql)
         sql = """
-CREATE TABLE `classstarts_not` (
+CREATE TABLE `svr_classstarts_not` (
 	`id` INT NOT NULL AUTO_INCREMENT,
 	`classid` INT NOT NULL,
 	PRIMARY KEY (`id`),
