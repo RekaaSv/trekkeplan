@@ -13,7 +13,7 @@ class SplitClubMates(QDialog):
         super().__init__(parent)
         logging.info("SplitClubMates")
         self.parent = parent
-        self.setWindowTitle("Splitt klubbkompiser")
+        self.setWindowTitle("Splitt klubbkamerater")
 #        parent.resize(1000, 700)
         self.resize(1287, 707)
 

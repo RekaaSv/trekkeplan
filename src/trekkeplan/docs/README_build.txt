@@ -5,24 +5,13 @@ Bygge og pakke Trekkeplan GUI med PyInstaller
 ---------------------------------------------
 
 Dette prosjektet bruker PyInstaller til å pakke Python-koden som en Windows .exe-fil.
-Vi har to versjoner:
 
-1. Trekkeplan.exe – GUI uten konsoll (for sluttbrukere)
-2. Trekkeplan_debug.exe – GUI med konsoll (for utvikling og feilsøking)
-
-Felles innhold:
-- Ikon: terning.ico
-- Konfigurasjon: trekkeplan.cfg
-- Versjonsinfo: version.txt (vises i Egenskaper → Detaljer)
-
----
 
 Generere .spec-filer (kun første gang eller ved endringer)
 -----------------------------------------------------------
 
-Kjør disse i PyCharm-terminalen for å lage .spec-filer:
+Kjør dette i PyCharm-terminalen for å bygge EXE-fil og lage .spec-fil:
 
-GUI uten konsoll:
 pyinstaller src/trekkeplan/main.py `
   --onefile `
   --noconsole `
@@ -32,36 +21,23 @@ pyinstaller src/trekkeplan/main.py `
   --name Trekkeplan
 
 
----
-
-Bygge fra .spec-filer (repeterbart)
+Bygge fra .spec-fil (repeterbart)
 -----------------------------------
 
-Etter at .spec-filene er generert, kan du bygge med:
+Etter at .spec-filene er generert, kan du bygge med den:
 
-GUI uten konsoll:
 python -m PyInstaller Trekkeplan.spec
 
----
 
 Opprydding etter bygging
 -------------------------
-
-Du kan slette midlertidige filer med:
+Du kan slette midlertidige filer:
 - build/
-- dist/
 - __pycache__/
-- *.spec (hvis du vil regenerere dem)
 
----
 
-Tips
-----
-
-- Du kan lage egne .bat-filer for bygging og opprydding hvis du ønsker én-klikks prosess.
-- Versjonsnummeret vises i GUI via `version.txt` og leses fra .exe-filen.
-- Ikonet vises i Utforsker og i tittellinjen på GUI-vinduet.
-
----
+Hvis filstrukturen endrer seg, eller nye ressurs-filer, så *.spec regenereres.
+Det gjøres ved å slette *.spec og byge med den første metoden
+(som også lager ny *.spec fil).
 
 Sist oppdatert: 21.11.2025
