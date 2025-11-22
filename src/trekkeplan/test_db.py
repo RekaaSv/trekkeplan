@@ -1,6 +1,6 @@
 import configparser
 
-from trekkeplan.db import queries
+from trekkeplan.db import sql
 from trekkeplan.db.connection import ConnectionManager
 
 def test():

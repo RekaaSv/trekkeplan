@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPalette, QColor, QIntValidator, QIcon, QDesktopServices
 
 from trekkeplan.control import control
 from trekkeplan.control.errors import MyCustomError
-from trekkeplan.db import queries
+from trekkeplan.db import sql
 from trekkeplan.db.connection import ConnectionManager
 from trekkeplan.gui.about_dialog import AboutDialog
 from trekkeplan.gui.block_line_edit import BlockLineEdit
@@ -508,7 +508,7 @@ class MainWindow(QWidget):
 
     def refresh_race_times(self, raceid):
         logging.debug("refresh_race_times")
-        rows0, columns0 = queries.read_race(self.conn_mgr, self.race_id)
+        rows0, columns0 = sql.read_race(self.conn_mgr, self.race_id)
         if not rows0: return
         race = rows0[0]
         self.race_name = race[1]

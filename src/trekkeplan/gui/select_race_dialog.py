@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-from trekkeplan.db import queries
+from trekkeplan.db import sql
 
 
 class SelectRaceDialog(QDialog):
@@ -58,7 +58,7 @@ class SelectRaceDialog(QDialog):
     def refresh(self):
         logging.info("SelectRaceDialog.refresh")
         rows, columns = None, None
-        rows, columns = queries.read_race_list(self.parent.conn_mgr)
+        rows, columns = sql.read_race_list(self.parent.conn_mgr)
         self.parent.populate_table(self.table_race, columns, rows)
         self.table_race.setColumnHidden(3, True)
 

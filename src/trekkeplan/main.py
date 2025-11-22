@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pymysql
 
-from trekkeplan.db import queries
+from trekkeplan.db import sql
 from trekkeplan.db.connection import ConnectionManager
 from trekkeplan.gui.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -74,10 +74,10 @@ def main():
         # DB-kobling OK, fortsett.
 
         # Sjekk om Trekkeplan DB-objekter er på plass.
-        is_installed = queries.is_db_objects_installed(conn_mgr)
+        is_installed = sql.is_db_objects_installed(conn_mgr)
         logging.info(f"DB objects installed: {is_installed}")
         if not is_installed:
-            queries.install_db_objects(conn_mgr)
+            sql.install_db_objects(conn_mgr)
 
         window = MainWindow(config, conn_mgr, icon_path, pdf_path)
         window.show()
