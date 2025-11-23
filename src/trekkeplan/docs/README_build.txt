@@ -35,9 +35,27 @@ Du kan slette midlertidige filer:
 - build/
 - __pycache__/
 
-
 Hvis filstrukturen endrer seg, eller nye ressurs-filer, så *.spec regenereres.
 Det gjøres ved å slette *.spec og byge med den første metoden
 (som også lager ny *.spec fil).
+
+Pakke sammen zip-fil for nedlasting fra GitHub
+----------------------------------------------
+Samle filene som skal zip'es sammen i folderen dist:
+- Trekkeplan.exe (plassert hit under bygging)
+- trekkeplan.cfg (kopier fra src/trekkeplan, men endre password til <passord>
+- README.pdf (kopier fra src/trekkeplan/docs)
+
+Pakk samme de 3 filene til:
+trekkeplan.zip
+
+Laste ZIP-fil opp til ny release på GitHub.
+-------------------------------------------
+https://github.com/RekaaSv/trekkeplan/releases
+Draft a new release. -> Create new tag (eks. v1.1.0)
+Attach binaries: Dra og slipp zip-filen her.
+Publish release.
+
+
 
 Sist oppdatert: 21.11.2025
